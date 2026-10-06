@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>haze games</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --ga: #ffffff;              /* accent, mirrors haze accent */
+      --ga-ink: #0a0a0a;
+      --pill: #0f0f0f;
+      --pill-brd: #262626;
+      --muted: #9a9a9a;
+    }
+    html { scrollbar-color: #333 #050505; }
+    body {
+      background: #050505; color: #f5f5f5;
+      font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+      padding: 14px 18px 86px; /* bottom padding leaves room for the page pill */
+    }
+
+    /* ---------- floating pill nav ---------- */
+    .g-nav {
+      position: sticky; top: 12px; z-index: 20;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    }
+    .g-nav .g-logo {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 999px;
+      background: var(--ga); color: var(--ga-ink);
+      font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em;
+      white-space: nowrap; cursor: pointer; border: none; font-family: inherit;
+    }
+    .g-nav .g-logo:active { transform: scale(0.97); }
+    .g-nav .g-div { width: 1px; height: 18px; background: #2a2a2a; margin: 0 3px; }
+    .g-nav button.g-ico, .g-nav label.g-search {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.85rem;
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      padding: 0 12px; transition: background 0.15s ease;
+    }
+    .g-nav button.g-ico:hover, .g-nav label.g-search:hover { background: #1d1d1d; }
+    .g-nav button.g-ico.on { background: #242424; }
+    .g-nav label.g-search { cursor: text; }
+    .g-nav input {
+      background: transparent; border: none; outline: none;
+      color: #f5f5f5; font-family: inherit; font-size: 0.85rem; width: 150px;
+    }
+    .g-nav input::placeholder { color: #6e6e6e; }
+    .g-nav .g-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
+    .g-nav select {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.8rem; cursor: pointer; padding: 0 8px;
+    }
+    .g-nav select:hover { background: #1d1d1d; }
+    .g-nav select option { background: #101010; color: #f5f5f5; }
+
+    /* ---------- sections ---------- */
+    .g-section-title {
+      font-size: 0.9rem; margin: 20px 2px 12px; color: #d8d8d8;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .g-section-title .g-clear {
+      font-size: 0.72rem; color: var(--muted); background: none; border: none;
+      cursor: pointer; text-decoration: underline; font-family: inherit;
+    }
+    .g-status { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
+    .g-status.error { color: #ff7d9c; }
+
+    /* ---------- card grid (cover-only, like the reference) ---------- */
+    .g-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 18px 14px;
+    }
+    .g-card {
+      position: relative; cursor: pointer; border: none; padding: 0;
+      background: transparent; color: inherit; font-family: inherit; text-align: center;
+      outline: none;
+    }
+    .g-card:focus-visible .g-cover { border-color: var(--ga); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22); }
+    .g-cover {
+      display: block; width: 100%; aspect-ratio: 1; border-radius: 16px;
+      overflow: hidden; background: #101010; border: 1px solid #1e1e1e;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+    .g-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .g-card:hover .g-cover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.55);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
+    }
+    /* the little name pill overlapping the cover's bottom edge */
+    .g-name {
+      position: relative; display: inline-block; max-width: 92%;
+      margin-top: -12px; z-index: 2;
+      background: var(--pill); border: 1px solid var(--pill-brd);
+      border-radius: 10px; padding: 5px 10px;
+      font-size: 0.72rem; color: #ddd;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: border-color 0.16s ease, color 0.16s ease;
+    }
+    .g-card:hover .g-name { border-color: var(--ga); color: #fff; }
+    .g-fav {
+      position: absolute; top: 8px; right: 8px; z-index: 3;
+      width: 28px; height: 28px; border-radius: 999px; cursor: pointer;
+      display: grid; place-items: center; font-size: 0.85rem; line-height: 1; padding: 0;
+      background: rgba(0, 0, 0, 0.62); border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #9a9a9a; backdrop-filter: blur(4px);
+      transition: transform 0.15s ease, color 0.15s ease;
+    }
+    .g-fav:hover { transform: scale(1.15); color: #fff; }
+    .g-fav.active { color: #ffd166; border-color: #ffd166; }
+    .g-meta {
+      position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; gap: 5px;
+    }
+    .g-badge {
+      font-size: 0.62rem; padding: 3px 7px; border-radius: 999px;
+      background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px); color: #cfcfcf;
+    }
+
+    /* ---------- floating bottom page pill ---------- */
+    .g-pages {
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 20; display: flex; align-items: center; gap: 2px;
+      background: rgba(15, 15, 15, 0.94);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+      max-width: calc(100vw - 32px);
+    }
+    .g-pages button {
+      min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px;
+      border: none; background: transparent; color: #cfcfcf;
+      font-family: inherit; font-size: 0.78rem; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      transition: background 0.14s ease, color 0.14s ease;
+    }
+    .g-pages button:hover { background: #1e1e1e; color: #fff; }
+    .g-pages button.on { background: var(--ga); color: var(--ga-ink); font-weight: 700; }
+    .g-pages .g-dots { color: #555; padding: 0 2px; font-size: 0.75rem; }
+    .g-pages:empty { display: none; }
+
+    /* ---------- player overlay ---------- */
+    #g-frame-wrap {
+      position: fixed; inset: 0; z-index: 50; background: #050505;
+      display: none; flex-direction: column;
+    }
+    #g-frame-wrap.open { display: flex; }
+    .g-frame-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-bottom: 1px solid #232323; background: #0d0d0d;
+    }
+    .g-frame-bar strong { font-size: 0.95rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .g-frame-bar button {
+      padding: 8px 16px; border-radius: 9px; cursor: pointer;
+      background: transparent; color: #f5f5f5; border: 1px solid #232323;
+      font-family: inherit; font-size: 0.85rem;
+      transition: border-color 0.15s ease;
+    }
+    .g-frame-bar button:hover { border-color: #fff; }
+    #g-frame { flex: 1; width: 100%; border: 0; background: #050505; }
+
+    @media (max-width: 560px) {
+      .g-grid { grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 14px 10px; }
+      .g-nav input { width: 90px; }
+      .g-nav .g-count { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="g-nav">
+    <button class="g-logo" id="g-home" type="button" title="All games">&#9632;&nbsp; gnmath</button>
+    <span class="g-div"></span>
+    <button class="g-ico" id="g-random" type="button" title="Open a random game">&#127922;</button>
+    <button class="g-ico on" id="g-favmode" type="button" title="Show favorites only">&#9733;</button>
+    <button class="g-ico" id="g-reset" type="button" title="Forget play history and favorites">&#8635;</button>
+    <span class="g-div"></span>
+    <label class="g-search">&#128269;
+      <input id="g-search" type="text" placeholder="search…" autocomplete="off" />
+    </label>
+    <select id="g-sort" title="Sort games">
+      <option value="default">A&#8594;Z</option>
+      <option value="plays">most played</option>
+      <option value="recent">recently played</option>
+    </select>
+    <span class="g-count" id="g-count"></span>
+  </nav>
+
+  <p class="g-status" id="g-status">Loading the library…</p>
+  <div id="g-sections"></div>
+  <div class="g-pages" id="g-pages"></div>
+
+  <div id="g-frame-wrap">
+    <div class="g-frame-bar">
+      <strong id="g-frame-title"></strong>
+      <button id="g-frame-full" type="button">⛶ Fullscreen</button>
+      <button id="g-frame-close" type="button">✕ Close</button>
+    </div>
+    <iframe id="g-frame" title="game"></iframe>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var COVERS = "https://cdn.jsdelivr.net/gh/freebuisness/covers@main";
+      var RECENT_KEY = "haze-games-recent";
+      var FAVS_KEY = "haze-games-favs";
+      var PAGE_KEY = "haze-games-page";
+      var PER_PAGE = 36;
+      var games = [];
+      var sections = document.getElementById("g-sections");
+      var status = document.getElementById("g-status");
+      var count = document.getElementById("g-count");
+      var search = document.getElementById("g-search");
+      var sortSel = document.getElementById("g-sort");
+      var pagesEl = document.getElementById("g-pages");
+      var favMode = false;
+      var frameWrap = document.getElementById("g-frame-wrap");
+      var frame = document.getElementById("g-frame");
+      var frameTitle = document.getElementById("g-frame-title");
+      var byId = {};
+
+      function loadJson(key, fallback) {
+        try {
+          return JSON.parse(localStorage.getItem(key) || fallback);
+        } catch (e) {
+          return JSON.parse(fallback);
+        }
+      }
+      function recentMap() { return loadJson(RECENT_KEY, "{}"); }
+      function favList() { return loadJson(FAVS_KEY, "[]"); }
+
+      function esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+
+      function cardHtml(g, meta) {
+        var badges = "";
+        if (meta.plays > 0) badges += '<span class="g-badge">\u25b6 ' + meta.plays + "</span>";
+        if (meta.last) {
+          var mins = Math.floor((Date.now() - meta.last) / 60000);
+          var when = mins < 1 ? "now" : mins < 60 ? mins + "m ago" : mins < 1440 ? Math.floor(mins / 60) + "h ago" : Math.floor(mins / 1440) + "d ago";
+          badges += '<span class="g-badge">' + when + "</span>";
+        }
+        return (
+          '<div class="g-card" data-id="' + g.id + '" role="button" tabindex="0" aria-label="Play ' + esc(g.name) + '">' +
+          '<span class="g-cover"><img loading="lazy" src="' + COVERS + "/" + g.id + '.png" alt="" onerror="this.style.display=\'none\'" />' +
+          (badges ? '<span class="g-meta">' + badges + "</span>" : "") +
+          "</span>" +
+          '<button class="g-fav' + (meta.fav ? " active" : "") + '" data-fav="' + g.id + '" title="Favorite" type="button">\u2605</button>' +
+          '<span class="g-name">' + esc(g.name) + "</span>" +
+          "</div>"
+        );
+      }
+
+      function section(title, list, clearLabel) {
+        var wrap = document.createElement("div");
+        var h = document.createElement("div");
+        h.className = "g-section-title";
+        h.innerHTML = title + (clearLabel ? ' <button class="g-clear" type="button">' + clearLabel + "</button>" : "");
+        wrap.appendChild(h);
+        var grid = document.createElement("div");
+        grid.className = "g-grid";
+        var recents = recentMap();
+        var favs = favList();
+        grid.innerHTML = list
+          .map(function (g) {
+            var meta = recents[g.id] || {};
+            meta.fav = favs.indexOf(String(g.id)) !== -1;
+            return cardHtml(g, meta);
+          })
+          .join("");
+        wrap.appendChild(grid);
+        if (clearLabel) {
+          h.querySelector(".g-clear").addEventListener("click", function () {
+            localStorage.removeItem(RECENT_KEY);
+            render();
+          });
+        }
+        return wrap;
+      }
+
+      // ---- pagination pill (1 … n with a window around the current page) ----
+      function pageNumbers(cur, total) {
+        if (total <= 8) {
+          var all = [];
+          for (var i = 1; i <= total; i++) all.push(i);
+          return all;
+        }
+        var set = [1, cur - 1, cur, cur + 1, total];
+        if (cur <= 4) set = [1, 2, 3, 4, 5, total];
+        if (cur >= total - 3) set = [1, total - 4, total - 3, total - 2, total - 1, total];
+        set = set.filter(function (p) { return p >= 1 && p <= total; });
+        var uniq = [];
+        for (var j = 0; j < set.length; j++) if (uniq.indexOf(set[j]) === -1) uniq.push(set[j]);
+        uniq.sort(function (a, b) { return a - b; });
+        return uniq;
+      }
+
+      function renderPages(cur, total) {
+        pagesEl.innerHTML = "";
+        if (total <= 1) return;
+        var nums = pageNumbers(cur, total);
+        var prev = 0;
+        for (var i = 0; i < nums.length; i++) {
+          var p = nums[i];
+          if (prev && p - prev > 1) {
+            var dots = document.createElement("span");
+            dots.className = "g-dots";
+            dots.textContent = "\u2026";
+            pagesEl.appendChild(dots);
+          }
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = String(p);
+          if (p === cur) b.classList.add("on");
+          b.addEventListener("click", function (page) {
+            return function () {
+              try { localStorage.setItem(PAGE_KEY, String(page)); } catch (e) {}
+              render();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            };
+          }(p));
+          pagesEl.appendChild(b);
+          prev = p;
+        }
+      }
+
+      function render() {
+        var q = search.value.trim().toLowerCase();
+        var recents = recentMap();
+        var favs = favList();
+        var list = games.slice();
+        if (favMode) {
+          list = list.filter(function (g) { return favs.indexOf(String(g.id)) !== -1; });
+        }
+        if (q) {
+          list = list.filter(function (g) { return g.name.toLowerCase().indexOf(q) !== -1; });
+        }
+        var sort = sortSel.value;
+        if (sort === "plays") {
+          list.sort(function (a, b) { return (recents[b.id] && recents[b.id].plays || 0) - (recents[a.id] && recents[a.id].plays || 0) || a.name.localeCompare(b.name); });
+        } else if (sort === "recent") {
+          list.sort(function (a, b) { return (recents[b.id] && recents[b.id].last || 0) - (recents[a.id] && recents[a.id].last || 0) || a.name.localeCompare(b.name); });
+        } else {
+          list.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        }
+        count.textContent = list.length + (q ? " found" : " games");
+        sections.innerHTML = "";
+        renderPages(1, 1); // cleared by default
+
+        if (!list.length) {
+          status.textContent = favMode && !q ? "No favorites yet — tap \u2605 on any game." : q ? "No games match \"" + q + "\"." : "";
+          status.hidden = !favMode && !q;
+          status.className = "g-status";
+          return;
+        }
+        status.hidden = true;
+
+        // recents + favorites strips (only on the unfiltered, first-page view)
+        if (!q && !favMode) {
+          var recentGames = Object.keys(recents)
+            .sort(function (a, b) { return (recents[b].last || 0) - (recents[a].last || 0); })
+            .map(function (id) { return byId[id]; })
+            .filter(Boolean)
+            .slice(0, 12);
+          if (recentGames.length) {
+            sections.appendChild(section("\u23f1 Recently played", recentGames, "forget"));
+          }
+          var favGames = favs.map(function (id) { return byId[id]; }).filter(Boolean);
+          if (favGames.length) {
+            sections.appendChild(section("\u2605 Favorites", favGames));
+          }
+          var total = Math.ceil(list.length / PER_PAGE);
+          var cur = Math.min(parseInt(localStorage.getItem(PAGE_KEY) || "1", 10) || 1, total);
+          if (cur < 1) cur = 1;
+          try { localStorage.setItem(PAGE_KEY, String(cur)); } catch (e2) {}
+          var pageList = list.slice((cur - 1) * PER_PAGE, cur * PER_PAGE);
+          sections.appendChild(section("All games", pageList));
+          renderPages(cur, total);
+        } else {
+          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list));
+        }
+      }
+
+      function openGame(g) {
+        frameTitle.textContent = g.name;
+        // the zone url is "{HTML_URL}/<file>.html" - send the real filename,
+        // 287 games have suffixed ones (e.g. 1-fde.html)
+        var file = String(g.url).split("/").pop();
+        frame.src = "/games/play/" + encodeURIComponent(file);
+        frameWrap.classList.add("open");
+        var recents = recentMap();
+        var meta = recents[g.id] || { plays: 0, last: 0 };
+        meta.plays = (meta.plays || 0) + 1;
+        meta.last = Date.now();
+        recents[g.id] = meta;
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents)); } catch (e) {}
+      }
+
+      function closeGame() {
+        frameWrap.classList.remove("open");
+        frame.src = "about:blank";
+        render(); // refresh play-count badges
+      }
+
+      sections.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var card = e.target.closest ? e.target.closest(".g-card") : null;
+        if (!card || e.target !== card) return;
+        e.preventDefault();
+        var g = byId[card.dataset.id];
+        if (g) openGame(g);
+      });
+
+      sections.addEventListener("click", function (e) {
+        var favBtn = e.target.closest(".g-fav");
+        if (favBtn) {
+          e.stopPropagation();
+          var id = favBtn.dataset.fav;
+          var favs = favList();
+          var idx = favs.indexOf(id);
+          if (idx === -1) favs.push(id);
+          else favs.splice(idx, 1);
+          try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs.slice(0, 30))); } catch (e2) {}
+          render();
+          return;
+        }
+        var card = e.target.closest(".g-card");
+        if (!card) return;
+        var g = byId[card.dataset.id];
+        if (g) openGame(g);
+      });
+
+      document.getElementById("g-random").addEventListener("click", function () {
+        if (!games.length) return;
+        openGame(games[Math.floor(Math.random() * games.length)]);
+      });
+      document.getElementById("g-favmode").addEventListener("click", function () {
+        favMode = !favMode;
+        this.classList.toggle("on", favMode);
+        render();
+      });
+      document.getElementById("g-reset").addEventListener("click", function () {
+        localStorage.removeItem(RECENT_KEY);
+        localStorage.removeItem(FAVS_KEY);
+        render();
+      });
+      document.getElementById("g-home").addEventListener("click", function () {
+        favMode = false;
+        search.value = "";
+        document.getElementById("g-favmode").classList.remove("on");
+        try { localStorage.removeItem(PAGE_KEY); } catch (e) {}
+        render();
+      });
+      sortSel.addEventListener("change", render);
+      document.getElementById("g-frame-close").addEventListener("click", closeGame);
+      document.getElementById("g-frame-full").addEventListener("click", function () {
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+        else frameWrap.requestFullscreen().catch(function () {});
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && frameWrap.classList.contains("open")) closeGame();
+      });
+
+      var searchTimer = null;
+      search.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(render, 120);
+      });
+
+      // mirror haze's accent color (same origin - settings are shared)
+      try {
+        var accent = JSON.parse(localStorage.getItem("haze-settings") || "{}").accent;
+        if (accent) document.documentElement.style.setProperty("--ga", accent);
+      } catch (e) {}
+
+      fetch("/games/zones.json")
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (zones) {
+          games = zones.filter(function (g) {
+            return g && g.url && g.url.indexOf("{HTML_URL}") !== -1 && g.name;
+          });
+          for (var i = 0; i < games.length; i++) {
+            games[i].id = String(games[i].id);
+            byId[games[i].id] = games[i];
+          }
+          render();
+        })
+        .catch(function () {
+          status.textContent = "Couldn't load the game library — the catalog wasn't reachable. Reload to retry.";
+          status.className = "g-status error";
+        });
+    })();
+  </script>
+</body>
+</html>

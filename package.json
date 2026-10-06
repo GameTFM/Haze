@@ -1,0 +1,26 @@
+{
+  "name": "haze",
+  "version": "1.0.0",
+  "description": "haze - black & white Scramjet web proxy",
+  "type": "module",
+  "packageManager": "pnpm@10.18.3",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "infisical run --env=dev -- node server.js",
+    "start:plain": "node server.js"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@mercuryworkshop/scramjet",
+      "bufferutil",
+      "utf-8-validate"
+    ]
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "@mercuryworkshop/wisp-js": "^0.4.1",
+    "ws": "^8.18.3"
+  }
+}

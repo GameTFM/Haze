@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>haze apps</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --aa: #ffffff;             /* accent, mirrors haze accent */
+      --aa-ink: #0a0a0a;
+      --pill: #0f0f0f;
+      --pill-brd: #262626;
+      --muted: #9a9a9a;
+    }
+    html { scrollbar-color: #333 #050505; }
+    body {
+      background: #050505; color: #f5f5f5;
+      font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+      padding: 14px 18px 86px;
+    }
+
+    /* ---------- floating pill nav ---------- */
+    .a-nav {
+      position: sticky; top: 12px; z-index: 20;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+      max-width: calc(100vw - 36px);
+    }
+    .a-nav .a-logo {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 999px;
+      background: var(--aa); color: var(--aa-ink);
+      font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em;
+      white-space: nowrap; cursor: pointer; border: none; font-family: inherit;
+    }
+    .a-nav .a-logo:active { transform: scale(0.97); }
+    .a-nav .a-div { width: 1px; height: 18px; background: #2a2a2a; margin: 0 3px; flex: none; }
+    .a-nav button.a-ico, .a-nav label.a-search {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.85rem;
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      padding: 0 12px; transition: background 0.15s ease; flex: none;
+    }
+    .a-nav button.a-ico:hover, .a-nav label.a-search:hover { background: #1d1d1d; }
+    .a-nav button.a-ico.on { background: #242424; }
+    .a-nav label.a-search { cursor: text; }
+    .a-nav input {
+      background: transparent; border: none; outline: none;
+      color: #f5f5f5; font-family: inherit; font-size: 0.85rem; width: 150px;
+    }
+    .a-nav input::placeholder { color: #6e6e6e; }
+    .a-nav .a-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
+    .a-nav select {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.8rem; cursor: pointer; padding: 0 8px;
+    }
+    .a-nav select:hover { background: #1d1d1d; }
+    .a-nav select option { background: #101010; color: #f5f5f5; }
+
+    /* ---------- sections ---------- */
+    .a-section-title {
+      font-size: 0.9rem; margin: 20px 2px 12px; color: #d8d8d8;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .a-section-title .a-clear {
+      font-size: 0.72rem; color: var(--muted); background: none; border: none;
+      cursor: pointer; text-decoration: underline; font-family: inherit;
+    }
+    .a-status { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
+    .a-status.error { color: #ff7d9c; }
+
+    /* ---------- phone home-screen icon grid (squircle icons, names under) ---------- */
+    .a-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, 82px);
+      gap: 18px 10px; justify-content: start;
+    }
+    .a-tile {
+      position: relative; width: 82px; cursor: pointer; border-radius: 18px;
+      background: none; border: none; padding: 0;
+      color: inherit; font-family: inherit; outline: none;
+      display: flex; flex-direction: column; align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .a-icon {
+      width: 62px; height: 62px; border-radius: 15px;
+      background: rgba(255, 255, 255, 0.07);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, outline-color 0.15s ease;
+      outline: 1px solid rgba(255, 255, 255, 0.08); outline-offset: -1px;
+      font-size: 1.3rem; font-weight: 700; color: #cfcfcf;
+    }
+    .a-tile:hover .a-icon {
+      transform: scale(1.08);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
+      outline-color: rgba(255, 255, 255, 0.35);
+    }
+    .a-tile:active .a-icon { transform: scale(0.95); }
+    .a-tile:focus-visible .a-icon { outline: 2px solid var(--aa); outline-offset: 0; }
+    .a-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .a-label {
+      margin-top: 7px; max-width: 82px;
+      font-size: 0.66rem; font-weight: 600; color: rgba(255, 255, 255, 0.88);
+      line-height: 1.25; text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .a-fav {
+      position: absolute; top: -6px; right: -6px; z-index: 3;
+      width: 22px; height: 22px; border-radius: 999px; cursor: pointer;
+      display: grid; place-items: center; font-size: 0.62rem; line-height: 1; padding: 0;
+      background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #9a9a9a; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+    }
+    .a-tile:hover .a-fav, .a-fav.active { opacity: 1; }
+    .a-fav:hover { transform: scale(1.15); color: #fff; }
+    .a-fav.active { color: #ffd166; border-color: #ffd166; }
+
+    /* ---------- floating bottom page pill (iOS-style dots + arrows) ---------- */
+    .a-pages {
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 20; display: flex; align-items: center; gap: 2px;
+      background: rgba(15, 15, 15, 0.94);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+      max-width: calc(100vw - 32px); overflow: hidden;
+    }
+    .a-pages button {
+      height: 30px; border-radius: 999px;
+      border: none; background: transparent; color: #cfcfcf;
+      font-family: inherit; font-size: 0.78rem; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.14s ease, color 0.14s ease; flex: none;
+    }
+    .a-pages button.a-arrow { min-width: 30px; padding: 0 8px; }
+    .a-pages button.a-arrow:disabled { opacity: 0.3; cursor: default; }
+    .a-pages button.a-arrow:disabled:hover { background: transparent; }
+    .a-pages button.a-dot { min-width: 26px; padding: 0 3px; }
+    .a-pages button.a-dot:hover { background: transparent; color: #fff; }
+    .a-pages button.a-dot .a-dotc {
+      display: block; width: 7px; height: 7px; border-radius: 999px;
+      background: #4d4d4d; transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .a-pages button.a-dot.on .a-dotc {
+      background: var(--aa); transform: scale(1.25);
+    }
+    .a-pages .a-dots { color: #555; padding: 0 2px; font-size: 0.75rem; flex: none; }
+    .a-pages:empty { display: none; }
+
+    @media (max-width: 560px) {
+      .a-nav input { width: 90px; }
+      .a-nav .a-count { display: none; }
+      .a-grid { grid-template-columns: repeat(auto-fill, 76px); gap: 16px 8px; }
+      .a-tile { width: 76px; }
+      .a-icon { width: 58px; height: 58px; }
+      .a-label { max-width: 76px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="a-nav">
+    <button class="a-logo" id="a-home" type="button" title="All apps">&#9632;&nbsp; apps</button>
+    <span class="a-div"></span>
+    <button class="a-ico on" id="a-favmode" type="button" title="Show favorites only">&#9733;</button>
+    <button class="a-ico" id="a-reset" type="button" title="Forget favorites and recents">&#8635;</button>
+    <span class="a-div"></span>
+    <label class="a-search">&#128269;
+      <input id="a-search" type="text" placeholder="search 25,000 apps…" autocomplete="off" />
+    </label>
+    <select id="a-sort" title="Sort apps">
+      <option value="default">originals first</option>
+      <option value="az">A&#8594;Z</option>
+    </select>
+    <span class="a-count" id="a-count"></span>
+  </nav>
+
+  <p class="a-status" id="a-status">Loading the app library…</p>
+  <div id="a-sections"></div>
+  <div class="a-pages" id="a-pages"></div>
+
+  <script>
+    (function () {
+      "use strict";
+      var APPS_KEY = "haze-apps-favs";
+      var RECENT_KEY = "haze-apps-recent";
+      var PAGE_KEY = "haze-apps-page";
+      var PER_PAGE = 120;
+      var apps = [];
+      var sections = document.getElementById("a-sections");
+      var status = document.getElementById("a-status");
+      var count = document.getElementById("a-count");
+      var search = document.getElementById("a-search");
+      var sortSel = document.getElementById("a-sort");
+      var pagesEl = document.getElementById("a-pages");
+      var favMode = false;
+
+      function loadJson(key, fallback) {
+        try {
+          return JSON.parse(localStorage.getItem(key) || fallback);
+        } catch (e) {
+          return JSON.parse(fallback);
+        }
+      }
+      function favList() { return loadJson(APPS_KEY, "[]"); }
+      function recentList() { return loadJson(RECENT_KEY, "[]"); }
+
+      function esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+
+      // broken icon? try the domain's Google favicon once, then give up to the letter
+      window.hazeIconFallback = function (img) {
+        if (!img) return;
+        if (img.getAttribute("data-step") === "0") {
+          img.setAttribute("data-step", "1");
+          img.src = "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(img.getAttribute("data-host") || "") + "&sz=128";
+          return;
+        }
+        img.remove();
+      };
+
+      // launch through the parent haze proxy - fall back to a plain new tab
+      // when apps.html runs standalone
+      function openApp(url, title) {
+        var recents = recentList().filter(function (r) { return r.url !== url; });
+        recents.unshift({ url: url, title: title, t: Date.now() });
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents.slice(0, 16))); } catch (e) {}
+        try {
+          if (window.parent && window.parent.hazeLaunch) {
+            window.parent.hazeLaunch(url);
+            return;
+          }
+        } catch (e) {}
+        window.open(url, "_blank", "noopener");
+      }
+
+      function tileHtml(app, i) {
+        var favs = favList();
+        var isFav = favs.indexOf(app.url) !== -1;
+        var icon = app.icon || "";
+        var initial = esc((app.title || "?").charAt(0).toUpperCase());
+        var host = "";
+        try { host = new URL(app.url).hostname; } catch (e) {}
+        return (
+          '<div class="a-tile" data-i="' + i + '" role="button" tabindex="0" aria-label="Open ' + esc(app.title) + '">' +
+          '<div class="a-icon">' +
+          (icon ? '<img loading="lazy" src="' + esc(icon) + '" alt="" data-host="' + esc(host) + '" data-step="0" onerror="hazeIconFallback(this)" />' : initial) +
+          "</div>" +
+          '<div class="a-label">' + esc(app.title) + "</div>" +
+          '<button class="a-fav' + (isFav ? " active" : "") + '" data-fav="' + i + '" title="Favorite" type="button">\u2605</button>' +
+          "</div>"
+        );
+      }
+
+      function section(title, list, clearLabel) {
+        var wrap = document.createElement("div");
+        var h = document.createElement("div");
+        h.className = "a-section-title";
+        h.innerHTML = title + (clearLabel ? ' <button class="a-clear" type="button">' + clearLabel + "</button>" : "");
+        wrap.appendChild(h);
+        var grid = document.createElement("div");
+        grid.className = "a-grid";
+        grid.innerHTML = list
+          .map(function (item) { return tileHtml(item.app, item.i); })
+          .join("");
+        wrap.appendChild(grid);
+        if (clearLabel) {
+          h.querySelector(".a-clear").addEventListener("click", function () {
+            localStorage.removeItem(APPS_KEY);
+            render();
+          });
+        }
+        return wrap;
+      }
+
+      function pageNumbers(cur, total) {
+        if (total <= 8) {
+          var all = [];
+          for (var i = 1; i <= total; i++) all.push(i);
+          return all;
+        }
+        var set = [1, cur - 1, cur, cur + 1, total];
+        if (cur <= 4) set = [1, 2, 3, 4, 5, total];
+        if (cur >= total - 3) set = [1, total - 4, total - 3, total - 2, total - 1, total];
+        set = set.filter(function (p) { return p >= 1 && p <= total; });
+        var uniq = [];
+        for (var j = 0; j < set.length; j++) if (uniq.indexOf(set[j]) === -1) uniq.push(set[j]);
+        uniq.sort(function (a, b) { return a - b; });
+        return uniq;
+      }
+
+      // iOS-style page dots (windowed) with prev/next arrows
+      function renderPages(cur, total) {
+        pagesEl.innerHTML = "";
+        if (total <= 1) return;
+        var nums = pageNumbers(cur, total);
+        function jump(page) {
+          try { localStorage.setItem(PAGE_KEY, String(page)); } catch (e) {}
+          render();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        var prev = document.createElement("button");
+        prev.type = "button";
+        prev.className = "a-arrow";
+        prev.title = "Previous page";
+        prev.textContent = "\u2039";
+        prev.disabled = cur <= 1;
+        prev.addEventListener("click", function () { if (cur > 1) jump(cur - 1); });
+        pagesEl.appendChild(prev);
+        var shown = 0;
+        for (var i = 0; i < nums.length; i++) {
+          var p = nums[i];
+          if (shown && p - nums[i - 1] > 1) {
+            var dots = document.createElement("span");
+            dots.className = "a-dots";
+            dots.textContent = "\u2026";
+            pagesEl.appendChild(dots);
+          }
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "a-dot" + (p === cur ? " on" : "");
+          b.title = "Page " + p + " of " + total;
+          b.setAttribute("aria-label", "Page " + p + " of " + total);
+          b.innerHTML = '<span class="a-dotc"></span>';
+          b.addEventListener("click", function (page) {
+            return function () { jump(page); };
+          }(p));
+          pagesEl.appendChild(b);
+          shown++;
+        }
+        var next = document.createElement("button");
+        next.type = "button";
+        next.className = "a-arrow";
+        next.title = "Next page";
+        next.textContent = "\u203a";
+        next.disabled = cur >= total;
+        next.addEventListener("click", function () { if (cur < total) jump(cur + 1); });
+        pagesEl.appendChild(next);
+      }
+
+      function render() {
+        var q = search.value.trim().toLowerCase();
+        var favs = favList();
+        var list = apps
+          .map(function (app, i) { return { app: app, i: i }; });
+        if (favMode) {
+          list = list.filter(function (item) { return favs.indexOf(item.app.url) !== -1; });
+        }
+        if (q) {
+          list = list.filter(function (item) { return item.app.title.toLowerCase().indexOf(q) !== -1; });
+        }
+        if (sortSel.value === "az") {
+          list = list.slice().sort(function (a, b) { return a.app.title.localeCompare(b.app.title); });
+        }
+        count.textContent = list.length.toLocaleString() + (list.length === 1 ? " app" : " apps");
+        sections.innerHTML = "";
+        renderPages(1, 1);
+
+        if (!list.length) {
+          status.textContent = favMode && !q ? "No favorites yet \u2014 hover an app and tap \u2605." : q ? "No apps match \"" + q + "\"." : "";
+          status.hidden = !favMode && !q;
+          status.className = "a-status";
+          return;
+        }
+        status.hidden = true;
+
+        if (!q && !favMode) {
+          var recents = recentList()
+            .map(function (r) {
+              var idx = -1;
+              for (var k = 0; k < apps.length; k++) if (apps[k].url === r.url) { idx = k; break; }
+              return idx >= 0 ? { app: apps[idx], i: idx } : null;
+            })
+            .filter(Boolean)
+            .slice(0, 14);
+          if (recents.length) {
+            sections.appendChild(section("\u23f1 Recently opened", recents, "forget"));
+          }
+          var favApps = apps
+            .map(function (app, i) { return { app: app, i: i }; })
+            .filter(function (item) { return favs.indexOf(item.app.url) !== -1; });
+          if (favApps.length) {
+            sections.appendChild(section("\u2605 Favorites", favApps));
+          }
+          var total = Math.ceil(list.length / PER_PAGE);
+          var cur = Math.min(parseInt(localStorage.getItem(PAGE_KEY) || "1", 10) || 1, total);
+          if (cur < 1) cur = 1;
+          try { localStorage.setItem(PAGE_KEY, String(cur)); } catch (e2) {}
+          var pageList = list.slice((cur - 1) * PER_PAGE, cur * PER_PAGE);
+          sections.appendChild(section("All apps", pageList));
+          renderPages(cur, total);
+        } else {
+          // searches and favorites can still be big - paginate those too
+          var total2 = Math.ceil(list.length / PER_PAGE);
+          var cur2 = Math.min(parseInt(localStorage.getItem(PAGE_KEY) || "1", 10) || 1, total2);
+          try { localStorage.setItem(PAGE_KEY, String(cur2)); } catch (e3) {}
+          var pageList2 = list.slice((cur2 - 1) * PER_PAGE, cur2 * PER_PAGE);
+          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", pageList2));
+          renderPages(cur2, total2);
+        }
+      }
+
+      sections.addEventListener("click", function (e) {
+        var favBtn = e.target.closest(".a-fav");
+        if (favBtn) {
+          e.stopPropagation();
+          var app = apps[parseInt(favBtn.dataset.fav, 10)];
+          if (!app) return;
+          var favs = favList();
+          var idx = favs.indexOf(app.url);
+          if (idx === -1) favs.push(app.url);
+          else favs.splice(idx, 1);
+          try { localStorage.setItem(APPS_KEY, JSON.stringify(favs.slice(0, 60))); } catch (e2) {}
+          render();
+          return;
+        }
+        var tile = e.target.closest(".a-tile");
+        if (!tile) return;
+        var picked = apps[parseInt(tile.dataset.i, 10)];
+        if (picked) openApp(picked.url, picked.title);
+      });
+      sections.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var tile = e.target.closest ? e.target.closest(".a-tile") : null;
+        if (!tile || e.target !== tile) return;
+        e.preventDefault();
+        var picked = apps[parseInt(tile.dataset.i, 10)];
+        if (picked) openApp(picked.url, picked.title);
+      });
+
+      document.getElementById("a-favmode").addEventListener("click", function () {
+        favMode = !favMode;
+        this.classList.toggle("on", favMode);
+        render();
+      });
+      document.getElementById("a-reset").addEventListener("click", function () {
+        localStorage.removeItem(APPS_KEY);
+        localStorage.removeItem(RECENT_KEY);
+        render();
+      });
+      document.getElementById("a-home").addEventListener("click", function () {
+        favMode = false;
+        search.value = "";
+        document.getElementById("a-favmode").classList.remove("on");
+        try { localStorage.removeItem(PAGE_KEY); } catch (e) {}
+        render();
+      });
+      sortSel.addEventListener("change", render);
+
+      var searchTimer = null;
+      search.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(render, 150);
+      });
+
+      fetch("apps.json", { cache: "no-store" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (items) {
+          apps = (Array.isArray(items) ? items : []).filter(function (a) {
+            return a && a.url && /^https?:\/\//i.test(a.url);
+          });
+          render();
+        })
+        .catch(function () {
+          status.textContent = "Couldn't load apps.json \u2014 the app catalog wasn't reachable. Reload to retry.";
+          status.className = "a-status error";
+        });
+
+      // mirror haze's accent color (same origin - settings are shared)
+      try {
+        var accent = JSON.parse(localStorage.getItem("haze-settings") || "{}").accent;
+        if (accent) document.documentElement.style.setProperty("--aa", accent);
+      } catch (e) {}
+
+      // exposed for the parent haze command palette ("Open a random app")
+      window.hazeRandomApp = function () {
+        if (!apps.length) return;
+        var pick = apps[Math.floor(Math.random() * apps.length)];
+        openApp(pick.url, pick.title);
+      };
+    })();
+  </script>
+</body>
+</html>
