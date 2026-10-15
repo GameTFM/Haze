@@ -1,0 +1,24 @@
+{
+  "name": "haze",
+  "description": "haze - black & white Scramjet web proxy (Node + wisp websocket)",
+  "repository": "https://github.com/karthikchippa2-maker/Haze",
+  "keywords": ["proxy", "scramjet", "ultraviolet", "wisp", "nodejs"],
+  "image": "heroku/nodejs",
+  "stack": "heroku-24",
+  "env": {
+    "HOST": {
+      "description": "Bind address (always 0.0.0.0 on hosts).",
+      "value": "0.0.0.0"
+    },
+    "CHAT_SECRET": {
+      "description": "HMAC key for chat session tokens. Generated once at deploy; all sessions reset if changed.",
+      "generator": "secret"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+}
