@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: haze
+    runtime: docker
+    plan: starter
+    # websocket proxy: same-port /wisp/ upgrade must reach the container
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: HOST
+        value: 0.0.0.0
+      - key: CHAT_SECRET
+        generateValue: true
+      # set CHAT_DB_PATH to /data/chat-data.json + add a disk named "data"
+      # if you want chat history to survive deploys/restarts (needs paid plan)

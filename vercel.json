@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "framework": null,
+  "rewrites": [
+    { "source": "/music/search", "destination": "/api/music/search" },
+    { "source": "/music/yt", "destination": "/api/music/yt" },
+    { "source": "/chat/auth", "destination": "/api/chat/auth" },
+    { "source": "/chat/guest", "destination": "/api/chat/guest" },
+    { "source": "/chat/messages", "destination": "/api/chat/messages" },
+    { "source": "/games/zones.json", "destination": "/api/games/zones" },
+    { "source": "/games/play/:file", "destination": "/api/games/play?file=:file" },
+    { "source": "/ai/relay", "destination": "/api/ai/relay" }
+  ],
+  "headers": [
+    {
+      "source": "/scramjet/scramjet.wasm",
+      "headers": [{ "key": "Content-Type", "value": "application/wasm" }]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ]
+}

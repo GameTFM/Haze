@@ -1,0 +1,57 @@
+# haze on Netlify: static UI from public/, stateless APIs from netlify/functions/.
+# Browsing proxy needs a long-lived wisp backend — set haze-wisp-url
+# (localStorage or window.__HAZE_WISP_URL) to your Node host for that.
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/music/search"
+  to = "/.netlify/functions/music-search"
+  status = 200
+  query = { q = ":q", limit = ":limit" }
+
+[[redirects]]
+  from = "/music/yt"
+  to = "/.netlify/functions/music-yt"
+  status = 200
+  query = { q = ":q" }
+
+[[redirects]]
+  from = "/chat/auth"
+  to = "/.netlify/functions/chat-auth"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chat/guest"
+  to = "/.netlify/functions/chat-guest"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chat/messages"
+  to = "/.netlify/functions/chat-messages"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/games/zones.json"
+  to = "/.netlify/functions/games-zones"
+  status = 200
+
+[[redirects]]
+  from = "/games/play/*"
+  to = "/.netlify/functions/games-play"
+  status = 200
+
+[[redirects]]
+  from = "/ai/relay"
+  to = "/.netlify/functions/ai-relay"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/scramjet/scramjet.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"

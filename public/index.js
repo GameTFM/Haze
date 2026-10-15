@@ -48,59 +48,28 @@ let activeFrame = null;
 const navItems = document.querySelectorAll(".nav-item");
 const views = document.querySelectorAll(".view");
 
+function toggleView(view) {
+  navItems.forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  views.forEach((v) => v.classList.toggle("active", v.dataset.viewSection === view));
+
+  /* every view fills the window edge-to-edge beside the sidebar;
+     the AI chat keeps its own sidebar visible instead */
+  document.body.classList.toggle("fullbleed", view !== "ai");
+  document.body.classList.toggle("ai-immerse", view === "ai");
+}
+
 navItems.forEach((btn) => {
   btn.addEventListener("click", () => {
-    const view = btn.dataset.view;
-    navItems.forEach((b) => b.classList.toggle("active", b === btn));
-    views.forEach((v) => v.classList.toggle("active", v.dataset.viewSection === view));
+    toggleView(btn.dataset.view);
   });
 });
 
 /* ================================================================
-   haze games fullscreen
+   haze games / apps panes (fullscreen buttons removed)
    ================================================================ */
 
-const gamesFullscreenBtn = document.getElementById("games-fullscreen");
 const gamesWrap = document.querySelector(".games-wrap");
-
-gamesFullscreenBtn.addEventListener("click", () => {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {});
-  } else {
-    gamesWrap.requestFullscreen().catch(() => {});
-  }
-});
-
-document.addEventListener("fullscreenchange", () => {
-  gamesFullscreenBtn.innerHTML = document.fullscreenElement
-    ? "&#9974;&nbsp; Exit fullscreen"
-    : "&#9974;&nbsp; Fullscreen";
-});
-
-/* ================================================================
-   haze apps fullscreen (same pattern as the games pane)
-   ================================================================ */
-
-const appsFullscreenBtn = document.getElementById("apps-fullscreen");
 const appsWrap = document.querySelector(".apps-wrap");
-
-appsFullscreenBtn?.addEventListener("click", () => {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {});
-  } else {
-    appsWrap.requestFullscreen().catch(() => {});
-  }
-});
-
-document.addEventListener("fullscreenchange", () => {
-  if (!appsFullscreenBtn) return;
-  const onGames = gamesWrap.contains(document.fullscreenElement);
-  const onApps = appsWrap?.contains(document.fullscreenElement);
-  if (!onGames && !onApps) return; // each pane updates its own label via the shared listener above
-  appsFullscreenBtn.innerHTML = document.fullscreenElement
-    ? "&#9974;&nbsp; Exit fullscreen"
-    : "&#9974;&nbsp; Fullscreen";
-});
 
 /* ================================================================
    settings: themes / wallpaper / search engine (persisted locally)
@@ -130,7 +99,53 @@ const THEMES = [
   { id: "cream", label: "Cream", from: "#faf8f2", to: "#e6ddc8" },
   { id: "rose", label: "Rose", from: "#0c0507", to: "#6e2440" },
   { id: "matrix", label: "Matrix", from: "#010602", to: "#0c4d26" },
+  /* Nyx-inspired extras */
+  { id: "sakura", label: "Sakura", from: "#1c0a10", to: "#7a3b52" },
+  { id: "emerald", label: "Emerald", from: "#03130c", to: "#0d5c38" },
+  { id: "ruby", label: "Ruby", from: "#160404", to: "#8b1622" },
+  { id: "halloween", label: "Halloween", from: "#0d0800", to: "#b35c00" },
+  { id: "golden", label: "Golden", from: "#100c00", to: "#8a6d1b" },
 ];
+
+/* ---- font picker ---- */
+const FONTS = [
+  { id: "system", label: "System (default)" },
+  { id: "outfit", label: "Outfit" },
+  { id: "fredoka", label: "Fredoka" },
+  { id: "quicksand", label: "Quicksand" },
+  { id: "indie", label: "Indie Flower" },
+  { id: "mono", label: "Mono" },
+];
+function applyFont(id) {
+  const stack = {
+    system: null,
+    outfit: "'Outfit', -apple-system, 'Segoe UI', system-ui, sans-serif",
+    fredoka: "'Fredoka', -apple-system, 'Segoe UI', system-ui, sans-serif",
+    quicksand: "'Quicksand', -apple-system, 'Segoe UI', system-ui, sans-serif",
+    indie: "'Indie Flower', 'Comic Sans MS', cursive",
+    mono: "ui-monospace, 'Cascadia Code', Consolas, monospace",
+  }[id] || null;
+  /* inject/update a <style> so iframes and all views pick it up site-wide */
+  let style = document.getElementById("haze-font-style");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "haze-font-style";
+    document.head.appendChild(style);
+  }
+  style.textContent = stack ? "body, .widget, .settings-card, .palette, .haze-toast, .haze-modal, .side-nav, .frame-bar { font-family: " + stack + " !important; }" : "";
+  saveSettings({ font: id });
+  const sel = document.getElementById("font-select");
+  if (sel) sel.value = id;
+}
+function ensureFontLink() {
+  /* Google Fonts: the families behind the picker (only loads the css once) */
+  if (document.getElementById("haze-font-link")) return;
+  const link = document.createElement("link");
+  link.id = "haze-font-link";
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Outfit:wght@400;600&family=Quicksand:wght@400;600&family=Indie+Flower&display=swap";
+  document.head.appendChild(link);
+}
 
 const themeGrid = document.getElementById("theme-grid");
 
@@ -268,6 +283,68 @@ function tickHeroClock() {
 tickHeroClock();
 setInterval(tickHeroClock, 1000);
 
+/* ---- dynamic island (top-center pill: time | weather, click to expand) ---- */
+
+const diEl = document.getElementById("di");
+const diTime = document.getElementById("di-time");
+const diWx = document.getElementById("di-wx");
+const diEmoji = document.getElementById("di-emoji");
+const diTemp = document.getElementById("di-temp");
+const diDate = document.getElementById("di-date");
+const diCond = document.getElementById("di-cond");
+const diHl = document.getElementById("di-hl");
+
+function diTick() {
+  const now = new Date();
+  diTime.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  diDate.textContent = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+}
+diTick();
+setInterval(diTick, 1000);
+
+diEl.addEventListener("click", () => diEl.classList.toggle("open"));
+diEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); diEl.classList.toggle("open"); }
+});
+document.addEventListener("click", (e) => {
+  if (!diEl.contains(e.target)) diEl.classList.remove("open");
+});
+
+/* weather: no key needed — ipapi.co for coarse location, Open-Meteo for forecast */
+const DI_WX_CODES = {
+  0: ["☀️", "Clear"], 1: ["🌤️", "Mostly clear"], 2: ["⛅", "Partly cloudy"], 3: ["☁️", "Overcast"],
+  45: ["🌫️", "Fog"], 48: ["🌫️", "Fog"], 51: ["🌦️", "Light drizzle"], 53: ["🌦️", "Drizzle"],
+  55: ["🌦️", "Drizzle"], 61: ["🌧️", "Light rain"], 63: ["🌧️", "Rain"], 65: ["🌧️", "Heavy rain"],
+  66: ["🌧️", "Freezing rain"], 67: ["🌧️", "Freezing rain"], 71: ["🌨️", "Light snow"], 73: ["🌨️", "Snow"],
+  75: ["❄️", "Heavy snow"], 77: ["❄️", "Snow"], 80: ["🌦️", "Showers"], 81: ["🌦️", "Showers"],
+  82: ["🌧️", "Heavy showers"], 85: ["🌨️", "Snow showers"], 86: ["🌨️", "Snow showers"],
+  95: ["⛈️", "Thunderstorm"], 96: ["⛈️", "Thunderstorm"], 99: ["⛈️", "Thunderstorm"],
+};
+
+async function loadDiWeather() {
+  try {
+    const loc = await (await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(8000) })).json();
+    const { latitude, longitude, city } = loc;
+    if (typeof latitude !== "number") throw new Error("no location");
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+      `&current=temperature_2m,weather_code,apparent_temperature&daily=temperature_2m_max,temperature_2m_min` +
+      `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
+    const wx = await (await fetch(wxUrl, { signal: AbortSignal.timeout(8000) })).json();
+    const cur = wx.current;
+    const [emoji, label] = DI_WX_CODES[cur.weather_code] || ["🌡️", "—"];
+    diEmoji.textContent = emoji;
+    diTemp.textContent = `${Math.round(cur.temperature_2m)}°`;
+    diCond.textContent = `${label}${city ? " · " + city : ""}`;
+    const d = wx.daily;
+    if (d) diHl.textContent = `H ${Math.round(d.temperature_2m_max[0])}° / L ${Math.round(d.temperature_2m_min[0])}° – feels ${Math.round(cur.apparent_temperature)}°`;
+    diWx.style.display = "";
+  } catch {
+    /* offline or blocked — island just shows the time */
+  }
+}
+loadDiWeather();
+setInterval(loadDiWeather, 15 * 60 * 1000);
+
 /* ---- quote of the day (rotates daily, cycles with visits) ---- */
 
 const QUOTES = [
@@ -354,14 +431,11 @@ const widgetToggles = Object.fromEntries(
 function applyWidgets(prefs) {
   // prefs is the raw settings object - widget prefs are stored as widget_<name>
   const on = (k) => !!prefs["widget_" + k];
-  widgetClock.hidden = !on("clock");
-  widgetNotes.hidden = !on("notes");
-  widgetTodo.hidden = !on("todo");
-  widgetQuicklinks.hidden = !on("quicklinks");
-  widgetCalendar.hidden = !on("calendar");
-  widgetStopwatch.hidden = !on("stopwatch");
-  widgetBattery.hidden = !on("battery");
-  widgetPassgen.hidden = !on("passgen");
+  // every toggleable widget flips its own hidden flag (music is handled separately below)
+  for (const k of WIDGET_KEYS) {
+    const el = document.getElementById("widget-" + k);
+    if (el) el.hidden = !on(k);
+  }
   // music widget isn't a toggle - it shows automatically whenever something is playing
   widgetMusic.hidden = !nowPlaying;
   widgetsRow.hidden = !WIDGET_KEYS.some(on);
@@ -687,6 +761,21 @@ proxyEngineSelect.addEventListener("change", () => {
   applyWidgets(s);
   const wp = localStorage.getItem("haze-wallpaper");
   if (wp) applyWallpaper(wp);
+  /* font picker: only fetch the Google-Families stylesheet when a non-default font is chosen */
+  if (s.font && s.font !== "system") {
+    ensureFontLink();
+    applyFont(s.font);
+  }
+  /* wire the font select (Deferred — the DOM node exists at this point) */
+  const fontSel = document.getElementById("font-select");
+  if (fontSel) {
+    fontSel.value = s.font || "system";
+    fontSel.addEventListener("change", () => {
+      if (fontSel.value !== "system") ensureFontLink();
+      applyFont(fontSel.value);
+      hazeToast("Font: " + (FONTS.find(f => f.id === fontSel.value)?.label || fontSel.value));
+    });
+  }
 })();
 
 /* ================================================================
@@ -1256,7 +1345,7 @@ async function runMusicSearch(raw, hint) {
   hint.hidden = false;
   hint.textContent = `Searching \u201c${raw}\u201d\u2026`;
   try {
-    const res = await fetch(`/music/search?q=${encodeURIComponent(raw)}`, {
+    const res = await fetch((typeof HazeApi === "function" ? HazeApi(`/music/search?q=${encodeURIComponent(raw)}`) : `/music/search?q=${encodeURIComponent(raw)}`), {
       signal: musicSearchAbort.signal,
     });
     if (!res.ok) {
@@ -1875,7 +1964,7 @@ async function playFullSong(title, artist, cover, fallbackUrl, btn) {
   hint.textContent = `Loading the full song for \u201c${title}\u201d\u2026`;
   let videoId = null;
   try {
-    const r = await fetch(`/music/yt?q=${encodeURIComponent(`${artist} ${title}`.trim())}`);
+    const r = await fetch(typeof HazeApi === "function" ? HazeApi(`/music/yt?q=${encodeURIComponent(`${artist} ${title}`.trim())}`) : `/music/yt?q=${encodeURIComponent(`${artist} ${title}`.trim())}`);
     if (r.ok) videoId = (await r.json()).videoId || null;
   } catch {}
   if (ytCurrent?.title !== label) return; // another song or stop landed meanwhile
@@ -1973,7 +2062,7 @@ async function playFullSong(title, artist, cover, fallbackUrl, btn) {
 
   async function pollOnce() {
     try {
-      const res = await fetch(`/chat/messages?since=${lastStamp}`, {
+      const res = await fetch((typeof HazeApi === "function" ? HazeApi(`/chat/messages?since=${lastStamp}`) : `/chat/messages?since=${lastStamp}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -2030,7 +2119,7 @@ async function playFullSong(title, artist, cover, fallbackUrl, btn) {
     authError.textContent = "";
     authSubmit.disabled = true;
     try {
-      const res = await fetch("/chat/auth", {
+      const res = await fetch((typeof HazeApi === "function" ? HazeApi("/chat/auth") : "/chat/auth"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameInput.value.trim(), password: passInput.value }),
@@ -2053,7 +2142,7 @@ async function playFullSong(title, artist, cover, fallbackUrl, btn) {
     authError.textContent = "";
     guestBtn.disabled = true;
     try {
-      const res = await fetch("/chat/guest", {
+      const res = await fetch((typeof HazeApi === "function" ? HazeApi("/chat/guest") : "/chat/guest"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameInput.value.trim() }),
@@ -2085,7 +2174,7 @@ async function playFullSong(title, artist, cover, fallbackUrl, btn) {
     input.value = "";
     if (text === "/shrug") text = "\u00af\\_(\u30c4)_/\u00af"; // shell folk know
     try {
-      const res = await fetch("/chat/messages", {
+      const res = await fetch((typeof HazeApi === "function" ? HazeApi("/chat/messages") : "/chat/messages"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text }),
@@ -2253,10 +2342,9 @@ async function init() {
     if (!sw) throw new Error("No service worker available for the proxy");
 
     const wispUrl =
-      (location.protocol === "https:" ? "wss" : "ws") +
-      "://" +
-      location.host +
-      "/wisp/";
+      typeof HazeWisp === "function"
+        ? HazeWisp()
+        : (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
 
     // template wiring: transport first, then the controller with the runtime's
     // own defaultConfig - and controller.wait() gates on wasm + RPC readiness.
@@ -3165,8 +3253,7 @@ function paletteCommands() {
 }
 
 function clickNav(view) {
-  navItems.forEach((b) => b.classList.toggle("active", b.dataset.view === view));
-  views.forEach((v) => v.classList.toggle("active", v.dataset.viewSection === view));
+  toggleView(view);
 }
 
 function paletteRender(q) {
@@ -3293,7 +3380,7 @@ window.addEventListener("keydown", (event) => {
     lastTypingSent = Date.now();
     const token = localStorage.getItem("haze-chat-token");
     if (!token) return;
-    fetch("/chat/messages", {
+    fetch((typeof HazeApi === "function" ? HazeApi("/chat/messages") : "/chat/messages"), {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
       body: JSON.stringify({ typing: true, text: "" }),

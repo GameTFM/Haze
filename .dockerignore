@@ -1,0 +1,8 @@
+node_modules
+_setup
+node_runtime
+.git
+*.log
+chat-data.json
+.env
+npm-debug.log

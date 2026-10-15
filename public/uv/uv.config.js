@@ -9,5 +9,5 @@ self.__uv$config = {
   config: "/uv/uv.config.js",
   sw: "/uv/uv.sw.js",
   transport: "/epoxy/index.mjs",
-  wsTransportUrl: (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/",
+  wsTransportUrl: (typeof HazeWisp === "function" ? HazeWisp() : (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/"),
 };

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
   <title>haze</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <script src="haze-config.js"></script>
   <script src="/scramjet/scramjet.js"></script>
   <script src="/controller/controller.api.js"></script>
   <script src="/epoxy/index.js"></script>
@@ -19,6 +20,17 @@
   <div class="glass-blobs" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
   <div class="grid-overlay" aria-hidden="true"></div>
   <div class="wallpaper" id="wallpaper" aria-hidden="true"></div>
+
+  <button class="di" id="di" type="button" title="Time & weather — click to expand">
+    <span class="di-time" id="di-time">--:--</span>
+    <span class="di-sep"></span>
+    <span class="di-wx" id="di-wx" style="display:none"><span class="di-emoji" id="di-emoji"></span><span id="di-temp"></span></span>
+    <span class="di-more" aria-hidden="true">
+      <span class="di-small" id="di-date"></span>
+      <span class="di-small" id="di-cond"></span>
+      <span class="di-small" id="di-hl"></span>
+    </span>
+  </button>
 
   <div class="app">
     <aside class="sidebar">
@@ -35,6 +47,10 @@
         <button class="nav-item" data-view="music" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <span>Music</span>
+        </button>
+        <button class="nav-item" data-view="ai" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          <span>AI</span>
         </button>
         <button class="nav-item" data-view="chat" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -264,7 +280,6 @@
             <h2>haze games</h2>
             <p class="muted">Hundreds of browser games, built in. Runs natively — no proxy needed.</p>
           </div>
-          <button id="games-fullscreen" class="ghost-btn" type="button">⛶&nbsp; Fullscreen</button>
         </div>
         <div class="games-wrap">
           <iframe id="games-frame" src="/games.html" title="haze games"></iframe>
@@ -361,6 +376,19 @@
         </div>
       </section>
 
+      <!-- ===================== AI ===================== -->
+      <section class="view view-ai" data-view-section="ai">
+        <div class="view-head ai-head">
+          <div>
+            <h2>AI</h2>
+            <p class="muted">Chat with 18+ models — free ones work with no key at all; drop in API keys for the premium ones.</p>
+          </div>
+        </div>
+        <div class="ai-wrap">
+          <iframe id="ai-frame" src="/ai.html" title="haze AI"></iframe>
+        </div>
+      </section>
+
       <!-- ===================== APPS ===================== -->
       <section class="view view-apps" data-view-section="apps">
         <div class="view-head apps-head">
@@ -368,7 +396,6 @@
             <h2>Apps</h2>
             <p class="muted">25,000+ sites as one-tap app tiles — launching through the haze proxy.</p>
           </div>
-          <button id="apps-fullscreen" class="ghost-btn" type="button">⛶&nbsp; Fullscreen</button>
         </div>
         <div class="apps-wrap">
           <iframe id="apps-frame" src="/apps.html" title="haze apps"></iframe>
@@ -425,6 +452,18 @@
           <div class="settings-card">
             <h3>Appearance</h3>
             <p class="muted">Accent color, transparency and motion.</p>
+            <div class="cloak-custom-row">
+              <label class="music-speed-label">Font
+                <select id="font-select">
+                  <option value="system">System (default)</option>
+                  <option value="outfit">Outfit</option>
+                  <option value="fredoka">Fredoka</option>
+                  <option value="quicksand">Quicksand</option>
+                  <option value="indie">Indie Flower</option>
+                  <option value="mono">Mono</option>
+                </select>
+              </label>
+            </div>
             <div class="accent-row" id="accent-row"></div>
             <label class="widget-toggle"><input id="glass-toggle" type="checkbox" /> Liquid glass panels</label>
             <label class="widget-toggle"><input id="particles-toggle" type="checkbox" /> Floating particle background</label>
@@ -617,6 +656,7 @@
               Daily quote
             </label>
             <p class="muted widget-toggle-note">Music shows up here automatically while a song is playing — no toggle needed. It always wears the liquid-glass style.</p>
+
           </div>
 
           <div class="settings-card">

@@ -8,8 +8,8 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "infisical run --env=dev -- node server.js",
-    "start:plain": "node server.js"
+    "start": "node server.js",
+    "start:infisical": "infisical run --env=dev -- node server.js"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

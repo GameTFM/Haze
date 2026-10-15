@@ -65,6 +65,75 @@ html[data-theme="glass"] {
   --glow: rgba(255, 255, 255, 0.14); --grid-line: rgba(255, 255, 255, 0.05);
 }
 
+/* Nyx-inspired themes — each with a real themed backdrop */
+
+html[data-theme="sakura"] {
+  --bg: #150a10; --bg-elev: #24121c; --panel: #2a1520; --border: #4a2436;
+  --text: #ffeef5; --muted: #d19bad;
+  --accent: #ff9ecb; --accent-contrast: #1a0710;
+  --glow: rgba(255, 158, 203, 0.22); --grid-line: rgba(255, 170, 210, 0.07);
+}
+/* themed backdrops (on body — html stays plain for composition) */
+html[data-theme="sakura"] body {
+  background:
+    radial-gradient(1100px 500px at 75% -8%, rgba(255, 130, 190, 0.20), transparent 60%),
+    radial-gradient(900px 420px at 12% 108%, rgba(120, 60, 110, 0.28), transparent 60%),
+    linear-gradient(165deg, #1e0d15 0%, #341722 48%, #170a10 100%) fixed;
+}
+
+html[data-theme="emerald"] {
+  --bg: #04120c; --bg-elev: #0a2318; --panel: #0d2a1c; --border: #1b4a32;
+  --text: #e4fff1; --muted: #7fc7a1;
+  --accent: #34e08a; --accent-contrast: #03140c;
+  --glow: rgba(52, 224, 138, 0.2); --grid-line: rgba(80, 230, 150, 0.07);
+}
+html[data-theme="emerald"] body {
+  background:
+    radial-gradient(1000px 480px at 85% -10%, rgba(50, 220, 130, 0.16), transparent 60%),
+    radial-gradient(900px 500px at 8% 105%, rgba(10, 80, 50, 0.35), transparent 60%),
+    linear-gradient(160deg, #061a10 0%, #0b3a24 50%, #04120c 100%) fixed;
+}
+
+html[data-theme="ruby"] {
+  --bg: #140404; --bg-elev: #2a0a0c; --panel: #310d10; --border: #571119;
+  --text: #ffe9ea; --muted: #d08f95;
+  --accent: #ff4457; --accent-contrast: #1c0507;
+  --glow: rgba(255, 68, 87, 0.22); --grid-line: rgba(255, 100, 110, 0.07);
+}
+html[data-theme="ruby"] body {
+  background:
+    radial-gradient(1050px 460px at 80% -10%, rgba(255, 60, 80, 0.20), transparent 60%),
+    radial-gradient(900px 460px at 10% 108%, rgba(110, 10, 25, 0.35), transparent 60%),
+    linear-gradient(162deg, #20070a 0%, #41111a 50%, #14040a 100%) fixed;
+}
+
+html[data-theme="halloween"] {
+  --bg: #0e0900; --bg-elev: #221604; --panel: #281a05; --border: #4c3310;
+  --text: #fff3de; --muted: #cba478;
+  --accent: #ff9933; --accent-contrast: #140c00;
+  --glow: rgba(255, 153, 51, 0.25); --grid-line: rgba(255, 170, 70, 0.08);
+}
+html[data-theme="halloween"] body {
+  background:
+    radial-gradient(980px 420px at 50% -12%, rgba(255, 140, 30, 0.22), transparent 62%),
+    radial-gradient(860px 420px at 85% 108%, rgba(70, 30, 90, 0.28), transparent 60%),
+    radial-gradient(700px 380px at 10% 100%, rgba(60, 20, 70, 0.22), transparent 60%),
+    linear-gradient(168deg, #1b1002 0%, #3d2508 48%, #100a01 100%) fixed;
+}
+
+html[data-theme="golden"] {
+  --bg: #120e00; --bg-elev: #26200a; --panel: #2c250c; --border: #514420;
+  --text: #fff7dd; --muted: #d4bd88;
+  --accent: #ffcf5c; --accent-contrast: #161100;
+  --glow: rgba(255, 207, 92, 0.22); --grid-line: rgba(255, 215, 120, 0.08);
+}
+html[data-theme="golden"] body {
+  background:
+    radial-gradient(1000px 460px at 78% -10%, rgba(255, 200, 80, 0.18), transparent 60%),
+    radial-gradient(880px 460px at 12% 108%, rgba(120, 90, 20, 0.32), transparent 60%),
+    linear-gradient(165deg, #1c1504 0%, #3f3210 50%, #120e00 100%) fixed;
+}
+
 /* ---------------- reset / base ---------------- */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1437,3 +1506,96 @@ html.webgl-tilt .widget {
   font-style: italic;
   color: var(--muted);
 }
+
+/* ================= new: dynamic island ================= */
+
+.di {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(10, 10, 12, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  border-radius: 999px;
+  padding: 10px 18px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.di:hover { transform: translateX(-50%) scale(1.04); }
+.di:active { transform: translateX(-50%) scale(0.97); }
+.di-time { font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
+.di-sep { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.25); flex: none; }
+.di-wx { display: flex; align-items: center; gap: 5px; font-weight: 500; white-space: nowrap; }
+.di-emoji { font-size: 15px; }
+.di-more {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  font-weight: 500;
+}
+.di.open { padding: 10px 20px; }
+.di.open .di-more { max-width: 340px; opacity: 1; }
+.di-small { font-size: 11.5px; color: rgba(255, 255, 255, 0.55); font-weight: 500; }
+
+/* ================= new: ai view (mirrors games/apps) ================= */
+
+.ai-wrap {
+  border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; background: var(--bg-elev);
+  box-shadow: 0 0 40px var(--glow);
+}
+#ai-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
+
+.ai-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+}
+.ai-head .ghost-btn { flex: none; margin-bottom: 22px; }
+
+.ai-wrap:fullscreen {
+  border: none; border-radius: 0; background: var(--bg);
+  box-shadow: none;
+}
+.ai-wrap:fullscreen #ai-frame { height: 100vh; height: 100dvh; }
+
+/* ================= new: ai view fills the whole window except sidebar ================= */
+
+.view-ai { padding-top: 20px; padding-bottom: 0; }
+.view-ai .ai-head { margin-bottom: 0; }
+.view-ai .ai-head .ghost-btn { margin-bottom: 0; }
+.ai-wrap { height: calc(100vh - 120px); border-radius: 16px; }
+#ai-frame { height: 100%; }
+html.compact .ai-wrap { height: calc(100vh - 92px); }
+html.glass-mode .ai-wrap { border-radius: 22px; }
+
+/* AI immersive: keep the haze sidebar, hide the AI heading, chat fills the rest */
+body.ai-immerse .view-ai .view-head { display: none; }
+body.ai-immerse .ai-wrap {
+  height: calc(100vh - 40px);
+  border-radius: 0;
+  border: none;
+}
+body.ai-immerse #ai-frame { height: 100%; }
+
+/* full-bleed views (everything except AI): hide the heading text, fill to edges */
+body.fullbleed .sidebar ~ main .view-head { display: none; }
+body.fullbleed .games-wrap,
+body.fullbleed .apps-wrap {
+  height: calc(100vh - 40px);
+  border-radius: 0;
+  border: none;
+}
+body.fullbleed #games-frame,
+body.fullbleed #apps-frame { height: 100%; }
+body.fullbleed .music-head,
+body.fullbleed .games-head,
+body.fullbleed .apps-head { display: none; }

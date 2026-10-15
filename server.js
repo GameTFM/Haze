@@ -1,5 +1,6 @@
 // haze server - Scramjet v2 (static vendored files) + wisp transport server
 import { createServer } from "node:http";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "url";
 import { hostname } from "node:os";
 import path from "node:path";
@@ -243,7 +244,7 @@ app.get("/music/yt", async (req, res) => {
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
-const CHAT_DB_PATH = path.join(__dirname, "chat-data.json");
+const CHAT_DB_PATH = process.env.CHAT_DB_PATH || path.join(__dirname, "chat-data.json");
 const CHAT_SECRET = process.env.CHAT_SECRET || randomBytes(32).toString("hex");
 const CHAT_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const CHAT_NAME_RE = /^[a-zA-Z0-9_\-.]{3,16}$/;
@@ -553,6 +554,56 @@ app.get("/games/play/:file", async (req, res) => {
     res.send(html);
   } catch {
     res.status(502).send("Couldn't load that game \u2014 try again.");
+  }
+});
+
+/* ---- AI relay: free models (Pollinations) need to be called server-side;
+   the browser's Origin header trips their anonymous token check ---- */
+
+app.post("/ai/relay", express.json({ limit: "4mb" }), async (req, res) => {
+  try {
+    const { model, messages } = req.body || {};
+    if (!Array.isArray(messages) || !messages.length) {
+      return res.status(400).json({ error: "messages required" });
+    }
+    /* Pollinations paywalls by caller headers: POSTs carrying browser
+       Origin/Referer get "Missing Turnstile token", and the /openai
+       endpoint 402s for anonymous callers. Properly anonymous requests
+       (no origin headers) to the ROOT endpoint with stream:true pass
+       reliably — confirmed 3/3 in testing — so always call it that way
+       and let the client parse SSE. Never echo the browser's headers. */
+    async function callUpstream(m) {
+      return fetch("https://text.pollinations.ai/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: m,
+          messages,
+          stream: true,
+          referrer: "haze",
+        }),
+        signal: AbortSignal.timeout(120000),
+      });
+    }
+    const wanted = typeof model === "string" && /^[\w.-]{1,64}$/.test(model) ? model : "openai-fast";
+    let upstream = await callUpstream(wanted);
+    /* anonymous access only reliably allows openai-fast — if another
+       "free" model is rejected, fall back to it so the user still gets
+       an answer instead of an error */
+    if (!upstream.ok && (upstream.status === 402 || upstream.status === 403 || upstream.status === 404) && wanted !== "openai-fast") {
+      upstream = await callUpstream("openai-fast");
+    }
+    if (!upstream.ok) {
+      const t = await upstream.text().catch(() => "");
+      return res.status(upstream.status).type("application/json").send(t || JSON.stringify({ error: "upstream error" }));
+    }
+    res.status(200);
+    const ct = upstream.headers.get("content-type");
+    if (ct) res.setHeader("Content-Type", ct);
+    if (upstream.body) Readable.fromWeb(upstream.body).pipe(res);
+    else res.end();
+  } catch (e) {
+    res.status(502).json({ error: String(e?.message || e) });
   }
 });
 
