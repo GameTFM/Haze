@@ -1,7 +1,7 @@
 {
   "name": "haze",
   "description": "haze - black & white Scramjet web proxy (Node + wisp websocket)",
-  "repository": "https://github.com/karthikchippa2-maker/Haze",
+  "repository": "https://github.com/GameTFM/Haze",
   "keywords": ["proxy", "scramjet", "ultraviolet", "wisp", "nodejs"],
   "image": "heroku/nodejs",
   "stack": "heroku-24",

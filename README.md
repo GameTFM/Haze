@@ -20,15 +20,15 @@ Opens at **http://localhost:8000**
 
 One click — pick a host. Railway, Render, Koyeb, DigitalOcean, Heroku, and Google Cloud Run run the full Node backend (proxy + wisp + APIs). Vercel, Netlify, and Cloudflare Pages serve the UI + stateless APIs; point `haze-wisp-url` at a Node backend to enable browsing there (see [DEPLOY.md](DEPLOY.md)).
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.app/new/template?template=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/karthikchippa2-maker/Haze&branch=main&name=haze)
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/karthikchippa2-maker/Haze/tree/main)
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/karthikchippa2-maker/Haze)
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/karthikchippa2-maker/Haze)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.app/new/template?template=https://github.com/GameTFM/Haze)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/GameTFM/Haze)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/GameTFM/Haze&branch=main&name=haze)
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/GameTFM/Haze/tree/main)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/GameTFM/Haze)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/GameTFM/Haze)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/GameTFM/Haze)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/GameTFM/Haze)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/GameTFM/Haze)
 
 > Cloudflare hosts the static UI + serverless APIs (`functions/`) — the `/wisp/` proxy still needs a Node backend (see [DEPLOY.md](DEPLOY.md) Option C).
 
