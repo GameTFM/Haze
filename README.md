@@ -28,6 +28,9 @@ One click — pick a host. Railway, Render, Koyeb, DigitalOcean, Heroku, and Goo
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/karthikchippa2-maker/Haze)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/karthikchippa2-maker/Haze)
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/karthikchippa2-maker/Haze)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/karthikchippa2-maker/Haze)
+
+> Cloudflare hosts the static UI + serverless APIs (`functions/`) — the `/wisp/` proxy still needs a Node backend (see [DEPLOY.md](DEPLOY.md) Option C).
 
 ## Stack
 
