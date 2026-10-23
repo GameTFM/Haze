@@ -17,7 +17,7 @@
     body {
       background: #050505; color: #f5f5f5;
       font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-      padding: 14px 18px 86px;
+      padding: 14px 18px 60px;
     }
 
     /* ---------- floating pill nav ---------- */
@@ -54,12 +54,6 @@
     }
     .a-nav input::placeholder { color: #6e6e6e; }
     .a-nav .a-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
-    .a-nav select {
-      height: 34px; border-radius: 999px; border: none; background: transparent;
-      color: #e8e8e8; font-family: inherit; font-size: 0.8rem; cursor: pointer; padding: 0 8px;
-    }
-    .a-nav select:hover { background: #1d1d1d; }
-    .a-nav select option { background: #101010; color: #f5f5f5; }
 
     /* ---------- sections ---------- */
     .a-section-title {
@@ -71,92 +65,56 @@
       cursor: pointer; text-decoration: underline; font-family: inherit;
     }
     .a-status { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
-    .a-status.error { color: #ff7d9c; }
 
-    /* ---------- phone home-screen icon grid (squircle icons, names under) ---------- */
+    /* ---------- hub cards (bigger than the old icon grid: name + blurb) ---------- */
     .a-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, 82px);
-      gap: 18px 10px; justify-content: start;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
     }
     .a-tile {
-      position: relative; width: 82px; cursor: pointer; border-radius: 18px;
-      background: none; border: none; padding: 0;
+      position: relative; cursor: pointer; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.09);
       color: inherit; font-family: inherit; outline: none;
-      display: flex; flex-direction: column; align-items: center;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 13px 14px; text-align: left;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
       -webkit-tap-highlight-color: transparent;
     }
+    .a-tile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.32); background: rgba(255, 255, 255, 0.07); }
+    .a-tile:active { transform: scale(0.98); }
+    .a-tile:focus-visible { border-color: var(--aa); }
     .a-icon {
-      width: 62px; height: 62px; border-radius: 15px;
-      background: rgba(255, 255, 255, 0.07);
-      display: flex; align-items: center; justify-content: center; overflow: hidden;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, outline-color 0.15s ease;
-      outline: 1px solid rgba(255, 255, 255, 0.08); outline-offset: -1px;
-      font-size: 1.3rem; font-weight: 700; color: #cfcfcf;
+      width: 46px; height: 46px; border-radius: 13px; flex: none;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem;
     }
-    .a-tile:hover .a-icon {
-      transform: scale(1.08);
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
-      outline-color: rgba(255, 255, 255, 0.35);
+    .a-meta { min-width: 0; }
+    .a-name { font-size: 0.86rem; font-weight: 700; letter-spacing: -0.01em; }
+    .a-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; margin-top: 3px; }
+    .a-kind {
+      display: inline-block; margin-top: 7px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18); color: #cfcfcf;
     }
-    .a-tile:active .a-icon { transform: scale(0.95); }
-    .a-tile:focus-visible .a-icon { outline: 2px solid var(--aa); outline-offset: 0; }
-    .a-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .a-label {
-      margin-top: 7px; max-width: 82px;
-      font-size: 0.66rem; font-weight: 600; color: rgba(255, 255, 255, 0.88);
-      line-height: 1.25; text-align: center;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .a-kind.builtin { border-color: var(--aa); color: var(--aa); }
     .a-fav {
-      position: absolute; top: -6px; right: -6px; z-index: 3;
-      width: 22px; height: 22px; border-radius: 999px; cursor: pointer;
-      display: grid; place-items: center; font-size: 0.62rem; line-height: 1; padding: 0;
-      background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(255, 255, 255, 0.25);
+      position: absolute; top: 8px; right: 8px; z-index: 3;
+      width: 24px; height: 24px; border-radius: 999px; cursor: pointer;
+      display: grid; place-items: center; font-size: 0.7rem; line-height: 1; padding: 0;
+      background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.22);
       color: #9a9a9a; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
     }
     .a-tile:hover .a-fav, .a-fav.active { opacity: 1; }
     .a-fav:hover { transform: scale(1.15); color: #fff; }
     .a-fav.active { color: #ffd166; border-color: #ffd166; }
 
-    /* ---------- floating bottom page pill (iOS-style dots + arrows) ---------- */
-    .a-pages {
-      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      z-index: 20; display: flex; align-items: center; gap: 2px;
-      background: rgba(15, 15, 15, 0.94);
-      border: 1px solid var(--pill-brd); border-radius: 999px;
-      padding: 5px; backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-      max-width: calc(100vw - 32px); overflow: hidden;
-    }
-    .a-pages button {
-      height: 30px; border-radius: 999px;
-      border: none; background: transparent; color: #cfcfcf;
-      font-family: inherit; font-size: 0.78rem; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      transition: background 0.14s ease, color 0.14s ease; flex: none;
-    }
-    .a-pages button.a-arrow { min-width: 30px; padding: 0 8px; }
-    .a-pages button.a-arrow:disabled { opacity: 0.3; cursor: default; }
-    .a-pages button.a-arrow:disabled:hover { background: transparent; }
-    .a-pages button.a-dot { min-width: 26px; padding: 0 3px; }
-    .a-pages button.a-dot:hover { background: transparent; color: #fff; }
-    .a-pages button.a-dot .a-dotc {
-      display: block; width: 7px; height: 7px; border-radius: 999px;
-      background: #4d4d4d; transition: background 0.15s ease, transform 0.15s ease;
-    }
-    .a-pages button.a-dot.on .a-dotc {
-      background: var(--aa); transform: scale(1.25);
-    }
-    .a-pages .a-dots { color: #555; padding: 0 2px; font-size: 0.75rem; flex: none; }
-    .a-pages:empty { display: none; }
-
     @media (max-width: 560px) {
       .a-nav input { width: 90px; }
       .a-nav .a-count { display: none; }
-      .a-grid { grid-template-columns: repeat(auto-fill, 76px); gap: 16px 8px; }
-      .a-tile { width: 76px; }
-      .a-icon { width: 58px; height: 58px; }
-      .a-label { max-width: 76px; }
+      .a-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -168,90 +126,92 @@
     <button class="a-ico" id="a-reset" type="button" title="Forget favorites and recents">&#8635;</button>
     <span class="a-div"></span>
     <label class="a-search">&#128269;
-      <input id="a-search" type="text" placeholder="search 25,000 apps…" autocomplete="off" />
+      <input id="a-search" type="text" placeholder="search apps…" autocomplete="off" />
     </label>
-    <select id="a-sort" title="Sort apps">
-      <option value="default">originals first</option>
-      <option value="az">A&#8594;Z</option>
-    </select>
     <span class="a-count" id="a-count"></span>
   </nav>
 
-  <p class="a-status" id="a-status">Loading the app library…</p>
+  <p class="a-status" id="a-status" hidden></p>
   <div id="a-sections"></div>
-  <div class="a-pages" id="a-pages"></div>
 
   <script>
     (function () {
       "use strict";
-      var APPS_KEY = "haze-apps-favs";
-      var RECENT_KEY = "haze-apps-recent";
-      var PAGE_KEY = "haze-apps-page";
-      var PER_PAGE = 120;
-      var apps = [];
+      // The haze app set. "go" tiles navigate to a
+      // built-in haze view (no proxy needed); "url" tiles open through the
+      // parent haze proxy, exactly like the old grid did.
+      var HUB = [
+        // ---- built into haze ----
+        { id: "chat",   name: "haze chat",   icon: "\uD83D\uDCAC", kind: "go", view: "chat",     desc: "On-device chat rooms with guest login." },
+        { id: "music",  name: "hazefy",      icon: "\uD83C\uDFB5", kind: "go", view: "music",    desc: "Search songs and play previews with built-in music." },
+        { id: "ai",     name: "haze ai",     icon: "\uD83E\uDD16", kind: "go", view: "ai",       desc: "Ask the built-in AI assistant." },
+        { id: "games",  name: "haze games",  icon: "\uD83C\uDFAE", kind: "go", view: "games",    desc: "Game zones ready to play." },
+        { id: "code",   name: "hazecode",    icon: "\uD83E\uDDF0", kind: "go", view: "studio", sub: "code",  desc: "HTML+CSS+JS sandbox with sealed preview." },
+        { id: "links",  name: "hazelinks",   icon: "\uD83D\uDD17", kind: "go", view: "studio", sub: "links", desc: "Paste URLs, get honest OK / HTTP / timeout status." },
+        { id: "cloak",  name: "hazecloak",   icon: "\uD83D\uDD75\uFE0F", kind: "go", view: "studio", sub: "maker", desc: "Build cloaked about:blank launcher snippets." },
+        { id: "text",   name: "hazetext",    icon: "\uD83D\uDCDD", kind: "go", view: "studio", sub: "text",  desc: "Word count, case tools and base64 (Text Lab)." },
+        { id: "keys",   name: "hazekeys",    icon: "\uD83D\uDD11", kind: "go", view: "settings", desc: "Proxy engine, keys and haze preferences." },
+        // ---- through the proxy ----
+        { id: "tube",   name: "hazetube",    icon: "\u25B6\uFE0F", kind: "url", url: "https://www.youtube.com/", desc: "YouTube through the haze proxy." },
+        { id: "flix",   name: "hazeflix",    icon: "\uD83C\uDF7F", kind: "url", url: "https://www.themoviedb.org/", desc: "Browse movies and shows, trailers included." },
+        { id: "watch",  name: "hazewatch",   icon: "\uD83D\uDCFA", kind: "url", url: "https://www.justwatch.com/", desc: "Where any show is streaming legally." },
+        { id: "cloud",  name: "hazecloud",   icon: "\u2601\uFE0F", kind: "url", url: "https://play.geforcenow.com/", desc: "Cloud gaming in the browser." },
+        { id: "tok",    name: "hazetok",     icon: "\uD83D\uDCF1", kind: "url", url: "https://www.tiktok.com/", desc: "Short-form video through the haze proxy." },
+        { id: "anime",  name: "hazeanime",   icon: "\u26E9\uFE0F", kind: "url", url: "https://animex.one/", desc: "Anime streaming and tracking." },
+        { id: "duck",   name: "hazeduck",    icon: "\uD83E\uDD86", kind: "url", url: "https://duck.ai/", desc: "Private AI chat through the haze proxy." },
+        { id: "deliver", name: "hazedeliver", icon: "\uD83D\uDCE6", kind: "url", url: "https://www.jsdelivr.com/", desc: "Free CDN for open-source packages." }
+      ];
+
+      var FAVS_KEY = "haze-hub-favs";
+      var RECENT_KEY = "haze-hub-recent";
       var sections = document.getElementById("a-sections");
       var status = document.getElementById("a-status");
       var count = document.getElementById("a-count");
       var search = document.getElementById("a-search");
-      var sortSel = document.getElementById("a-sort");
-      var pagesEl = document.getElementById("a-pages");
       var favMode = false;
 
       function loadJson(key, fallback) {
-        try {
-          return JSON.parse(localStorage.getItem(key) || fallback);
-        } catch (e) {
-          return JSON.parse(fallback);
-        }
+        try { return JSON.parse(localStorage.getItem(key) || fallback); }
+        catch (e) { return JSON.parse(fallback); }
       }
-      function favList() { return loadJson(APPS_KEY, "[]"); }
-      function recentList() { return loadJson(RECENT_KEY, "[]"); }
-
       function esc(s) {
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
       }
+      function byId(id) {
+        for (var i = 0; i < HUB.length; i++) if (HUB[i].id === id) return HUB[i];
+        return null;
+      }
 
-      // broken icon? try the domain's Google favicon once, then give up to the letter
-      window.hazeIconFallback = function (img) {
-        if (!img) return;
-        if (img.getAttribute("data-step") === "0") {
-          img.setAttribute("data-step", "1");
-          img.src = "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(img.getAttribute("data-host") || "") + "&sz=128";
-          return;
-        }
-        img.remove();
-      };
-
-      // launch through the parent haze proxy - fall back to a plain new tab
-      // when apps.html runs standalone
-      function openApp(url, title) {
-        var recents = recentList().filter(function (r) { return r.url !== url; });
-        recents.unshift({ url: url, title: title, t: Date.now() });
-        try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents.slice(0, 16))); } catch (e) {}
+      function openTile(tile) {
+        var recents = loadJson(RECENT_KEY, "[]").filter(function (r) { return r !== tile.id; });
+        recents.unshift(tile.id);
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents.slice(0, 10))); } catch (e) {}
         try {
-          if (window.parent && window.parent.hazeLaunch) {
-            window.parent.hazeLaunch(url);
+          if (tile.kind === "go" && window.parent && window.parent.hazeGo) {
+            window.parent.hazeGo(tile.view, tile.sub);
+            return;
+          }
+          if (tile.kind === "url" && window.parent && window.parent.hazeLaunch) {
+            window.parent.hazeLaunch(tile.url);
             return;
           }
         } catch (e) {}
-        window.open(url, "_blank", "noopener");
+        // standalone fallback (hub opened outside haze)
+        if (tile.url) window.open(tile.url, "_blank", "noopener");
       }
 
-      function tileHtml(app, i) {
-        var favs = favList();
-        var isFav = favs.indexOf(app.url) !== -1;
-        var icon = app.icon || "";
-        var initial = esc((app.title || "?").charAt(0).toUpperCase());
-        var host = "";
-        try { host = new URL(app.url).hostname; } catch (e) {}
+      function tileHtml(tile) {
+        var favs = loadJson(FAVS_KEY, "[]");
+        var isFav = favs.indexOf(tile.id) !== -1;
         return (
-          '<div class="a-tile" data-i="' + i + '" role="button" tabindex="0" aria-label="Open ' + esc(app.title) + '">' +
-          '<div class="a-icon">' +
-          (icon ? '<img loading="lazy" src="' + esc(icon) + '" alt="" data-host="' + esc(host) + '" data-step="0" onerror="hazeIconFallback(this)" />' : initial) +
-          "</div>" +
-          '<div class="a-label">' + esc(app.title) + "</div>" +
-          '<button class="a-fav' + (isFav ? " active" : "") + '" data-fav="' + i + '" title="Favorite" type="button">\u2605</button>' +
-          "</div>"
+          '<button class="a-tile" data-id="' + esc(tile.id) + '" type="button" aria-label="Open ' + esc(tile.name) + '">' +
+          '<span class="a-icon">' + esc(tile.icon) + "</span>" +
+          '<span class="a-meta"><span class="a-name">' + esc(tile.name) + "</span>" +
+          '<span class="a-desc" style="display:block">' + esc(tile.desc) + "</span>" +
+          '<span class="a-kind' + (tile.kind === "go" ? " builtin" : "") + '">' +
+          (tile.kind === "go" ? "built-in" : "proxy") + "</span></span>" +
+          '<span class="a-fav' + (isFav ? " active" : "") + '" data-fav="' + esc(tile.id) + '" title="Favorite" role="button" tabindex="0">\u2605</span>' +
+          "</button>"
         );
       }
 
@@ -259,147 +219,52 @@
         var wrap = document.createElement("div");
         var h = document.createElement("div");
         h.className = "a-section-title";
-        h.innerHTML = title + (clearLabel ? ' <button class="a-clear" type="button">' + clearLabel + "</button>" : "");
+        h.innerHTML = esc(title) + (clearLabel ? ' <button class="a-clear" type="button">' + esc(clearLabel) + "</button>" : "");
         wrap.appendChild(h);
         var grid = document.createElement("div");
         grid.className = "a-grid";
-        grid.innerHTML = list
-          .map(function (item) { return tileHtml(item.app, item.i); })
-          .join("");
+        grid.innerHTML = list.map(tileHtml).join("");
         wrap.appendChild(grid);
         if (clearLabel) {
           h.querySelector(".a-clear").addEventListener("click", function () {
-            localStorage.removeItem(APPS_KEY);
+            localStorage.removeItem(clearLabel === "forget" ? RECENT_KEY : FAVS_KEY);
             render();
           });
         }
         return wrap;
       }
 
-      function pageNumbers(cur, total) {
-        if (total <= 8) {
-          var all = [];
-          for (var i = 1; i <= total; i++) all.push(i);
-          return all;
-        }
-        var set = [1, cur - 1, cur, cur + 1, total];
-        if (cur <= 4) set = [1, 2, 3, 4, 5, total];
-        if (cur >= total - 3) set = [1, total - 4, total - 3, total - 2, total - 1, total];
-        set = set.filter(function (p) { return p >= 1 && p <= total; });
-        var uniq = [];
-        for (var j = 0; j < set.length; j++) if (uniq.indexOf(set[j]) === -1) uniq.push(set[j]);
-        uniq.sort(function (a, b) { return a - b; });
-        return uniq;
-      }
-
-      // iOS-style page dots (windowed) with prev/next arrows
-      function renderPages(cur, total) {
-        pagesEl.innerHTML = "";
-        if (total <= 1) return;
-        var nums = pageNumbers(cur, total);
-        function jump(page) {
-          try { localStorage.setItem(PAGE_KEY, String(page)); } catch (e) {}
-          render();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-        var prev = document.createElement("button");
-        prev.type = "button";
-        prev.className = "a-arrow";
-        prev.title = "Previous page";
-        prev.textContent = "\u2039";
-        prev.disabled = cur <= 1;
-        prev.addEventListener("click", function () { if (cur > 1) jump(cur - 1); });
-        pagesEl.appendChild(prev);
-        var shown = 0;
-        for (var i = 0; i < nums.length; i++) {
-          var p = nums[i];
-          if (shown && p - nums[i - 1] > 1) {
-            var dots = document.createElement("span");
-            dots.className = "a-dots";
-            dots.textContent = "\u2026";
-            pagesEl.appendChild(dots);
-          }
-          var b = document.createElement("button");
-          b.type = "button";
-          b.className = "a-dot" + (p === cur ? " on" : "");
-          b.title = "Page " + p + " of " + total;
-          b.setAttribute("aria-label", "Page " + p + " of " + total);
-          b.innerHTML = '<span class="a-dotc"></span>';
-          b.addEventListener("click", function (page) {
-            return function () { jump(page); };
-          }(p));
-          pagesEl.appendChild(b);
-          shown++;
-        }
-        var next = document.createElement("button");
-        next.type = "button";
-        next.className = "a-arrow";
-        next.title = "Next page";
-        next.textContent = "\u203a";
-        next.disabled = cur >= total;
-        next.addEventListener("click", function () { if (cur < total) jump(cur + 1); });
-        pagesEl.appendChild(next);
-      }
-
       function render() {
         var q = search.value.trim().toLowerCase();
-        var favs = favList();
-        var list = apps
-          .map(function (app, i) { return { app: app, i: i }; });
-        if (favMode) {
-          list = list.filter(function (item) { return favs.indexOf(item.app.url) !== -1; });
-        }
+        var favs = loadJson(FAVS_KEY, "[]");
+        var list = HUB.slice();
+        if (favMode) list = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
         if (q) {
-          list = list.filter(function (item) { return item.app.title.toLowerCase().indexOf(q) !== -1; });
+          list = list.filter(function (t) {
+            return (t.name + " " + t.desc).toLowerCase().indexOf(q) !== -1;
+          });
         }
-        if (sortSel.value === "az") {
-          list = list.slice().sort(function (a, b) { return a.app.title.localeCompare(b.app.title); });
-        }
-        count.textContent = list.length.toLocaleString() + (list.length === 1 ? " app" : " apps");
+        count.textContent = list.length + (list.length === 1 ? " app" : " apps");
         sections.innerHTML = "";
-        renderPages(1, 1);
 
         if (!list.length) {
-          status.textContent = favMode && !q ? "No favorites yet \u2014 hover an app and tap \u2605." : q ? "No apps match \"" + q + "\"." : "";
-          status.hidden = !favMode && !q;
-          status.className = "a-status";
+          status.hidden = false;
+          status.textContent = favMode && !q
+            ? "No favorites yet \u2014 hover an app and tap \u2605."
+            : q ? 'No apps match "' + q + '".' : "";
           return;
         }
         status.hidden = true;
 
         if (!q && !favMode) {
-          var recents = recentList()
-            .map(function (r) {
-              var idx = -1;
-              for (var k = 0; k < apps.length; k++) if (apps[k].url === r.url) { idx = k; break; }
-              return idx >= 0 ? { app: apps[idx], i: idx } : null;
-            })
-            .filter(Boolean)
-            .slice(0, 14);
-          if (recents.length) {
-            sections.appendChild(section("\u23f1 Recently opened", recents, "forget"));
-          }
-          var favApps = apps
-            .map(function (app, i) { return { app: app, i: i }; })
-            .filter(function (item) { return favs.indexOf(item.app.url) !== -1; });
-          if (favApps.length) {
-            sections.appendChild(section("\u2605 Favorites", favApps));
-          }
-          var total = Math.ceil(list.length / PER_PAGE);
-          var cur = Math.min(parseInt(localStorage.getItem(PAGE_KEY) || "1", 10) || 1, total);
-          if (cur < 1) cur = 1;
-          try { localStorage.setItem(PAGE_KEY, String(cur)); } catch (e2) {}
-          var pageList = list.slice((cur - 1) * PER_PAGE, cur * PER_PAGE);
-          sections.appendChild(section("All apps", pageList));
-          renderPages(cur, total);
+          var recents = loadJson(RECENT_KEY, "[]").map(byId).filter(Boolean).slice(0, 6);
+          if (recents.length) sections.appendChild(section("\u23F1 Recently opened", recents, "forget"));
+          var favTiles = HUB.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+          if (favTiles.length) sections.appendChild(section("\u2605 Favorites", favTiles));
+          sections.appendChild(section("Built into haze", HUB.filter(function (t) { return t.kind === "go"; })));
+          sections.appendChild(section("Through the proxy", HUB.filter(function (t) { return t.kind === "url"; })));
         } else {
-          // searches and favorites can still be big - paginate those too
-          var total2 = Math.ceil(list.length / PER_PAGE);
-          var cur2 = Math.min(parseInt(localStorage.getItem(PAGE_KEY) || "1", 10) || 1, total2);
-          try { localStorage.setItem(PAGE_KEY, String(cur2)); } catch (e3) {}
-          var pageList2 = list.slice((cur2 - 1) * PER_PAGE, cur2 * PER_PAGE);
-          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", pageList2));
-          renderPages(cur2, total2);
+          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list));
         }
       }
 
@@ -407,28 +272,18 @@
         var favBtn = e.target.closest(".a-fav");
         if (favBtn) {
           e.stopPropagation();
-          var app = apps[parseInt(favBtn.dataset.fav, 10)];
-          if (!app) return;
-          var favs = favList();
-          var idx = favs.indexOf(app.url);
-          if (idx === -1) favs.push(app.url);
-          else favs.splice(idx, 1);
-          try { localStorage.setItem(APPS_KEY, JSON.stringify(favs.slice(0, 60))); } catch (e2) {}
+          var id = favBtn.getAttribute("data-fav");
+          var favs = loadJson(FAVS_KEY, "[]");
+          var idx = favs.indexOf(id);
+          if (idx === -1) favs.push(id); else favs.splice(idx, 1);
+          try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs.slice(0, 60))); } catch (e2) {}
           render();
           return;
         }
         var tile = e.target.closest(".a-tile");
         if (!tile) return;
-        var picked = apps[parseInt(tile.dataset.i, 10)];
-        if (picked) openApp(picked.url, picked.title);
-      });
-      sections.addEventListener("keydown", function (e) {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        var tile = e.target.closest ? e.target.closest(".a-tile") : null;
-        if (!tile || e.target !== tile) return;
-        e.preventDefault();
-        var picked = apps[parseInt(tile.dataset.i, 10)];
-        if (picked) openApp(picked.url, picked.title);
+        var picked = byId(tile.getAttribute("data-id"));
+        if (picked) openTile(picked);
       });
 
       document.getElementById("a-favmode").addEventListener("click", function () {
@@ -437,7 +292,7 @@
         render();
       });
       document.getElementById("a-reset").addEventListener("click", function () {
-        localStorage.removeItem(APPS_KEY);
+        localStorage.removeItem(FAVS_KEY);
         localStorage.removeItem(RECENT_KEY);
         render();
       });
@@ -445,32 +300,14 @@
         favMode = false;
         search.value = "";
         document.getElementById("a-favmode").classList.remove("on");
-        try { localStorage.removeItem(PAGE_KEY); } catch (e) {}
         render();
       });
-      sortSel.addEventListener("change", render);
 
       var searchTimer = null;
       search.addEventListener("input", function () {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(render, 150);
       });
-
-      fetch("apps.json", { cache: "no-store" })
-        .then(function (r) {
-          if (!r.ok) throw new Error("HTTP " + r.status);
-          return r.json();
-        })
-        .then(function (items) {
-          apps = (Array.isArray(items) ? items : []).filter(function (a) {
-            return a && a.url && /^https?:\/\//i.test(a.url);
-          });
-          render();
-        })
-        .catch(function () {
-          status.textContent = "Couldn't load apps.json \u2014 the app catalog wasn't reachable. Reload to retry.";
-          status.className = "a-status error";
-        });
 
       // mirror haze's accent color (same origin - settings are shared)
       try {
@@ -480,10 +317,10 @@
 
       // exposed for the parent haze command palette ("Open a random app")
       window.hazeRandomApp = function () {
-        if (!apps.length) return;
-        var pick = apps[Math.floor(Math.random() * apps.length)];
-        openApp(pick.url, pick.title);
+        openTile(HUB[Math.floor(Math.random() * HUB.length)]);
       };
+
+      render();
     })();
   </script>
 </body>
