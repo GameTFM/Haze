@@ -140,6 +140,30 @@
     .fineprint { max-width: 760px; margin: 8px auto 0; text-align: center; font-size: 11.5px; color: var(--muted); }
 
     .empty-list { padding: 10px 12px; color: var(--muted); font-size: 12.5px; }
+
+    /* ---------- N7x look: grayscale + hero + pill composer ---------- */
+    :root { --bg: #0b0b0d; --bg-panel: #101012; --bg-elev: #17171a; --border: rgba(255,255,255,.08); --muted: rgba(255,255,255,.55); }
+    body { background: radial-gradient(1000px 480px at 50% -10%, rgba(255,255,255,.05), transparent 60%), var(--bg); }
+    .side-newrow { display: flex; gap: 8px; }
+    .side-btn.grow { flex: 1; }
+    .side-btn.ico { flex: none; width: 42px; padding: 10px 0; justify-content: center; }
+    .side-options { padding: 4px 16px 12px; border-top: 1px solid var(--border); }
+    .ai-use { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .ai-usebar { height: 6px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--border); margin-top: 6px; overflow: hidden; }
+    .ai-usebar div { height: 100%; width: 0; background: #f2f2f4; border-radius: 999px; transition: width .2s; }
+    .side-local { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+    body.ai-side-hide .side { display: none; }
+    .top .title { font-weight: 600; }
+    .welcome { margin-top: 9vh; }
+    .welcome-eyebrow { font-size: 12px; letter-spacing: .18em; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+    .welcome h1 { font-size: 40px; margin: 0 0 8px; }
+    .welcome-sub { color: var(--muted); margin: 0 0 26px; font-size: 15px; }
+    .composer.nx-pill { display: flex; align-items: center; gap: 10px; border-radius: 999px; padding: 8px; background: var(--bg-panel); }
+    .composer.nx-pill .keybtn { flex: none; border-radius: 999px; display: flex; align-items: center; gap: 6px; }
+    .composer.nx-pill textarea { flex: 1; padding: 10px 6px; }
+    .composer.nx-pill .send { margin: 0; flex: none; width: 38px; height: 38px; border-radius: 50%; background: #f2f2f4; color: #0b0b0d; border: none; font-weight: 700; }
+    .composer.nx-pill .send:hover { filter: brightness(.92); }
+    @media (max-width: 760px) { .composer.nx-pill .keybtn b { display: none; } }
   </style>
   <script src="haze-config.js"></script>
 </head>
@@ -147,26 +171,36 @@
   <aside class="side">
     <div class="side-brand"><span class="orb"></span> haze AI <small id="model-count"></small></div>
     <div class="side-actions">
-      <button class="side-btn" id="btn-new">＋ New chat</button>
+      <div class="side-newrow">
+        <button class="side-btn grow" id="btn-new">＋ New chat</button>
+        <button class="side-btn ico" id="btn-history" title="Search chats" type="button">◷</button>
+      </div>
       <button class="side-btn" id="btn-temp">↺ Temporary chat</button>
       <button class="side-btn" id="btn-images">🎨 Image studio</button>
     </div>
     <div class="side-label">CHATS</div>
     <div class="side-search"><input id="chat-search" placeholder="Search chats" /></div>
     <div class="chat-list" id="chat-list"></div>
+    <div class="side-options">
+      <div class="side-label" style="padding:10px 2px 6px">CHAT OPTIONS</div>
+      <div class="ai-use"><span>Stored chats</span><span id="ai-use-tx">0 / 50</span></div>
+      <div class="ai-usebar"><div id="ai-use-fill"></div></div>
+      <div class="side-local">Local only · no account needed</div>
+    </div>
     <div class="side-foot">haze AI · free models</div>
   </aside>
-
   <main class="main">
     <div class="top">
+      <button class="keybtn" id="btn-side" title="Toggle sidebar" type="button">☰</button>
       <span class="title" id="conv-title">New conversation</span>
       <span class="spacer"></span>
-      <button class="keybtn" id="btn-models" title="Choose model">◇ <b id="cur-model-label">Free</b></button>
+      <button class="keybtn" id="btn-trash" title="Delete this chat" type="button">🗑</button>
     </div>
-
     <div class="msgs" id="msgs">
       <div class="welcome">
-        <h1>What's on your mind?</h1>
+        <div class="welcome-eyebrow">haze AI</div>
+        <h1>Welcome back</h1>
+        <p class="welcome-sub">What would you like to explore today?</p>
         <div class="suggestions">
           <button class="sugg" data-p="Help me plan a project step by step">▦ Plan a project</button>
           <button class="sugg" data-p="Explain how black holes work in simple terms">◔ Explain something</button>
@@ -175,7 +209,6 @@
         </div>
       </div>
     </div>
-
     <div class="isu-overlay" id="isu-overlay">
       <div class="isu">
         <h2>Image studio</h2>
@@ -206,19 +239,15 @@
         <div class="isu-out" id="isu-out"><div class="isu-empty">Your generated images will appear here. They stay on your device.</div></div>
       </div>
     </div>
-
     <div class="composer-wrap">
-      <form class="composer" id="composer" autocomplete="off">
-        <textarea id="input" rows="1" placeholder="Message your model..."></textarea>
-        <div class="composer-row">
-          <span style="color:var(--muted);font-size:12px">Shift + Enter for a new line</span>
-          <button class="send" id="send" type="submit">↑</button>
-        </div>
+      <form class="composer nx-pill" id="composer" autocomplete="off">
+        <button class="keybtn" id="btn-models" title="Choose model" type="button">◇ <b id="cur-model-label">Free</b> ▾</button>
+        <textarea id="input" rows="1" placeholder="Message haze AI..."></textarea>
+        <button class="send" id="send" type="submit">↑</button>
       </form>
-      <p class="fineprint" id="fineprint">Responses can contain mistakes.</p>
+      <p class="fineprint" id="fineprint">haze AI can make mistakes. Text chats are saved on this device (up to 50 recent). Temporary chats keep nothing.</p>
     </div>
   </main>
-
   <div class="mdu-overlay" id="mdu-overlay">
     <div class="mdu" role="dialog" aria-label="Models">
       <div style="display:flex;flex-direction:column;flex:1;min-width:0">
@@ -237,14 +266,9 @@
       <div class="mdu-rail" id="mdu-rail"></div>
     </div>
   </div>
-
 <script>
 (function () {
   "use strict";
-
-  /* ======================= providers & models ======================= */
-  /* one keyless provider: the server relay (Pollinations, anonymous tier) */
-
   var PROVIDERS = {
     free: {
       label: "Free (no key)", endpoint: "/ai/relay",
@@ -260,27 +284,23 @@
       ]
     }
   }
-
-  /* ======================= state ======================= */
   var PREF_KEY = "haze-ai-pref", HIST_KEY = "haze-ai-chats";
   var pref = loadPref(), chats = loadChats(), currentId = null, temporary = false;
-
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
   function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
   function loadPref() { return jget(PREF_KEY, { provider: "free", model: "openai-fast" }); }
   function loadChats() { return jget(HIST_KEY, []); }
-
-
-  function saveChats() { if (!temporary) jset(HIST_KEY, chats); }
+  function saveChats() { if (!temporary) jset(HIST_KEY, chats.slice(0, 50)); }
+  function updateUsage() {
+    try {
+      $("ai-use-tx").textContent = chats.length + " / 50";
+      $("ai-use-fill").style.width = Math.min(100, (chats.length / 50) * 100) + "%";
+    } catch {}
+  }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function $(id) { return document.getElementById(id); }
-
-  /* ======================= dom ======================= */
   var msgsEl = $("msgs"), inputEl = $("input"), sendBtn = $("send");
   var convTitle = $("conv-title"), chatListEl = $("chat-list"), searchEl = $("chat-search");
-
-  /* ======================= provider / model picker (Models dialog) ======================= */
-  /* current selection lives in pref.provider + pref[pref.provider] */
   var PROVIDER_ICONS = {
     free: { glyph: "🐝", bg: "radial-gradient(circle at 30% 30%, #ffe9a8, #e8b93c)" },
     openrouter: { glyph: "⌘", bg: "#1f1f28" },
@@ -294,7 +314,6 @@
     together: { glyph: "⋈", bg: "#0f6fff" },
     cohere: { glyph: "◔", bg: "#39594d" }
   };
-
   function currentPid() { return pref.provider || "free"; }
   function currentModelId() {
     var pid = currentPid();
@@ -314,9 +333,8 @@
     var needs = !p.keyless;
     $("fineprint").textContent = needs
       ? "Free models only — 'may need seed tier' ones auto-fallback to GPT Fast."
-      : "Responses can contain mistakes.";
+      : "haze AI can make mistakes. Text chats are saved on this device (up to 50 recent). Temporary chats keep nothing.";
   }
-
   function railIcon(pid) {
     var ico = PROVIDER_ICONS[pid] || { glyph: "◆", bg: "#1f1f28" };
     var d = document.createElement("div"); d.className = "rail-ico";
@@ -336,11 +354,9 @@
       var l = document.createElement("span"); l.className = "lbl"; l.textContent = p.label.replace(" (no key)", "").split(" ")[0];
       b.appendChild(l);
       b.addEventListener("click", function () { $("mdu-search").value = ""; renderRail(""); renderModelList(""); });
-      /* clicking a rail icon filters to that provider; free/All shows all */
       rail.appendChild(b);
     });
   }
-
   function renderModelList(filterText) {
     var list = $("mdu-list"); list.innerHTML = "";
     var q = (filterText || "").toLowerCase();
@@ -390,7 +406,6 @@
       var d = document.createElement("div"); d.className = "empty-list"; d.textContent = "No models match."; list.appendChild(d);
     }
   }
-
   function openModels() { $("mdu-overlay").classList.add("open"); $("mdu-search").value = ""; renderRail(""); renderModelList(""); $("mdu-search").focus(); }
   function closeModels() { $("mdu-overlay").classList.remove("open"); }
   $("btn-models").addEventListener("click", openModels);
@@ -399,11 +414,8 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModels(); });
   $("mdu-search").addEventListener("input", function () { renderRail(this.value); renderModelList(this.value); });
   updateModelBar();
-
-  /* ======================= chats (sidebar) ======================= */
   function chatById(id) { return chats.find(function (c) { return c.id === id; }); }
   function activeChat() { return currentId ? chatById(currentId) : null; }
-
   function renderChatList() {
     chatListEl.innerHTML = "";
     var q = (searchEl.value || "").toLowerCase();
@@ -431,9 +443,16 @@
       b.appendChild(x);
       chatListEl.appendChild(b);
     });
+    updateUsage();
   }
   searchEl.addEventListener("input", renderChatList);
-
+  $("btn-side").addEventListener("click", function () { document.body.classList.toggle("ai-side-hide"); });
+  $("btn-history").addEventListener("click", function () { searchEl.focus(); });
+  $("btn-trash").addEventListener("click", function () {
+    if (!currentId) return;
+    chats = chats.filter(function (z) { return z.id !== currentId; });
+    currentId = null; saveChats(); renderChatList(); showWelcome();
+  });
   function openChat(id) {
     currentId = id; temporary = false;
     var c = chatById(id);
@@ -444,7 +463,7 @@
   function showWelcome() {
     convTitle.textContent = "New conversation";
     msgsEl.innerHTML =
-      '<div class="welcome"><h1>What\'s on your mind?</h1><div class="suggestions">' +
+      '<div class="welcome"><div class="welcome-eyebrow">haze AI</div><h1>Welcome back</h1><p class="welcome-sub">What would you like to explore today?</p><div class="suggestions">' +
       '<button class="sugg" data-p="Help me plan a project step by step">▦ Plan a project</button>' +
       '<button class="sugg" data-p="Explain how black holes work in simple terms">◔ Explain something</button>' +
       '<button class="sugg" data-p="Review this code idea: a cache that never invalidates. What breaks?">◇ Review my code</button>' +
@@ -455,16 +474,12 @@
     var s = e.target.closest(".sugg");
     if (s) { inputEl.value = s.dataset.p; inputEl.focus(); autoGrow(); submit(); }
   });
-
   $("btn-new").addEventListener("click", function () { currentId = null; temporary = false; showWelcome(); renderChatList(); inputEl.focus(); });
   $("btn-temp").addEventListener("click", function () {
     currentId = null; temporary = true; showWelcome(); renderChatList(); inputEl.focus();
     convTitle.textContent = "Temporary chat";
   });
-
-  /* ======================= rendering ======================= */
-  var WELCOME_STRIP = null; // welcome screen removed while messages exist
-
+  var WELCOME_STRIP = null;
   function renderMessages() {
     var c = activeChat();
     if (!c) return;
@@ -489,7 +504,6 @@
     el.innerHTML = formatMd(String(text));
   }
   function formatMd(t) {
-    /* small safe markdown: escape first, then code fences / inline code / bold */
     var esc = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     esc = esc.replace(/```(\w*)\n?([\s\S]*?)```/g, function (_, l, c) {
       return "<pre><code>" + c.replace(/\n$/, "") + "</code></pre>";
@@ -501,24 +515,18 @@
   function currentModelName() {
     return currentModelLabel();
   }
-
-  /* ======================= sending ======================= */
   function autoGrow() { inputEl.style.height = "auto"; inputEl.style.height = Math.min(180, inputEl.scrollHeight) + "px"; }
   inputEl.addEventListener("input", autoGrow);
   inputEl.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
   });
   $("composer").addEventListener("submit", function (e) { e.preventDefault(); submit(); });
-
   var busy = false;
-
   function submit() {
     if (busy) return;
     var text = inputEl.value.trim();
     if (!text) return;
-
     var pid = currentPid(), p = PROVIDERS[pid];
-
     var c = activeChat();
     if (!c) {
       c = { id: uid(), title: text.slice(0, 60), messages: [] };
@@ -531,12 +539,10 @@
     if (!temporary) saveChats();
     appendMsg("user", text);
     inputEl.value = ""; autoGrow();
-
     var aiDiv = appendMsg("assistant", "", true);
     var aiTextEl = aiDiv.querySelector(".text");
     var acc = "";
     busy = true; sendBtn.disabled = true;
-
     callModel(pid, c.messages, {
       onDelta: function (d) {
         acc += d;
@@ -557,12 +563,10 @@
     });
   }
   function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
   function callModel(pid, messages, cb) {
     var p = PROVIDERS[pid];
     var modelId = currentModelId();
     var headers = { "Content-Type": "application/json" };
-
     var body;
     if (p.format === "anthropic") {
       var sys = "";
@@ -571,10 +575,8 @@
     } else {
       body = JSON.stringify({ model: modelId, messages: messages, stream: true, referrer: "haze", local: true });
     }
-
     fetch((typeof HazeApi === "function" ? HazeApi(p.endpoint) : p.endpoint), { method: "POST", headers: headers, body: body, signal: AbortSignal.timeout(120000) })
       .then(function (res) {
-        /* the free relay always returns SSE (upstream is forced to stream) */
         if (!res.ok) {
           return res.text().then(function (t) {
             throw new Error("HTTP " + res.status + (t ? " — " + t.slice(0, 200) : ""));
@@ -613,14 +615,10 @@
         cb.onError(err.name === "TimeoutError" ? "Request timed out." : (err.message || "Request failed."));
       });
   }
-
-  /* ======================= image studio ======================= */
   var ISU_KEY = "haze-ai-images";
   var isuOverlay = $("isu-overlay"), isuPrompt = $("isu-prompt"), isuStyle = $("isu-style"), isuSize = $("isu-size"), isuGo = $("isu-go"), isuOut = $("isu-out");
   var isuImages = jget(ISU_KEY, []);
-
   function escHtml2(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
   function renderIsuOut() {
     if (!isuImages.length) {
       isuOut.innerHTML = '<div class="isu-empty">Your generated images will appear here. They stay on your device.</div>';
@@ -631,7 +629,6 @@
       var card = document.createElement("div"); card.className = "isu-card";
       var img = document.createElement("img"); img.src = item.url; img.alt = item.prompt; img.title = item.prompt;
       img.style.aspectRatio = "auto";
-      // pollinations may take a few seconds; show a loading shimmer via opacity
       img.style.transition = "opacity .4s"; img.style.opacity = "0";
       img.onload = function () { img.style.opacity = "1"; };
       img.onerror = function () { card.style.opacity = ".4"; card.title = "Failed to load"; };
@@ -651,14 +648,12 @@
       isuOut.appendChild(card);
     });
   }
-
   function openIsu() { isuOverlay.classList.add("open"); renderIsuOut(); isuPrompt.focus(); }
   function closeIsu() { isuOverlay.classList.remove("open"); }
   $("btn-images").addEventListener("click", openIsu);
   $("isu-close").addEventListener("click", closeIsu);
   isuOverlay.addEventListener("click", function (e) { if (e.target === isuOverlay) closeIsu(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeIsu(); });
-
   isuGo.addEventListener("click", function () {
     var raw = isuPrompt.value.trim();
     if (!raw) { isuPrompt.focus(); return; }
@@ -675,11 +670,8 @@
     isuGo.disabled = true;
     isuGo.textContent = "Generating…";
     renderIsuOut();
-    // loading state quickly releases — we can't know exactly when upstream finishes rendering
     setTimeout(function () { isuGo.disabled = false; isuGo.textContent = "Generate"; }, 3500);
   });
-
-  /* ======================= boot ======================= */
   renderChatList();
   showWelcome();
   inputEl.focus();
