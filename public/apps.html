@@ -90,6 +90,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.45rem;
     }
+    .a-icon img { width: 34px; height: 34px; border-radius: 8px; object-fit: contain; }
     .a-meta { min-width: 0; }
     .a-name { font-size: 0.86rem; font-weight: 700; letter-spacing: -0.01em; }
     .a-name code { font-size: 0.72rem; color: var(--muted); font-family: inherit; font-weight: 600; margin-left: 5px; }
@@ -101,16 +102,30 @@
       border: 1px solid rgba(255, 255, 255, 0.18); color: #cfcfcf;
     }
     .a-kind.builtin { border-color: var(--aa); color: var(--aa); }
-    .a-fav {
-      position: absolute; top: 8px; right: 8px; z-index: 3;
+    .a-kind.web { border-color: #7ab8ff; color: #7ab8ff; }
+    .a-fav, .a-del {
+      position: absolute; top: 8px; z-index: 3;
       width: 24px; height: 24px; border-radius: 999px; cursor: pointer;
       display: grid; place-items: center; font-size: 0.7rem; line-height: 1; padding: 0;
       background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.22);
       color: #9a9a9a; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
     }
-    .a-tile:hover .a-fav, .a-fav.active:hover, .a-fav.active { opacity: 1; }
-    .a-fav:hover { transform: scale(1.15); color: #fff; }
+    .a-fav { right: 8px; }
+    .a-del { right: 36px; }
+    .a-tile:hover .a-fav, .a-fav.active:hover, .a-fav.active, .a-tile:hover .a-del { opacity: 1; }
+    .a-fav:hover, .a-del:hover { transform: scale(1.15); color: #fff; }
     .a-fav.active { color: #ffd166; border-color: #ffd166; }
+    .a-del:hover { color: #ff8f8f; border-color: #ff8f8f; }
+
+    /* ---------- add-your-own tile ---------- */
+    .a-add {
+      justify-content: center; align-items: center; flex-direction: column;
+      border-style: dashed; text-align: center; gap: 4px;
+      color: var(--muted); background: transparent;
+      min-height: 86px;
+    }
+    .a-add .a-plus { font-size: 1.3rem; color: var(--aa); }
+    .a-add:hover { color: #e8e8e8; background: rgba(255, 255, 255, 0.05); }
 
     @media (max-width: 560px) {
       .a-nav input { width: 90px; }
@@ -125,7 +140,7 @@
     <button class="a-logo" id="a-home" type="button" title="All apps">&#9632;&nbsp; apps</button>
     <span class="a-div"></span>
     <button class="a-ico on" id="a-favmode" type="button" title="Show favorites only">&#9733;</button>
-    <button class="a-ico" id="a-reset" type="button" title="Forget favorites and recents">&#8635;</button>
+    <button class="a-ico" id="a-reset" type="button" title="Forget favorites, recents and custom apps">&#8635;</button>
     <span class="a-div"></span>
     <label class="a-search">&#128269;
       <input id="a-search" type="text" placeholder="search apps…" autocomplete="off" />
@@ -139,11 +154,14 @@
   <script>
     (function () {
       "use strict";
-      /* The haze app set. "go" tiles navigate to a built-in haze view
-         (no proxy needed); "url" tiles open through the parent haze proxy.
-         The url set below is the GitHub app library: every tile is a real
-         project from GitHub (OS shells, game hubs, cloaked pages, tools),
-         loaded from CDNs that serve the right MIME type for HTML. */
+      /*  Haze app library.
+          - "go" tiles   -> navigate to a built-in haze view (no proxy needed)
+          - "github" set -> real GitHub projects (OS shells, game hubs, cloaked
+                            pages, tools), loaded from CDNs that serve the
+                            right MIME type, all opened through the haze proxy
+          - WEBAPPS      -> the Interstellar web-app catalog (82 real sites with
+                            their original icons), opened through the proxy
+          - custom apps  -> ones you add yourself, saved on this device              */
       var GD = "https://raw.githack.com"; // serves GitHub files with text/html
 
       var HUB = [
@@ -163,7 +181,7 @@
         { id: "aeos",     name: "Aeos Lite",  by: "aeosntw",         icon: "\uD83C\uDF31", kind: "url", url: GD + "/aeosntw/lite/main/index.html", desc: "Single-file launcher backed by the Ultimate Games Stash." },
         { id: "helium",   name: "Helium",     by: "1sunw",           icon: "\u2661", kind: "url", url: GD + "/1sunw/helium-s/main/helium.html", desc: "Lightweight hub with its own app shelves." },
         { id: "uranium",  name: "Axiom",      by: "Onex558",         icon: "\u25A5", kind: "url", url: GD + "/Onex558/uraniumsite/main/index.html", desc: "Proxy shell with a configurable nav rail and themes." },
-        { id: "xenos",    name: "XenOS",      by: "NebulaServices",  icon: "\u2B50", kind: "url", url: "https://github.com/NebulaServices/XenOS","desc": "Customizable web desktop (archived \u2014 opens the repo page)." },
+        { id: "xenos",    name: "XenOS",      by: "NebulaServices",  icon: "\u2B50", kind: "url", url: "https://github.com/NebulaServices/XenOS", desc: "Customizable web desktop (archived \u2014 opens the repo page)." },
         { id: "skyline",  name: "SkylineOS",  by: "carbonicality",   icon: "\uD83C\uDF05", kind: "url", url: "https://github.com/carbonicality/skylineOS", desc: "Alpine-linux emulation desktop (opens the repo page)." },
 
         // ---- github game hubs ----
@@ -191,8 +209,100 @@
         { id: "arsenic",  name: "Arsenic",      by: "AvidTroll",  icon: "\uD83E\uDDBF", kind: "url", url: GD + "/AvidTroll/arsenic/main/public/index.html", desc: "Landing portal: home, chatroom, about, games and unblocker." }
       ];
 
+      /* ---- Interstellar web-app catalog (https://github.com/Wrbxy/intersteller) ---- */
+      var WEBAPPS = [
+        {id:"amazon",name:"Amazon",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/amazon.webp",url:"https://amazon.com/"},
+        {id:"steam",name:"Steam",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/steam.webp",url:"https://store.steampowered.com/"},
+        {id:"buzzfeed-quizzes",name:"BuzzFeed Quizzes",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/buzzfeed.webp",url:"https://www.buzzfeed.com/quizzes"},
+        {id:"guilded",name:"Guilded",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/guilded.webp",url:"https://www.guilded.gg/"},
+        {id:"android",name:"Android",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/android.webp",url:"https://now.gg/iframe/snippet?app_pkg=com.uncube.launcher3&partner=interstellar"},
+        {id:"temu",name:"Temu",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/temu.webp",url:"https://www.temu.com/"},
+        {id:"aptoide",name:"Aptoide",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/aptoide.webp",url:"https://now.gg/iframe/snippet?app_pkg=com.aptoide.partners.nowgg.store&partner=interstellar"},
+        {id:"scratch",name:"Scratch",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/scratch.webp",url:"https://scratch.mit.edu"},
+        {id:"chess-com",name:"Chess.com",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/chess.webp",url:"https://www.chess.com/"},
+        {id:"cool-math-games",name:"Cool Math Games",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/coolmath.webp",url:"https://www.coolmathgames.com/"},
+        {id:"discord",name:"Discord",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/dc.jpg",url:"https://discord.com/app"},
+        {id:"espn",name:"ESPN",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/espn.webp",url:"https://www.espn.com/watch/"},
+        {id:"fifa-rosters",name:"Fifa Rosters",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/fifa.webp",url:"https://fifarosters.com/"},
+        {id:"firefox-web-browser",name:"Firefox Web Browser",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/firefox.webp",url:"https://replit.com/@cooleddie001/Firefox-Legacy?v=1"},
+        {id:"flix-hq",name:"Flix HQ",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/flixhq.webp",url:"https://flixhq.to"},
+        {id:"geforce-now",name:"Geforce NOW",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/geforce-now.webp",url:"https://play.geforcenow.com"},
+        {id:"github",name:"Github",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/github.webp",url:"https://github.com"},
+        {id:"google",name:"Google",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/google.webp",url:"https://google.com"},
+        {id:"hbo-max",name:"HBO MAX",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/hbo.webp",url:"https://www.hbomax.com/"},
+        {id:"messenger",name:"Messenger",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/messenger.webp",url:"https://messenger.com/"},
+        {id:"mlb",name:"MLB",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/mlb.webp",url:"https://mlb.com"},
+        {id:"nfl",name:"NFL",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/nfl.webp",url:"https://nfl.com"},
+        {id:"nba",name:"NBA",img:"",url:"https://nba.com"},
+        {id:"paramount-plus",name:"Paramount Plus",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/paramount.webp",url:"https://paramountplus.com"},
+        {id:"pinterest",name:"Pinterest",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/pinterest.webp",url:"https://pinterest.com"},
+        {id:"pixlr",name:"Pixlr",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/pix.webp",url:"https://pixlr.com/"},
+        {id:"poki",name:"Poki",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/poki.webp",url:"https://poki.com"},
+        {id:"premier-league",name:"Premier League",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/pl.webp",url:"https://premierleague.com"},
+        {id:"soundcloud",name:"Soundcloud",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/soundcloud.webp",url:"https://soundcloud.com"},
+        {id:"spotify",name:"Spotify",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/spotify.webp",url:"https://open.spotify.com"},
+        {id:"telegram",name:"Telegram",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/telegram.webp",url:"https://web.telegram.org/"},
+        {id:"tiktok",name:"Tiktok",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/tiktok.webp",url:"https://tiktok.com"},
+        {id:"free-media-heck-yeah",name:"Free Media Heck Yeah",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/fmhy.webp",url:"https://fmhy.pages.dev"},
+        {id:"canva",name:"Canva",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/canva.webp",url:"https://canva.com"},
+        {id:"wikipedia",name:"Wikipedia",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/wiki.webp",url:"https://en.wikipedia.org"},
+        {id:"goal",name:"GOAL",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/goal.webp",url:"https://goal.com"},
+        {id:"trello",name:"Trello",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/trello.webp",url:"https://trello.com"},
+        {id:"gidd-io-games",name:"Gidd.io Games",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gidd.webp",url:"https://gidd.io"},
+        {id:"tumblr",name:"Tumblr",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/tumblr.webp",url:"https://tumblr.com/"},
+        {id:"twitch",name:"Twitch",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/twitch.webp",url:"https://twitch.tv"},
+        {id:"twitter",name:"Twitter",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/twitter.webp",url:"https://twitter.com"},
+        {id:"vs-code",name:"VS Code",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/vscode.webp",url:"https://vscode.dev"},
+        {id:"y8-games",name:"Y8 Games",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/y8.webp",url:"https://y8.com/"},
+        {id:"youtube",name:"YouTube",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/youtube.webp",url:"https://youtube.com"},
+        {id:"youtube-alternative-invi",name:"YouTube Alternative (Invidious)",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/youtube.webp",url:"https://vid.puffyan.us/"},
+        {id:"whatsapp",name:"Whatsapp",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/whatsapp.webp",url:"https://web.whatsapp.com"},
+        {id:"wattpad",name:"Wattpad",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/wattpad.webp",url:"https://www.wattpad.com/"},
+        {id:"hd-today",name:"HD Today",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/hd.webp",url:"https://hdtoday.tv"},
+        {id:"now-gg",name:"Now.GG",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/now-gg.webp",url:"https://now.gg"},
+        {id:"now-gg-nowgg-me-working",name:"Now.GG (NowGG.me) [Working]",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/shuttle.webp",url:"https://nowgg.me"},
+        {id:"vercel",name:"Vercel",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/vercel.webp",url:"https://vercel.com"},
+        {id:"amazon-luna",name:"Amazon Luna",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/amazon-luna.webp",url:"https://luna.amazon.com/"},
+        {id:"google-gemini",name:"Google Gemini",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gemini.webp",url:"https://gemini.google.com"},
+        {id:"google-mail-gmail",name:"Google Mail (Gmail)",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gmail.webp",url:"https://mail.google.com/"},
+        {id:"outlook",name:"Outlook",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/outlook.webp",url:"https://outlook.live.com/"},
+        {id:"snapchat",name:"Snapchat",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/snap.webp",url:"https://web.snapchat.com"},
+        {id:"w3schools",name:"W3Schools",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/W3Schools.webp",url:"https://www.w3schools.com"},
+        {id:"newgrounds",name:"Newgrounds",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/newgrounds.webp",url:"https://www.newgrounds.com"},
+        {id:"instagram",name:"Instagram",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/insta.webp",url:"https://www.instagram.com"},
+        {id:"proton-mail",name:"Proton Mail",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/proton.webp",url:"https://account.proton.me/mail"},
+        {id:"spacehey",name:"SpaceHey",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/spacehey.png",url:"https://www.spacehey.com"},
+        {id:"fmovies-to",name:"FMovies.to",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/FM.png",url:"https://fmovies24.to/"},
+        {id:"emovies-si",name:"EMovies.si",img:"",url:"https://emovies.si"},
+        {id:"movie-web",name:"Movie Web",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/MW.png",url:"https://movie-web-me.vercel.app/"},
+        {id:"sudo-flix-lol-movie-web-",name:"Sudo-Flix.Lol (Movie Web Clone)",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/MW.png",url:"https://sudo-flix.lol/"},
+        {id:"gba-games",name:"GBA Games",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gba.png",url:"https://gba.js.org/"},
+        {id:"gptzero-me",name:"GPTZero.me",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gz.webp",url:"https://gptzero.me/"},
+        {id:"zerogpt-com",name:"ZeroGPT.com",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/zg.webp",url:"https://www.zerogpt.com/"},
+        {id:"chatgpt",name:"ChatGPT",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gpt.jpg",url:"https://chat.openai.com"},
+        {id:"copyleaks-com",name:"CopyLeaks.com",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/cl.jpg",url:"https://copyleaks.com/ai-content-detector"},
+        {id:"writer-com",name:"Writer.com",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/wr.png",url:"https://writer.com/ai-content-detector/"},
+        {id:"quillbot-com-ai-detector",name:"Quillbot.com AI Detector",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/qb.jpg",url:"https://quillbot.com/ai-content-detector"},
+        {id:"kome-ai-youtube-transcri",name:"Kome.ai YouTube Transcript",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/km.webp",url:"https://kome.ai/tools/youtube-transcript-generator"},
+        {id:"notegpt-io-youtube-trans",name:"NoteGPT.io YouTube Transcript",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/ng.jpg",url:"https://notegpt.io/youtube-transcript-generator"},
+        {id:"grammarly-plagiarism-che",name:"Grammarly Plagiarism Checker",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gm.png",url:"https://www.grammarly.com/plagiarism-checker"},
+        {id:"plagiarism-detector",name:"Plagiarism Detector",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/pdn.png",url:"https://plagiarismdetector.net/"},
+        {id:"blooket-cheats",name:"Blooket Cheats",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/bl.webp",url:"https://github.com/005konz/Blooket-Cheats"},
+        {id:"edpuzzle-cheats",name:"Edpuzzle Cheats",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/ep.png",url:"https://github.com/ading2210/edpuzzle-answers"},
+        {id:"deepai-org",name:"DeepAI.org",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/da.webp",url:"https://deepai.org/"},
+        {id:"freedomgpt",name:"FreedomGPT",img:"",url:"https://chat.freedomgpt.com/"},
+        {id:"cinera-movies",name:"Cinera (Movies)",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/MW.png",url:"https://cinera.to"},
+        {id:"talkai-info",name:"TalkAI.info",img:"https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/ta.webp",url:"https://talkai.info/chat/"},
+      ].map(function (x) {
+        x.kind = "url";
+        x.web = true;
+        x.desc = "From the Interstellar catalog — opened through the haze proxy.";
+        return x;
+      });
+
       var FAVS_KEY = "haze-hub-favs";
       var RECENT_KEY = "haze-hub-recent";
+      var CUSTOM_KEY = "haze-hub-custom";
       var sections = document.getElementById("a-sections");
       var status = document.getElementById("a-status");
       var count = document.getElementById("a-count");
@@ -206,8 +316,12 @@
       function esc(s) {
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
       }
+      function allApps() {
+        return HUB.concat(WEBAPPS, loadJson(CUSTOM_KEY, "[]"));
+      }
       function byId(id) {
-        for (var i = 0; i < HUB.length; i++) if (HUB[i].id === id) return HUB[i];
+        var list = allApps();
+        for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
         return null;
       }
 
@@ -217,7 +331,7 @@
         try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents.slice(0, 12))); } catch (e) {}
         try {
           if (tile.kind === "go" && window.parent && window.parent.hazeGo) {
-            window.parent.hazeGo(tile.view, tile.sub);
+            window.parent.hazeGo(tile.view);
             return;
           }
           if (tile.kind === "url" && window.parent && window.parent.hazeLaunch) {
@@ -229,23 +343,36 @@
         if (tile.url) window.open(tile.url, "_blank", "noopener");
       }
 
+      function iconHtml(tile) {
+        if (tile.img) {
+          return '<span class="a-icon"><img src="' + esc(tile.img) + '" alt="" loading="lazy" onerror="this.remove()">' + "</span>";
+        }
+        return '<span class="a-icon">' + esc(tile.icon || "\uD83C\uDF10") + "</span>";
+      }
+
       function tileHtml(tile) {
         var favs = loadJson(FAVS_KEY, "[]");
         var isFav = favs.indexOf(tile.id) !== -1;
         var credit = tile.by ? "<code>@" + esc(tile.by) + "</code>" : "";
+        var kindLabel = tile.kind === "go" ? "built-in" : tile.custom ? "your app" : tile.web ? "web" : "github";
+        var kindClass = tile.kind === "go" ? " builtin" : tile.web ? " web" : "";
+        var del = tile.custom ? '<span class="a-del" data-del="' + esc(tile.id) + '" title="Remove this app" role="button" tabindex="0">\u2715</span>' : "";
         return (
           '<button class="a-tile" data-id="' + esc(tile.id) + '" type="button" aria-label="Open ' + esc(tile.name) + '">' +
-          '<span class="a-icon">' + esc(tile.icon) + "</span>" +
+          iconHtml(tile) +
           '<span class="a-meta"><span class="a-name">' + esc(tile.name) + credit + "</span>" +
           '<span class="a-desc" style="display:block">' + esc(tile.desc) + "</span>" +
-          '<span class="a-kind' + (tile.kind === "go" ? " builtin" : "") + '">' +
-          (tile.kind === "go" ? "built-in" : "github") + "</span></span>" +
+          '<span class="a-kind' + kindClass + '">' + kindLabel + "</span></span>" +
+          del +
           '<span class="a-fav' + (isFav ? " active" : "") + '" data-fav="' + esc(tile.id) + '" title="Favorite" role="button" tabindex="0">\u2605</span>' +
           "</button>"
         );
       }
 
-      function section(title, list, clearLabel) {
+      var ADD_TILE = '<button class="a-tile a-add" id="a-add-app" type="button" title="Add your own app">' +
+        '<span class="a-plus">+</span><span style="font-size:0.78rem">Add your own app</span></button>';
+
+      function section(title, listHtml, clearLabel) {
         var wrap = document.createElement("div");
         var h = document.createElement("div");
         h.className = "a-section-title";
@@ -253,27 +380,38 @@
         wrap.appendChild(h);
         var grid = document.createElement("div");
         grid.className = "a-grid";
-        grid.innerHTML = list.map(tileHtml).join("");
+        grid.innerHTML = listHtml;
         wrap.appendChild(grid);
         if (clearLabel) {
           h.querySelector(".a-clear").addEventListener("click", function () {
-            localStorage.removeItem(clearLabel === "forget" ? RECENT_KEY : FAVS_KEY);
+            if (clearLabel === "forget") localStorage.removeItem(RECENT_KEY);
+            else localStorage.removeItem(FAVS_KEY);
             render();
           });
         }
         return wrap;
       }
 
+      var GH_GROUPS = {
+        "GitHub desktops": ["nautilus", "fluxos", "nebuli", "nebulis", "anura", "aeos", "helium", "uranium", "xenos", "skyline"],
+        "GitHub game hubs": ["gug", "fluxv3", "chicken", "bigfoot", "totally", "bloxcraft", "dogehub", "onekey"],
+        "GitHub cloaked pages": ["infamous", "premiumhub", "english", "garnish", "chalkie", "sussy"],
+        "GitHub tools & web apps": ["yt", "ggr", "dlhub", "arsenic"]
+      };
+
       function render() {
         var q = search.value.trim().toLowerCase();
         var favs = loadJson(FAVS_KEY, "[]");
-        var list = HUB.slice();
-        if (favMode) list = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+        var all = allApps();
+        var list = all;
+
         if (q) {
           list = list.filter(function (t) {
             return (t.name + " " + (t.by || "") + " " + t.desc).toLowerCase().indexOf(q) !== -1;
           });
         }
+        if (favMode) list = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+
         count.textContent = list.length + (list.length === 1 ? " app" : " apps");
         sections.innerHTML = "";
 
@@ -288,20 +426,51 @@
 
         if (!q && !favMode) {
           var recents = loadJson(RECENT_KEY, "[]").map(byId).filter(Boolean).slice(0, 6);
-          if (recents.length) sections.appendChild(section("\u23F1 Recently opened", recents, "forget"));
-          var favTiles = HUB.filter(function (t) { return favs.indexOf(t.id) !== -1; });
-          if (favTiles.length) sections.appendChild(section("\u2605 Favorites", favTiles));
-          sections.appendChild(section("Built into haze", HUB.filter(function (t) { return t.kind === "go"; })));
-          sections.appendChild(section("GitHub desktops", HUB.filter(function (t) { return t.kind === "url" && ["nautilus","fluxos","nebuli","nebulis","anura","aeos","helium","uranium","xenos","skyline"].indexOf(t.id) !== -1; })));
-          sections.appendChild(section("GitHub game hubs", HUB.filter(function (t) { return ["gug","fluxv3","chicken","bigfoot","totally","bloxcraft","dogehub","onekey"].indexOf(t.id) !== -1; })));
-          sections.appendChild(section("GitHub cloaked pages", HUB.filter(function (t) { return ["infamous","premiumhub","english","garnish","chalkie","sussy"].indexOf(t.id) !== -1; })));
-          sections.appendChild(section("GitHub tools & web apps", HUB.filter(function (t) { return t.kind === "url" && ["yt","ggr","dlhub","arsenic"].indexOf(t.id) !== -1; })));
+          if (recents.length) sections.appendChild(section("\u23F1 Recently opened", recents.map(tileHtml).join(""), "forget"));
+          var favTiles = all.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+          if (favTiles.length) sections.appendChild(section("\u2605 Favorites", favTiles.map(tileHtml).join("")));
+          var custom = loadJson(CUSTOM_KEY, "[]");
+          sections.appendChild(section("\uD83D\uDC8C Your apps", custom.map(tileHtml).join("") + ADD_TILE, custom.length ? "clear all" : null));
+          sections.appendChild(section("Built into haze", HUB.filter(function (t) { return t.kind === "go"; }).map(tileHtml).join("")));
+          for (var g in GH_GROUPS) {
+            var ids = GH_GROUPS[g];
+            var tiles = HUB.filter(function (t) { return ids.indexOf(t.id) !== -1; });
+            if (tiles.length) sections.appendChild(section(g, tiles.map(tileHtml).join("")));
+          }
+          sections.appendChild(section("\u25A6 Web apps (Interstellar)", WEBAPPS.map(tileHtml).join("")));
         } else {
-          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list));
+          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list.map(tileHtml).join("")));
         }
       }
 
+      function addCustomApp() {
+        var name = (window.prompt ? prompt("Name this app (e.g. Notion)") : "") || "";
+        if (!name.trim()) return;
+        var url = prompt("URL for " + name.trim() + " (e.g. notion.so)") || "";
+        if (!url.trim()) return;
+        if (!/^https?:\/\//i.test(url)) url = "https://" + url.replace(/^\/+/, "");
+        var custom = loadJson(CUSTOM_KEY, "[]");
+        var id = "c" + Math.random().toString(36).slice(2, 8);
+        custom.push({ id: id, name: name.trim().slice(0, 30), icon: "\uD83C\uDF10", kind: "url", url: url, custom: true, desc: "Added by you \u2014 opens through the haze proxy." });
+        try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom.slice(0, 60))); } catch (e2) {}
+        render();
+      }
+
+      function removeCustomApp(id) {
+        var custom = loadJson(CUSTOM_KEY, "[]").filter(function (c) { return c.id !== id; });
+        try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) {}
+        var favs = loadJson(FAVS_KEY, "[]").filter(function (f) { return f !== id; });
+        try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); } catch (e) {}
+        render();
+      }
+
       sections.addEventListener("click", function (e) {
+        var delBtn = e.target.closest(".a-del");
+        if (delBtn) {
+          e.stopPropagation();
+          removeCustomApp(delBtn.getAttribute("data-del"));
+          return;
+        }
         var favBtn = e.target.closest(".a-fav");
         if (favBtn) {
           e.stopPropagation();
@@ -313,8 +482,12 @@
           render();
           return;
         }
+        if (e.target.closest(".a-add")) {
+          addCustomApp();
+          return;
+        }
         var tile = e.target.closest(".a-tile");
-        if (!tile) return;
+        if (!tile || tile.getAttribute("data-id") === null) return;
         var picked = byId(tile.getAttribute("data-id"));
         if (picked) openTile(picked);
       });
@@ -325,8 +498,10 @@
         render();
       });
       document.getElementById("a-reset").addEventListener("click", function () {
+        if (!confirm("Forget favorites, recents and your custom apps?")) return;
         localStorage.removeItem(FAVS_KEY);
         localStorage.removeItem(RECENT_KEY);
+        localStorage.removeItem(CUSTOM_KEY);
         render();
       });
       document.getElementById("a-home").addEventListener("click", function () {
@@ -350,7 +525,8 @@
 
       // exposed for the parent haze command palette ("Open a random app")
       window.hazeRandomApp = function () {
-        openTile(HUB[Math.floor(Math.random() * HUB.length)]);
+        var all = HUB.concat(WEBAPPS);
+        openTile(all[Math.floor(Math.random() * all.length)]);
       };
 
       render();

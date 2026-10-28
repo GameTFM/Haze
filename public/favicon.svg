@@ -1,3 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="7" fill="#0b0b0d"/>
+  <text x="16" y="18.7"
+        text-anchor="middle"
+        font-family="ui-sans-serif, system-ui, 'Segoe UI', -apple-system, Arial, sans-serif"
+        font-size="8.25"
+        font-weight="700"
+        letter-spacing="-0.375"
+        fill="#ffffff">haze</text>
+  <rect x="9.1" y="20.3" width="13.8" height="1.5" rx="0.75" fill="#ffffff"/>
 </svg>
