@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>haze apps</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --aa: #ffffff;             /* accent, mirrors haze accent */
+      --aa-ink: #0a0a0a;
+      --pill: #0f0f0f;
+      --pill-brd: #262626;
+      --muted: #9a9a9a;
+    }
+    html { scrollbar-color: #333 #050505; }
+    body {
+      background: #050505; color: #f5f5f5;
+      font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+      padding: 14px 18px 60px;
+    }
+
+    /* ---------- floating pill nav ---------- */
+    .a-nav {
+      position: sticky; top: 12px; z-index: 20;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+      max-width: calc(100vw - 36px);
+    }
+    .a-nav .a-logo {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 999px;
+      background: var(--aa); color: var(--aa-ink);
+      font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em;
+      white-space: nowrap; cursor: pointer; border: none; font-family: inherit;
+    }
+    .a-nav .a-logo:active { transform: scale(0.97); }
+    .a-nav .a-div { width: 1px; height: 18px; background: #2a2a2a; margin: 0 3px; flex: none; }
+    .a-nav button.a-ico, .a-nav label.a-search {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.85rem;
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      padding: 0 12px; transition: background 0.15s ease; flex: none;
+    }
+    .a-nav button.a-ico:hover, .a-nav label.a-search:hover { background: #1d1d1d; }
+    .a-nav button.a-ico.on { background: #242424; }
+    .a-nav label.a-search { cursor: text; }
+    .a-nav input {
+      background: transparent; border: none; outline: none;
+      color: #f5f5f5; font-family: inherit; font-size: 0.85rem; width: 150px;
+    }
+    .a-nav input::placeholder { color: #6e6e6e; }
+    .a-nav .a-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
+
+    /* ---------- sections ---------- */
+    .a-section-title {
+      font-size: 0.9rem; margin: 20px 2px 12px; color: #d8d8d8;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .a-section-title .a-clear {
+      font-size: 0.72rem; color: var(--muted); background: none; border: none;
+      cursor: pointer; text-decoration: underline; font-family: inherit;
+    }
+    .a-status { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
+
+    /* ---------- the hub grids ---------- */
+    .a-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 12px;
+    }
+    .a-tile {
+      position: relative; cursor: pointer; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: inherit; font-family: inherit; outline: none;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 13px 14px; text-align: left;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .a-tile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.32); background: rgba(255, 255, 255, 0.07); }
+    .a-tile:active { transform: scale(0.98); }
+    .a-tile:focus-visible { border-color: var(--aa); }
+    .a-icon {
+      width: 46px; height: 46px; border-radius: 13px; flex: none;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem;
+    }
+    .a-meta { min-width: 0; }
+    .a-name { font-size: 0.86rem; font-weight: 700; letter-spacing: -0.01em; }
+    .a-name code { font-size: 0.72rem; color: var(--muted); font-family: inherit; font-weight: 600; margin-left: 5px; }
+    .a-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; margin-top: 3px; }
+    .a-kind {
+      display: inline-block; margin-top: 7px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18); color: #cfcfcf;
+    }
+    .a-kind.builtin { border-color: var(--aa); color: var(--aa); }
+    .a-fav {
+      position: absolute; top: 8px; right: 8px; z-index: 3;
+      width: 24px; height: 24px; border-radius: 999px; cursor: pointer;
+      display: grid; place-items: center; font-size: 0.7rem; line-height: 1; padding: 0;
+      background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #9a9a9a; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+    }
+    .a-tile:hover .a-fav, .a-fav.active:hover, .a-fav.active { opacity: 1; }
+    .a-fav:hover { transform: scale(1.15); color: #fff; }
+    .a-fav.active { color: #ffd166; border-color: #ffd166; }
+
+    @media (max-width: 560px) {
+      .a-nav input { width: 90px; }
+      .a-nav .a-count { display: none; }
+      .a-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="a-nav">
+    <button class="a-logo" id="a-home" type="button" title="All apps">&#9632;&nbsp; apps</button>
+    <span class="a-div"></span>
+    <button class="a-ico on" id="a-favmode" type="button" title="Show favorites only">&#9733;</button>
+    <button class="a-ico" id="a-reset" type="button" title="Forget favorites and recents">&#8635;</button>
+    <span class="a-div"></span>
+    <label class="a-search">&#128269;
+      <input id="a-search" type="text" placeholder="search apps…" autocomplete="off" />
+    </label>
+    <span class="a-count" id="a-count"></span>
+  </nav>
+
+  <p class="a-status" id="a-status" hidden></p>
+  <div id="a-sections"></div>
+
+  <script>
+    (function () {
+      "use strict";
+      /* The haze app set. "go" tiles navigate to a built-in haze view
+         (no proxy needed); "url" tiles open through the parent haze proxy.
+         The url set below is the GitHub app library: every tile is a real
+         project from GitHub (OS shells, game hubs, cloaked pages, tools),
+         loaded from CDNs that serve the right MIME type for HTML. */
+      var GD = "https://raw.githack.com"; // serves GitHub files with text/html
+
+      var HUB = [
+        // ---- built into haze ----
+        { id: "chat",   name: "haze chat",   icon: "\uD83D\uDCAC", kind: "go", view: "chat",     desc: "On-device chat rooms with reactions, mentions, emoji and commands." },
+        { id: "music",  name: "hazefy",      icon: "\uD83C\uDFB5", kind: "go", view: "music",    desc: "Spotify-style search, playlists, queue and liked songs." },
+        { id: "ai",     name: "haze ai",     icon: "\uD83E\uDD16", kind: "go", view: "ai",       desc: "18+ models, streaming answers and side-by-side runs." },
+        { id: "games",  name: "haze games",  icon: "\uD83C\uDFAE", kind: "go", view: "games",    desc: "Game zones ready to play, no proxy needed." },
+        { id: "keys",   name: "hazekeys",    icon: "\uD83D\uDD11", kind: "go", view: "settings", desc: "Proxy engine, keys and haze preferences." },
+
+        // ---- github desktops / OS shells ----
+        { id: "nautilus", name: "NautilusOS", by: "nautilus-os",     icon: "\uD83D\uDC3A", kind: "url", url: GD + "/nautilus-os/NautilusOS/main/NautilusOS-OneFile/index.html", desc: "One-file desktop OS: dock, windows and three proxy browsers." },
+        { id: "fluxos",   name: "Flux OS",    by: "blockfreeubg",    icon: "\u26A1", kind: "url", url: GD + "/blockfreeubg/flux-os/main/index.html", desc: "JSON-driven app launcher with draggable proxy windows." },
+        { id: "nebuli",   name: "NebuliOS",   by: "Nebuli-OS",       icon: "\uD83E\uDDA2", kind: "url", url: GD + "/Nebuli-OS/NebuliOS-v1/main/main.html", desc: "Browser-style tabs, address bar and resizable windows." },
+        { id: "nebulis",  name: "Nebuli search", by: "Nebuli-OS",    icon: "\uD83D\uDD0D", kind: "url", url: GD + "/Nebuli-OS/NebuliOS-v1/main/search.html", desc: "Quick-link launcher: Discord, Google and more, proxied." },
+        { id: "anura",    name: "AnuraOS",    by: "MercuryWorkshop", icon: "\uD83E\uDD8A", kind: "url", url: GD + "/MercuryWorkshop/anuraOS/main/public/index.html", desc: "Full web desktop with a marketplace and app library." },
+        { id: "aeos",     name: "Aeos Lite",  by: "aeosntw",         icon: "\uD83C\uDF31", kind: "url", url: GD + "/aeosntw/lite/main/index.html", desc: "Single-file launcher backed by the Ultimate Games Stash." },
+        { id: "helium",   name: "Helium",     by: "1sunw",           icon: "\u2661", kind: "url", url: GD + "/1sunw/helium-s/main/helium.html", desc: "Lightweight hub with its own app shelves." },
+        { id: "uranium",  name: "Axiom",      by: "Onex558",         icon: "\u25A5", kind: "url", url: GD + "/Onex558/uraniumsite/main/index.html", desc: "Proxy shell with a configurable nav rail and themes." },
+        { id: "xenos",    name: "XenOS",      by: "NebulaServices",  icon: "\u2B50", kind: "url", url: "https://github.com/NebulaServices/XenOS","desc": "Customizable web desktop (archived \u2014 opens the repo page)." },
+        { id: "skyline",  name: "SkylineOS",  by: "carbonicality",   icon: "\uD83C\uDF05", kind: "url", url: "https://github.com/carbonicality/skylineOS", desc: "Alpine-linux emulation desktop (opens the repo page)." },
+
+        // ---- github game hubs ----
+        { id: "gug",       name: "GUG hub",        by: "greeniYT",      icon: "\uD83C\uDFAE", kind: "url", url: GD + "/greeniYT/all-gug-links/main/lol.html", desc: "Console-style home with games + apps tabs and JSON catalogs." },
+        { id: "fluxv3",    name: "Flux Games",     by: "blockfreeubg",  icon: "\uD83C\uDFAF", kind: "url", url: GD + "/blockfreeubg/fluxv3/main/games.html", desc: "JSON game catalog with thumbnails and a modal player." },
+        { id: "chicken",   name: "Chicken's Vault",by: "carbonicality", icon: "\uD83D\uDC14", kind: "url", url: GD + "/carbonicality/ChickenKingsVault/main/index.html", desc: "Catalog of 700+ games: flash, web ports and emulators." },
+        { id: "bigfoot",   name: "Bigfoot's GS",   by: "supaub",        icon: "\uD83E\uDD83", kind: "url", url: GD + "/supaub/BigfootsGS/main/index.html", desc: "Reusable game-shack library with big game grids." },
+        { id: "totally",   name: "Totally Science",by: "chillguyaQ-cmd",icon: "\uD83E\uDDEA", kind: "url", url: GD + "/chillguyaQ-cmd/Totally-Science/main/index.html", desc: "Chromebook-friendly game hub, no downloads required." },
+        { id: "bloxcraft", name: "Bloxcraft",      by: "bloxys-playables", icon: "\uD83E\uDE9B", kind: "url", url: GD + "/bloxys-playables/Bloxcraft-UBG-Singlefile/main/__MAIN__.html", desc: "Single-file mobile-style Roblox-flavored games hub." },
+        { id: "dogehub",   name: "Dogehub",        by: "blockfreeubg",  icon: "\uD83D\uDC36", kind: "url", url: GD + "/blockfreeubg/Dogehub/main/public/index.html", desc: "Scramjet-powered game and app hub." },
+        { id: "onekey",    name: "1Key",           by: "frozenfinale",  icon: "\uD83D\uDD11", kind: "url", url: GD + "/frozenfinale/1key/main/public/links/newnoahsgmaes.html", desc: "Big link vault with pocket one-click launchers." },
+
+        // ---- github cloaked / disguised pages ----
+        { id: "infamous",  name: "Infamous",   by: "Mtreasur0133-bit", icon: "\uD83E\uDD8D", kind: "url", url: GD + "/Mtreasur0133-bit/Algebra-2-Unit-3-Assessment/main/infamous.html", desc: "Assessment-cloaked portal page." },
+        { id: "premiumhub",name: "PremiumHUB", by: "Mtreasur0133-bit", icon: "\uD83C\uDFA8", kind: "url", url: "https://cdn.jsdelivr.net/gh/Mtreasur0133-bit/15milbatch-m2l-5@main/DarknuxORpremiumHUB/PremiumHUB-27.svg", desc: "Cloaked-grid SVG launcher disguised as an English page." },
+        { id: "english",   name: "English SVG",by: "PeteZah-G",        icon: "\u270F\uFE0F", kind: "url", url: "https://cdn.jsdelivr.net/gh/PeteZah-G/PeteZahStaticDone@main/english.svg", desc: "Cloaked launcher hidden inside an SVG worksheet." },
+        { id: "garnish",   name: "Garnish",    by: "daknux",           icon: "\uD83E\uDD6B", kind: "url", url: "https://cdn.jsdelivr.net/gh/daknux/simile@main/garnishments.svg", desc: "Cloaked launcher styled like a finance page." },
+        { id: "chalkie",   name: "Chalkle",    by: "Mtreasur0133-bit", icon: "\uD83D\uDCD3", kind: "url", url: GD + "/Mtreasur0133-bit/chalkie-dcq-1/main/chalkle-single-cdn-998.html", desc: "Single-page CDN-cloaked app file." },
+        { id: "sussy",     name: "Sussy City", by: "applebeescheese16-glitch", icon: "\uD83C\uDFED", kind: "url", url: "https://cdn.jsdelivr.net/gh/applebeescheese16-glitch/sussy-city-boi@main/logo.svg", desc: "Cloaked launcher disguised as a logo SVG." },
+
+        // ---- github media, tools & web apps ----
+        { id: "yt",       name: "Tubular",      by: "lauraevan",  icon: "\u25B6\uFE0F", kind: "url", url: GD + "/lauraevan/YouTube/main/index.html", desc: "Search YouTube and play results in an embedded player." },
+        { id: "ggr",      name: "Greatest Revive", by: "lauraevan", icon: "\u2728", kind: "url", url: GD + "/lauraevan/greatestgreatest-revive/main/index.html", desc: "PWA game grid with theme + card-size settings." },
+        { id: "dlhub",    name: "Download Hub", by: "GreenGru2",  icon: "\uD83D\uDCE5", kind: "url", url: GD + "/GreenGru2/Download-Hub/main/index.html", desc: "Cards.json-driven hub: HTML/ZIP downloads with ratings." },
+        { id: "arsenic",  name: "Arsenic",      by: "AvidTroll",  icon: "\uD83E\uDDBF", kind: "url", url: GD + "/AvidTroll/arsenic/main/public/index.html", desc: "Landing portal: home, chatroom, about, games and unblocker." }
+      ];
+
+      var FAVS_KEY = "haze-hub-favs";
+      var RECENT_KEY = "haze-hub-recent";
+      var sections = document.getElementById("a-sections");
+      var status = document.getElementById("a-status");
+      var count = document.getElementById("a-count");
+      var search = document.getElementById("a-search");
+      var favMode = false;
+
+      function loadJson(key, fallback) {
+        try { return JSON.parse(localStorage.getItem(key) || fallback); }
+        catch (e) { return JSON.parse(fallback); }
+      }
+      function esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+      function byId(id) {
+        for (var i = 0; i < HUB.length; i++) if (HUB[i].id === id) return HUB[i];
+        return null;
+      }
+
+      function openTile(tile) {
+        var recents = loadJson(RECENT_KEY, "[]").filter(function (r) { return r !== tile.id; });
+        recents.unshift(tile.id);
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify(recents.slice(0, 12))); } catch (e) {}
+        try {
+          if (tile.kind === "go" && window.parent && window.parent.hazeGo) {
+            window.parent.hazeGo(tile.view, tile.sub);
+            return;
+          }
+          if (tile.kind === "url" && window.parent && window.parent.hazeLaunch) {
+            window.parent.hazeLaunch(tile.url);
+            return;
+          }
+        } catch (e) {}
+        // standalone fallback (hub opened outside haze)
+        if (tile.url) window.open(tile.url, "_blank", "noopener");
+      }
+
+      function tileHtml(tile) {
+        var favs = loadJson(FAVS_KEY, "[]");
+        var isFav = favs.indexOf(tile.id) !== -1;
+        var credit = tile.by ? "<code>@" + esc(tile.by) + "</code>" : "";
+        return (
+          '<button class="a-tile" data-id="' + esc(tile.id) + '" type="button" aria-label="Open ' + esc(tile.name) + '">' +
+          '<span class="a-icon">' + esc(tile.icon) + "</span>" +
+          '<span class="a-meta"><span class="a-name">' + esc(tile.name) + credit + "</span>" +
+          '<span class="a-desc" style="display:block">' + esc(tile.desc) + "</span>" +
+          '<span class="a-kind' + (tile.kind === "go" ? " builtin" : "") + '">' +
+          (tile.kind === "go" ? "built-in" : "github") + "</span></span>" +
+          '<span class="a-fav' + (isFav ? " active" : "") + '" data-fav="' + esc(tile.id) + '" title="Favorite" role="button" tabindex="0">\u2605</span>' +
+          "</button>"
+        );
+      }
+
+      function section(title, list, clearLabel) {
+        var wrap = document.createElement("div");
+        var h = document.createElement("div");
+        h.className = "a-section-title";
+        h.innerHTML = esc(title) + (clearLabel ? ' <button class="a-clear" type="button">' + esc(clearLabel) + "</button>" : "");
+        wrap.appendChild(h);
+        var grid = document.createElement("div");
+        grid.className = "a-grid";
+        grid.innerHTML = list.map(tileHtml).join("");
+        wrap.appendChild(grid);
+        if (clearLabel) {
+          h.querySelector(".a-clear").addEventListener("click", function () {
+            localStorage.removeItem(clearLabel === "forget" ? RECENT_KEY : FAVS_KEY);
+            render();
+          });
+        }
+        return wrap;
+      }
+
+      function render() {
+        var q = search.value.trim().toLowerCase();
+        var favs = loadJson(FAVS_KEY, "[]");
+        var list = HUB.slice();
+        if (favMode) list = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+        if (q) {
+          list = list.filter(function (t) {
+            return (t.name + " " + (t.by || "") + " " + t.desc).toLowerCase().indexOf(q) !== -1;
+          });
+        }
+        count.textContent = list.length + (list.length === 1 ? " app" : " apps");
+        sections.innerHTML = "";
+
+        if (!list.length) {
+          status.hidden = false;
+          status.textContent = favMode && !q
+            ? "No favorites yet \u2014 hover an app and tap \u2605."
+            : q ? 'No apps match "' + q + '".' : "";
+          return;
+        }
+        status.hidden = true;
+
+        if (!q && !favMode) {
+          var recents = loadJson(RECENT_KEY, "[]").map(byId).filter(Boolean).slice(0, 6);
+          if (recents.length) sections.appendChild(section("\u23F1 Recently opened", recents, "forget"));
+          var favTiles = HUB.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+          if (favTiles.length) sections.appendChild(section("\u2605 Favorites", favTiles));
+          sections.appendChild(section("Built into haze", HUB.filter(function (t) { return t.kind === "go"; })));
+          sections.appendChild(section("GitHub desktops", HUB.filter(function (t) { return t.kind === "url" && ["nautilus","fluxos","nebuli","nebulis","anura","aeos","helium","uranium","xenos","skyline"].indexOf(t.id) !== -1; })));
+          sections.appendChild(section("GitHub game hubs", HUB.filter(function (t) { return ["gug","fluxv3","chicken","bigfoot","totally","bloxcraft","dogehub","onekey"].indexOf(t.id) !== -1; })));
+          sections.appendChild(section("GitHub cloaked pages", HUB.filter(function (t) { return ["infamous","premiumhub","english","garnish","chalkie","sussy"].indexOf(t.id) !== -1; })));
+          sections.appendChild(section("GitHub tools & web apps", HUB.filter(function (t) { return t.kind === "url" && ["yt","ggr","dlhub","arsenic"].indexOf(t.id) !== -1; })));
+        } else {
+          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list));
+        }
+      }
+
+      sections.addEventListener("click", function (e) {
+        var favBtn = e.target.closest(".a-fav");
+        if (favBtn) {
+          e.stopPropagation();
+          var id = favBtn.getAttribute("data-fav");
+          var favs = loadJson(FAVS_KEY, "[]");
+          var idx = favs.indexOf(id);
+          if (idx === -1) favs.push(id); else favs.splice(idx, 1);
+          try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs.slice(0, 60))); } catch (e2) {}
+          render();
+          return;
+        }
+        var tile = e.target.closest(".a-tile");
+        if (!tile) return;
+        var picked = byId(tile.getAttribute("data-id"));
+        if (picked) openTile(picked);
+      });
+
+      document.getElementById("a-favmode").addEventListener("click", function () {
+        favMode = !favMode;
+        this.classList.toggle("on", favMode);
+        render();
+      });
+      document.getElementById("a-reset").addEventListener("click", function () {
+        localStorage.removeItem(FAVS_KEY);
+        localStorage.removeItem(RECENT_KEY);
+        render();
+      });
+      document.getElementById("a-home").addEventListener("click", function () {
+        favMode = false;
+        search.value = "";
+        document.getElementById("a-favmode").classList.remove("on");
+        render();
+      });
+
+      var searchTimer = null;
+      search.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(render, 150);
+      });
+
+      // mirror haze's accent color (same origin - settings are shared)
+      try {
+        var accent = JSON.parse(localStorage.getItem("haze-settings") || "{}").accent;
+        if (accent) document.documentElement.style.setProperty("--aa", accent);
+      } catch (e) {}
+
+      // exposed for the parent haze command palette ("Open a random app")
+      window.hazeRandomApp = function () {
+        openTile(HUB[Math.floor(Math.random() * HUB.length)]);
+      };
+
+      render();
+    })();
+  </script>
+</body>
+</html>

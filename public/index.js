@@ -2553,6 +2553,14 @@ frameExit.addEventListener("click", () => {
   frameExit.hidden = true;
 });
 
+/* exposed for the apps hub iframe (same origin): tiles ask the parent to
+   either flip to a built-in view or launch a GitHub app through the proxy */
+window.hazeLaunch = (url) => launch(url);
+window.hazeGo = (view) => toggleView(hasView(view) ? view : "home");
+function hasView(v) {
+  return [...document.querySelectorAll(".view")].some((s) => s.dataset.viewSection === v);
+}
+
 /* ================================================================
    service worker + controller init (scramjet v2)
    ================================================================ */
@@ -3507,6 +3515,8 @@ function paletteCommands() {
   const cmds = [
     { label: "Go: Home", run: () => clickNav("home"), key: "1" },
     { label: "Go: haze games", run: () => clickNav("games"), key: "2" },
+    { label: "Go: haze apps", run: () => clickNav("apps"), key: "a" },
+    { label: "Open a random app", run: () => { clickNav("apps"); const f = document.getElementById("apps-frame"); if (f) f.onload = () => { setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 80); }; setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 400); } },
 
     { label: "Go: Music", run: () => clickNav("music"), key: "3" },
     { label: "Go: Chat", run: () => clickNav("chat"), key: "4" },

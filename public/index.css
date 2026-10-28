@@ -673,6 +673,7 @@ html[data-theme^="glass"] .glass-blobs {
   box-shadow: 0 0 40px var(--glow);
 }
 #games-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
+#apps-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
 
 .games-head {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -1122,7 +1123,7 @@ html[data-theme^="glass"] .hero-quote-text { text-shadow: 0 1px 16px rgba(0, 0, 
   .side-nav { flex-direction: row; flex-wrap: wrap; }
   .sidebar-foot { display: none; }
   .view { padding: 22px 18px 40px; }
-  #games-frame { height: calc(100vh - 280px); }
+  #games-frame, #apps-frame { height: calc(100vh - 280px); }
   .chat-room { height: calc(100vh - 300px); }
   .chat-msg { max-width: 92%; }
 }
