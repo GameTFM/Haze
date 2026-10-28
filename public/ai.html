@@ -1,1 +1,789 @@
-@@FILE:haze-site/public/ai.html@@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>haze AI</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #050507; --bg-panel: #0b0b0f; --bg-elev: #111116;
+      --border: rgba(255,255,255,.09); --muted: rgba(255,255,255,.5);
+      --accent: #b79bff; --text: #f2f2f5;
+      --user-bubble: #1b1b22; --ai-bubble: transparent;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 14px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+      display: flex; overflow: hidden;
+    }
+
+    /* ---------- sidebar ---------- */
+    .side { width: 250px; flex: none; border-right: 1px solid var(--border); background: var(--bg-panel); display: flex; flex-direction: column; }
+    .side-brand { display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px; font-weight: 700; letter-spacing: .3px; }
+    .side-brand .orb { width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(from 180deg, #6ea8ff, #b79bff, #6ea8ff); box-shadow: 0 0 14px rgba(183,155,255,.5); flex: none; }
+    .side-brand small { color: var(--muted); font-weight: 500; margin-left: auto; }
+    .side-actions { padding: 10px 12px; display: grid; gap: 8px; }
+    .side-btn { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 10px 12px; cursor: pointer; font: inherit; font-weight: 600; }
+    .side-btn:hover { border-color: var(--accent); }
+    .side-label { padding: 12px 18px 6px; font-size: 11px; letter-spacing: .12em; color: var(--muted); display: flex; justify-content: space-between; }
+    .side-search { margin: 6px 12px; }
+    .side-search input { width: 100%; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 8px 12px; font: inherit; outline: none; }
+    .side-search input:focus { border-color: var(--accent); }
+    .chat-list { flex: 1; overflow-y: auto; padding: 4px 12px 12px; display: grid; gap: 4px; align-content: start; }
+    .chat-item { text-align: left; border: 0; background: none; color: var(--text); padding: 9px 12px; border-radius: 9px; cursor: pointer; font: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 8px; align-items: center; }
+    .chat-item:hover { background: var(--bg-elev); }
+    .chat-item.active { background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--border); }
+    .chat-item .del { margin-left: auto; opacity: 0; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 13px; }
+    .chat-item:hover .del { opacity: 1; }
+    .side-foot { padding: 10px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+
+    /* ---------- image studio (pollinations) ---------- */
+    .isu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.74); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 70; }
+    .isu-overlay.open { display: flex; }
+    .isu { width: min(860px, 94vw); max-height: 90vh; overflow-y: auto; background: #0d0d12; border: 1px solid var(--border); border-radius: 18px; padding: 20px 22px; }
+    .isu h2 { margin: 0 0 4px; font-size: 19px; }
+    .isu .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 14px; }
+    .isu-prompt { width: 100%; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 12px 14px; font: inherit; outline: none; margin-bottom: 10px; }
+    .isu-prompt:focus { border-color: var(--accent); }
+    .isu-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .isu-row select, .isu-row input[type=number] { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 13px; }
+    .isu-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+    .isu-go { border: 1px solid var(--accent); background: var(--accent); color: #14121c; border-radius: 10px; padding: 9px 18px; font: inherit; font-weight: 700; cursor: pointer; }
+    .isu-go:hover { filter: brightness(1.12); }
+    .isu-go:disabled { opacity: .5; cursor: wait; }
+    .isu-close { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 9px 14px; cursor: pointer; font: inherit; }
+    .isu-close:hover { border-color: var(--accent); }
+    .isu-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 6px; }
+    .isu-card { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--bg-elev); position: relative; }
+    .isu-card img { width: 100%; display: block; aspect-ratio: 1 / 1; object-fit: cover; }
+    .isu-card .dl { position: absolute; bottom: 8px; right: 8px; border: 1px solid var(--border); background: rgba(0,0,0,.65); color: #fff; border-radius: 8px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
+    .isu-card .dl:hover { border-color: var(--accent); }
+    .isu-empty { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
+
+    /* ---------- main ---------- */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .top { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .top .title { font-weight: 600; color: var(--muted); font-size: 13.5px; }
+    .spacer { flex: 1; }
+    .sel { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px; max-width: 280px; cursor: pointer; outline: none; }
+    .sel:focus { border-color: var(--accent); }
+
+    /* ---------- models dialog (NYX-style) ---------- */
+    .mdu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 60; }
+    .mdu-overlay.open { display: flex; }
+    .mdu { width: min(1040px, 94vw); height: min(660px, 88vh); background: #0d0d12; border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.7); display: flex; overflow: hidden; }
+    .mdu-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); flex: none; }
+    .mdu-head h2 { margin: 0; font-size: 19px; font-weight: 700; }
+    .mdu-head small { color: var(--muted); font-size: 12.5px; margin-left: 8px; }
+    .mdu-x { margin-left: auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); cursor: pointer; font-size: 15px; }
+    .mdu-x:hover { border-color: var(--accent); }
+    .mdu-rail { width: 92px; flex: none; border-right: 1px solid var(--border); overflow-y: auto; padding: 10px 6px; display: flex; flex-direction: column; gap: 4px; scrollbar-width: none; }
+    .mdu-rail::-webkit-scrollbar { display: none; }
+    .mdu-railbtn { border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .mdu-railbtn .rail-ico { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+    .mdu-railbtn span.lbl { font-size: 11px; color: var(--muted); }
+    .mdu-railbtn:hover { background: var(--bg-elev); }
+    .mdu-railbtn.active { background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--border); }
+    .mdu-railbtn.active .lbl { color: var(--text); }
+    .mdu-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .mdu-searchrow { display: flex; gap: 10px; padding: 14px 18px 10px; }
+    .mdu-search { flex: 1; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 11px 16px; font: inherit; font-size: 14px; outline: none; }
+    .mdu-search:focus { border-color: var(--accent); }
+    .mdu-list { flex: 1; overflow-y: auto; padding: 4px 18px 18px; }
+    .mdu-group { padding: 16px 2px 8px; font-size: 11px; letter-spacing: .13em; color: var(--muted); font-weight: 600; }
+    .mdu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 1px solid transparent; background: none; color: var(--text); font: inherit; border-radius: 14px; padding: 12px 14px; cursor: pointer; }
+    .mdu-item:hover { background: var(--bg-elev); }
+    .mdu-item.selrow { background: var(--bg-elev); border-color: var(--border); }
+    .mdu-item .mico { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.06); border: 1px solid var(--border); font-size: 15px; }
+    .mdu-item .mtxt { min-width: 0; }
+    .mdu-item .mname { font-weight: 700; font-size: 14.5px; }
+    .mdu-item .msub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .mdu-item .mtag { margin-left: auto; flex: none; }
+    .keychip, .nokeychip { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; border-radius: 999px; padding: 3px 9px; }
+    .keychip { color: #9ef2c6; background: rgba(78,222,155,.12); border: 1px solid rgba(78,222,155,.35); }
+    .nokeychip { color: #ffca7a; background: rgba(255,202,122,.1); border: 1px solid rgba(255,202,122,.35); }
+    .mdu-check { margin-left: 12px; color: var(--accent); font-weight: 700; }
+    .keybtn { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 10px; padding: 8px 12px; font: inherit; cursor: pointer; }
+    .keybtn:hover { border-color: var(--accent); }
+
+    .msgs { flex: 1; overflow-y: auto; padding: 24px 18px; scroll-behavior: smooth; }
+    .welcome { max-width: 720px; margin: 12vh auto 0; text-align: center; }
+    .welcome h1 { font-size: 34px; font-weight: 700; margin: 0 0 26px; letter-spacing: -.5px; }
+    .suggestions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .sugg { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 11px 16px; cursor: pointer; font: inherit; font-size: 13.5px; display: flex; gap: 8px; align-items: center; }
+    .sugg:hover { border-color: var(--accent); }
+
+    .msg { max-width: 760px; margin: 0 auto 18px; display: flex; gap: 12px; }
+    .msg .avatar { width: 28px; height: 28px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: var(--bg-elev); border: 1px solid var(--border); }
+    .msg.user .avatar { background: #2a2a33; }
+    .msg .bubble { flex: 1; min-width: 0; }
+    .msg .who { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .msg .text { white-space: pre-wrap; overflow-wrap: break-word; }
+    .msg.ai .text { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 12px 15px; }
+    .msg .text code { background: rgba(255,255,255,.08); border-radius: 5px; padding: 1px 5px; font-size: 12.5px; }
+    .msg .text pre { background: #0a0a0e; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; overflow-x: auto; }
+    .msg .text pre code { background: none; padding: 0; }
+    .cursor { display: inline-block; width: 8px; height: 15px; background: var(--accent); vertical-align: text-bottom; animation: blink 1s steps(2) infinite; border-radius: 2px; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .composer-wrap { padding: 12px 18px 18px; }
+    .composer { max-width: 760px; margin: 0 auto; border: 1px solid var(--border); background: var(--bg-panel); border-radius: 16px; padding: 12px 14px; transition: border-color .15s; }
+    .composer:focus-within { border-color: var(--accent); }
+    .composer textarea { width: 100%; border: 0; background: none; color: var(--text); font: inherit; resize: none; outline: none; max-height: 180px; }
+    .composer-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .send { margin-left: auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); cursor: pointer; font-size: 15px; }
+    .send:hover { border-color: var(--accent); }
+    .send:disabled { opacity: .4; cursor: default; }
+    .fineprint { max-width: 760px; margin: 8px auto 0; text-align: center; font-size: 11.5px; color: var(--muted); }
+
+    .empty-list { padding: 10px 12px; color: var(--muted); font-size: 12.5px; }
+
+    /* ---------- real icons (no emoji) ---------- */
+    .ic { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.16em; }
+    .side-btn .ic, .keybtn .ic, .sugg .ic, .nx-pill .ic { width: 1.1em; height: 1.1em; }
+    .side-search { position: relative; }
+    .side-search .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .side-search input { padding-left: 34px; }
+    .chat-item .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .chat-item .del .ic { width: 12px; height: 12px; }
+    .mdu-x .ic, .isu .ic { width: 14px; height: 14px; }
+    .mdu-check .ic { width: 16px; height: 16px; }
+    .rail-ico .ic, .mico .ic { width: 17px; height: 17px; }
+    .send .ic { width: 16px; height: 16px; }
+    .warn { display: inline-flex; align-items: center; gap: 8px; }
+    .warn .ic { color: #ff8484; }
+    .side-toggle { width: 100%; background: none; border: 0; cursor: pointer; justify-content: space-between; }
+    .side-toggle .ic { transition: transform .15s ease; }
+    .side-options.closed .ai-use, .side-options.closed .ai-usebar, .side-options.closed .side-local { display: none; }
+    .side-options.closed .side-toggle .ic { transform: rotate(-90deg); }
+    .dl { display: inline-flex; align-items: center; gap: 6px; }
+    .dl .ic { width: 13px; height: 13px; }
+
+    /* ---------- haze look: grayscale + hero + pill composer ---------- */
+    :root { --bg: #0b0b0d; --bg-panel: #101012; --bg-elev: #17171a; --border: rgba(255,255,255,.08); --muted: rgba(255,255,255,.55); }
+    body { background: radial-gradient(1000px 480px at 50% -10%, rgba(255,255,255,.05), transparent 60%), var(--bg); }
+    .side-newrow { display: flex; gap: 8px; }
+    .side-btn.grow { flex: 1; }
+    .side-btn.ico { flex: none; width: 42px; padding: 10px 0; justify-content: center; }
+    .side-options { padding: 4px 16px 12px; border-top: 1px solid var(--border); }
+    .ai-use { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .ai-usebar { height: 6px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--border); margin-top: 6px; overflow: hidden; }
+    .ai-usebar div { height: 100%; width: 0; background: #f2f2f4; border-radius: 999px; transition: width .2s; }
+    .side-local { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+    body.ai-side-hide .side { display: none; }
+    .top .title { font-weight: 600; }
+    .welcome { margin-top: 9vh; }
+    .welcome-eyebrow { font-size: 12px; letter-spacing: .18em; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+    .welcome h1 { font-size: 40px; margin: 0 0 8px; }
+    .welcome-sub { color: var(--muted); margin: 0 0 26px; font-size: 15px; }
+    .composer.nx-pill {
+      display: flex; align-items: center; gap: 10px;
+      border-radius: 999px; padding: 8px 8px 8px 8px;
+      background: var(--bg-panel);
+    }
+    .composer.nx-pill .keybtn { flex: none; border-radius: 999px; display: flex; align-items: center; gap: 6px; }
+    .composer.nx-pill textarea { flex: 1; padding: 10px 6px; }
+    .composer.nx-pill .send { margin: 0; flex: none; width: 38px; height: 38px; border-radius: 50%; background: #f2f2f4; color: #0b0b0d; border: none; font-weight: 700; }
+    .composer.nx-pill .send:hover { filter: brightness(.92); }
+    @media (max-width: 760px) { .composer.nx-pill .keybtn b { display: none; } }
+  </style>
+  <script src="haze-config.js"></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="hz-cat" viewBox="0 0 24 24">
+      <path d="M5 4l3.2 3.1a7.4 7.4 0 0 1 7.6 0L19 4l-.8 5.2a7.5 7.5 0 1 1-11.4 0L6 4z" fill="currentColor" />
+      <circle cx="9.4" cy="13.4" r="1.1" fill="#101012" />
+      <circle cx="14.6" cy="13.4" r="1.1" fill="#101012" />
+    </symbol>
+    <symbol id="hz-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+    <symbol id="hz-history" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3.5 12a8.5 8.5 0 1 1 2.5 6" /><path d="M3.5 12H7m-3.5 0V8.5" /><path d="M12 7.5V12l3 2" /></g></symbol>
+    <symbol id="hz-temp" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6" /><path d="M20 3.5V8h-4.5" /></g></symbol>
+    <symbol id="hz-image" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><circle cx="9" cy="10" r="1.8" /><path d="M4.5 17.5l4.5-4.5 3 3 3.5-3.5 4 4" /></g></symbol>
+    <symbol id="hz-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+    <symbol id="hz-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5h15" /><path d="M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6" /><path d="M6.5 6.5l1 12A2 2 0 0 0 9.5 20.5h5a2 2 0 0 0 2-2l1-12" /><path d="M10 10.5v6M14 10.5v6" /></g></symbol>
+    <symbol id="hz-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5" /><path d="M15.8 15.8L20.5 20.5" /></g></symbol>
+    <symbol id="hz-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+    <symbol id="hz-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="hz-chev" viewBox="0 0 24 24"><path d="M6.5 9.5l5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="hz-send" viewBox="0 0 24 24"><path d="M12 19V5m0 0l-5.5 5.5M12 5l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="hz-plan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="M4 9.5h16M9.5 9.5V19" /></g></symbol>
+    <symbol id="hz-explain" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7" /></g></symbol>
+    <symbol id="hz-code" viewBox="0 0 24 24"><path d="M8.5 8L4 12l4.5 4M15.5 8L20 12l-4.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="hz-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" fill="currentColor" /></symbol>
+    <symbol id="hz-warn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L22 20H2L12 3.5z" /><path d="M12 9.5v4.5" /><circle cx="12" cy="16.8" r=".4" fill="currentColor" /></g></symbol>
+    <symbol id="hz-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5" /><path d="M4.5 20h15" /></g></symbol>
+  </svg>
+  <aside class="side">
+    <div class="side-brand"><span><b>haze AI</b><br /><small style="margin:0">Workspace</small></span><small id="model-count"></small></div>
+    <div class="side-actions">
+      <div class="side-newrow">
+        <button class="side-btn grow" id="btn-new"><svg class="ic" aria-hidden="true"><use href="#hz-plus" /></svg> New chat</button>
+        <button class="side-btn ico" id="btn-history" title="Search chats" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-history" /></svg></button>
+      </div>
+      <button class="side-btn" id="btn-temp"><svg class="ic" aria-hidden="true"><use href="#hz-temp" /></svg> Temporary chat</button>
+      <button class="side-btn" id="btn-images"><svg class="ic" aria-hidden="true"><use href="#hz-image" /></svg> Image studio</button>
+    </div>
+    <div class="side-label">CHATS <span id="chat-count">0</span></div>
+    <div class="side-search"><svg class="ic" aria-hidden="true"><use href="#hz-search" /></svg><input id="chat-search" placeholder="Search chats" /></div>
+    <div class="chat-list" id="chat-list"></div>
+    <div class="side-options">
+      <button class="side-label side-toggle" id="btn-options" type="button" style="padding:10px 2px 6px">CHAT OPTIONS <svg class="ic" aria-hidden="true"><use href="#hz-chev" /></svg></button>
+      <div class="ai-use"><span>Stored chats</span><span id="ai-use-tx">0 / 50</span></div>
+      <div class="ai-usebar"><div id="ai-use-fill"></div></div>
+      <div class="side-local">Local only · no account needed</div>
+    </div>
+    <div class="side-foot">haze AI · free models</div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <button class="keybtn" id="btn-side" title="Toggle sidebar" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-menu" /></svg></button>
+      <span class="title" id="conv-title">New conversation</span>
+      <span class="spacer"></span>
+      <button class="keybtn" id="btn-trash" title="Delete this chat" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-trash" /></svg></button>
+    </div>
+
+    <div class="msgs" id="msgs">
+      <div class="welcome">
+        <div class="welcome-eyebrow">haze AI</div>
+        <h1>Welcome back</h1>
+        <p class="welcome-sub">What would you like to explore today?</p>
+        <div class="suggestions">
+          <button class="sugg" data-p="Help me plan a project step by step"><svg class="ic" aria-hidden="true"><use href="#hz-plan" /></svg> Plan a project</button>
+          <button class="sugg" data-p="Explain how black holes work in simple terms"><svg class="ic" aria-hidden="true"><use href="#hz-explain" /></svg> Explain something</button>
+          <button class="sugg" data-p="Review this code idea: a cache that never invalidates. What breaks?"><svg class="ic" aria-hidden="true"><use href="#hz-code" /></svg> Review my code</button>
+          <button class="sugg" data-p="Brainstorm 10 names for a lo-fi study app"><svg class="ic" aria-hidden="true"><use href="#hz-spark" /></svg> Brainstorm ideas</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="isu-overlay" id="isu-overlay">
+      <div class="isu">
+        <h2>Image studio</h2>
+        <p class="sub">Describe an image and pick a style — generated free, right in haze. Click an image to download it.</p>
+        <input class="isu-prompt" id="isu-prompt" placeholder="A neon city skyline at dusk, vaporwave style..." maxlength="600" />
+        <div class="isu-row">
+          <select id="isu-style">
+            <option value="">No style (raw prompt)</option>
+            <option value="vibrant digital art, highly detailed">Digital art</option>
+            <option value="cinematic photograph, 35mm, dramatic lighting">Cinematic</option>
+            <option value="anime style, studio quality, vivid colors">Anime</option>
+            <option value="watercolor painting, soft edges">Watercolor</option>
+            <option value="vaporwave, neon, retro-futuristic, grid horizon">Vaporwave</option>
+            <option value="pixel art, 16-bit, crisp pixels">Pixel art</option>
+            <option value="low-poly 3d render, pastel palette">Low-poly</option>
+          </select>
+          <select id="isu-size">
+            <option value="1024x1024">Square 1024</option>
+            <option value="1280x720">Wide 1280×720</option>
+            <option value="720x1280">Tall 720×1280</option>
+            <option value="1024x576">Wide 1024×576</option>
+          </select>
+          <div class="isu-actions">
+            <button class="isu-go" id="isu-go" type="button">Generate</button>
+            <button class="isu-close" id="isu-close" type="button">Close</button>
+          </div>
+        </div>
+        <div class="isu-out" id="isu-out"><div class="isu-empty">Your generated images will appear here. They stay on your device.</div></div>
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <form class="composer nx-pill" id="composer" autocomplete="off">
+        <button class="keybtn" id="btn-models" title="Choose model" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-spark" /></svg> <b id="cur-model-label">Free</b> <svg class="ic" aria-hidden="true"><use href="#hz-chev" /></svg></button>
+        <textarea id="input" rows="1" placeholder="Message haze AI..."></textarea>
+        <button class="send" id="send" type="submit"><svg class="ic" aria-hidden="true"><use href="#hz-send" /></svg></button>
+      </form>
+      <p class="fineprint" id="fineprint">haze AI can make mistakes. Text chats are saved on this device (up to 50 recent). Temporary chats keep nothing.</p>
+    </div>
+  </main>
+
+  <div class="mdu-overlay" id="mdu-overlay">
+    <div class="mdu" role="dialog" aria-label="Models">
+      <div style="display:flex;flex-direction:column;flex:1;min-width:0">
+        <div class="mdu-head">
+          <h2>Models</h2>
+          <small id="mdu-count"></small>
+          <button class="mdu-x" id="mdu-close" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-x" /></svg></button>
+        </div>
+        <div class="mdu-body">
+          <div class="mdu-searchrow">
+            <input class="mdu-search" id="mdu-search" placeholder="Search models, companies, or tasks" />
+          </div>
+          <div class="mdu-list" id="mdu-list"></div>
+        </div>
+      </div>
+      <div class="mdu-rail" id="mdu-rail"></div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ======================= providers & models ======================= */
+  /* one keyless provider: the server relay (Pollinations, anonymous tier) */
+
+  var PROVIDERS = {
+    free: {
+      label: "Free (no key)", endpoint: "/ai/relay",
+      format: "openai", keyless: true, local: true,
+      models: [
+        { id: "openai-fast", name: "OpenAI GPT Fast (free)" },
+        { id: "openai", name: "OpenAI GPT (free, may need seed tier)" },
+        { id: "mistral", name: "Mistral (free, may need seed tier)" },
+        { id: "qwen-coder", name: "Qwen Coder (free, may need seed tier)" },
+        { id: "llama", name: "Llama (free, may need seed tier)" },
+        { id: "deepseek", name: "DeepSeek (free, may need seed tier)" },
+        { id: "gemini", name: "Gemini (free, may need seed tier)" }
+      ]
+    }
+  }
+
+  /* ======================= state ======================= */
+  var PREF_KEY = "haze-ai-pref", HIST_KEY = "haze-ai-chats";
+  var pref = loadPref(), chats = loadChats(), currentId = null, temporary = false;
+
+  function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
+  function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  function loadPref() { return jget(PREF_KEY, { provider: "free", model: "openai-fast" }); }
+  function loadChats() { return jget(HIST_KEY, []); }
+
+
+  function saveChats() { if (!temporary) jset(HIST_KEY, chats.slice(0, 50)); }
+  function updateUsage() {
+    try {
+      $("ai-use-tx").textContent = chats.length + " / 50";
+      $("chat-count").textContent = String(chats.length);
+      $("ai-use-fill").style.width = Math.min(100, (chats.length / 50) * 100) + "%";
+    } catch {}
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function $(id) { return document.getElementById(id); }
+
+  /* ======================= dom ======================= */
+  var msgsEl = $("msgs"), inputEl = $("input"), sendBtn = $("send");
+  var convTitle = $("conv-title"), chatListEl = $("chat-list"), searchEl = $("chat-search");
+
+  /* ======================= provider / model picker (Models dialog) ======================= */
+  /* current selection lives in pref.provider + pref[pref.provider] */
+  var PROVIDER_ICONS = {
+    free: { svg: "hz-spark", bg: "radial-gradient(circle at 30% 30%, #ffe9a8, #e8b93c)" },
+    openrouter: { svg: "hz-spark", bg: "#1f1f28" },
+    openai: { svg: "hz-spark", bg: "#101014" },
+    anthropic: { svg: "hz-spark", bg: "#c96442" },
+    google: { svg: "hz-spark", bg: "radial-gradient(circle at 30% 30%, #7aa7ff, #3f6fe0)" },
+    groq: { svg: "hz-spark", bg: "#f55036" },
+    deepseek: { svg: "hz-spark", bg: "#4d6bfe" },
+    mistral: { svg: "hz-spark", bg: "#ffd800", fg: "#111" },
+    xai: { svg: "hz-spark", bg: "#101014" },
+    together: { svg: "hz-spark", bg: "#0f6fff" },
+    cohere: { svg: "hz-spark", bg: "#39594d" }
+  };
+
+  function currentPid() { return pref.provider || "free"; }
+  function currentModelId() {
+    var pid = currentPid();
+    var saved = pref[pid];
+    var p = PROVIDERS[pid];
+    return (saved && p.models.some(function (m) { return m.id === saved; })) ? saved : p.models[0].id;
+  }
+  function currentModelLabel() {
+    var pid = currentPid(), p = PROVIDERS[pid], mid = currentModelId();
+    var m = p.models.find(function (x) { return x.id === mid; });
+    return m ? m.name : mid;
+  }
+  function updateModelBar() {
+    $("cur-model-label").textContent = currentModelLabel();
+    $("model-count").textContent = PROVIDERS[currentPid()].models.length + " models";
+    var p = PROVIDERS[currentPid()];
+    var needs = !p.keyless;
+    $("fineprint").textContent = needs
+      ? "Free models only — 'may need seed tier' ones auto-fallback to GPT Fast."
+      : "haze AI can make mistakes. Text chats are saved on this device (up to 50 recent). Temporary chats keep nothing.";
+  }
+
+  function railIcon(pid) {
+    var ico = PROVIDER_ICONS[pid] || { svg: "hz-spark", bg: "#1f1f28" };
+    var d = document.createElement("div"); d.className = "rail-ico";
+    d.style.background = ico.bg;
+    d.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#' + ico.svg + '"></use></svg>';
+    if (ico.fg) d.style.color = ico.fg;
+    return d;
+  }
+  function renderRail(filterText) {
+    var rail = $("mdu-rail"); rail.innerHTML = "";
+    var q = (filterText || "").toLowerCase();
+    Object.keys(PROVIDERS).forEach(function (pid) {
+      var p = PROVIDERS[pid];
+      if (q && !p.label.toLowerCase().includes(q) && !p.models.some(function (m) { return (m.name + " " + m.id).toLowerCase().includes(q); })) return;
+      var b = document.createElement("button"); b.type = "button";
+      b.className = "mdu-railbtn" + (pid === currentPid() && !q ? " active" : "");
+      b.appendChild(railIcon(pid));
+      var l = document.createElement("span"); l.className = "lbl"; l.textContent = p.label.replace(" (no key)", "").split(" ")[0];
+      b.appendChild(l);
+      b.addEventListener("click", function () { $("mdu-search").value = ""; renderRail(""); renderModelList(""); });
+      /* clicking a rail icon filters to that provider; free/All shows all */
+      rail.appendChild(b);
+    });
+  }
+
+  function renderModelList(filterText) {
+    var list = $("mdu-list"); list.innerHTML = "";
+    var q = (filterText || "").toLowerCase();
+    var total = 0;
+    Object.keys(PROVIDERS).forEach(function (pid) {
+      var p = PROVIDERS[pid];
+      var matches = p.models.filter(function (m) {
+        return !q || (m.name + " " + p.label + " " + m.id).toLowerCase().includes(q);
+      });
+      if (!matches.length) return;
+      var tag = p.keyless ? "FREE" : "PAID";
+      var g = document.createElement("div"); g.className = "mdu-group";
+      g.textContent = "· FREE MODELS ·";
+      list.appendChild(g);
+      matches.forEach(function (m) {
+        total++;
+        var b = document.createElement("button"); b.type = "button";
+        var selected = pid === currentPid() && m.id === currentModelId();
+        b.className = "mdu-item" + (selected ? " selrow" : "");
+        var ico = PROVIDER_ICONS[pid] || { svg: "hz-spark", bg: "#1f1f28" };
+        var ic = document.createElement("div"); ic.className = "mico"; ic.style.background = ico.bg; ic.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#' + ico.svg + '"></use></svg>';
+        if (ico.fg) ic.style.color = ic.fg;
+        var tx = document.createElement("div"); tx.className = "mtxt";
+        var nm = document.createElement("div"); nm.className = "mname"; nm.textContent = m.name;
+        var sub = document.createElement("div"); sub.className = "msub";
+        sub.textContent = p.label.replace(" (no key)", "") + " · Text; Reasoning";
+        tx.appendChild(nm); tx.appendChild(sub);
+        var tagEl = document.createElement("span"); tagEl.className = "mtag";
+        if (!p.keyless) {
+          var chip = document.createElement("span");
+          chip.className = "nokeychip";
+          chip.textContent = "NO KEY";
+          tagEl.appendChild(chip);
+        }
+        b.appendChild(ic); b.appendChild(tx); b.appendChild(tagEl);
+        if (selected) { var c = document.createElement("span"); c.className = "mdu-check"; c.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-check"></use></svg>'; b.appendChild(c); }
+        b.addEventListener("click", function () {
+          pref.provider = pid; pref[pid] = m.id; jset(PREF_KEY, pref);
+          updateModelBar(); renderRail(""); renderModelList($("mdu-search").value);
+          closeModels();
+        });
+        list.appendChild(b);
+      });
+    });
+    $("mdu-count").textContent = total + " available";
+    if (!total) {
+      var d = document.createElement("div"); d.className = "empty-list"; d.textContent = "No models match."; list.appendChild(d);
+    }
+  }
+
+  function openModels() { $("mdu-overlay").classList.add("open"); $("mdu-search").value = ""; renderRail(""); renderModelList(""); $("mdu-search").focus(); }
+  function closeModels() { $("mdu-overlay").classList.remove("open"); }
+  $("btn-models").addEventListener("click", openModels);
+  $("mdu-close").addEventListener("click", closeModels);
+  $("mdu-overlay").addEventListener("click", function (e) { if (e.target === $("mdu-overlay")) closeModels(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModels(); });
+  $("mdu-search").addEventListener("input", function () { renderRail(this.value); renderModelList(this.value); });
+  updateModelBar();
+
+  /* ======================= chats (sidebar) ======================= */
+  function chatById(id) { return chats.find(function (c) { return c.id === id; }); }
+  function activeChat() { return currentId ? chatById(currentId) : null; }
+
+  function renderChatList() {
+    chatListEl.innerHTML = "";
+    var q = (searchEl.value || "").toLowerCase();
+    var shown = chats.filter(function (c) {
+      var t = (c.title || "") + " " + c.messages.map(function (m) { return m.content; }).join(" ");
+      return !q || t.toLowerCase().includes(q);
+    });
+    if (!shown.length) {
+      var d = document.createElement("div"); d.className = "empty-list";
+      d.textContent = "No chats yet.";
+      chatListEl.appendChild(d); updateUsage(); return;
+    }
+    shown.forEach(function (c) {
+      var b = document.createElement("button"); b.type = "button";
+      b.className = "chat-item" + (c.id === currentId ? " active" : "");
+      b.textContent = c.title || "New chat";
+      b.addEventListener("click", function () { openChat(c.id); });
+      var x = document.createElement("button"); x.type = "button"; x.className = "del"; x.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-x"></use></svg>'; x.title = "Delete chat";
+      x.addEventListener("click", function (e) {
+        e.stopPropagation();
+        chats = chats.filter(function (z) { return z.id !== c.id; });
+        if (currentId === c.id) { currentId = null; showWelcome(); }
+        saveChats(); renderChatList();
+      });
+      b.appendChild(x);
+      chatListEl.appendChild(b);
+    });
+    updateUsage();
+  }
+  searchEl.addEventListener("input", renderChatList);
+  $("btn-side").addEventListener("click", function () { document.body.classList.toggle("ai-side-hide"); });
+  $("btn-options").addEventListener("click", function () { this.parentElement.classList.toggle("closed"); });
+  $("btn-history").addEventListener("click", function () { searchEl.focus(); });
+  $("btn-trash").addEventListener("click", function () {
+    if (!currentId) return;
+    chats = chats.filter(function (z) { return z.id !== currentId; });
+    currentId = null; saveChats(); renderChatList(); showWelcome();
+  });
+
+  function openChat(id) {
+    currentId = id; temporary = false;
+    var c = chatById(id);
+    convTitle.textContent = c.title || "Conversation";
+    renderMessages();
+    renderChatList();
+  }
+  function showWelcome() {
+    convTitle.textContent = "New conversation";
+    msgsEl.innerHTML =
+      '<div class="welcome"><div class="welcome-eyebrow">haze AI</div><h1>Welcome back</h1><p class="welcome-sub">What would you like to explore today?</p><div class="suggestions">' +
+      '<button class="sugg" data-p="Help me plan a project step by step"><svg class="ic" aria-hidden="true"><use href="#hz-plan"></use></svg> Plan a project</button>' +
+      '<button class="sugg" data-p="Explain how black holes work in simple terms"><svg class="ic" aria-hidden="true"><use href="#hz-explain"></use></svg> Explain something</button>' +
+      '<button class="sugg" data-p="Review this code idea: a cache that never invalidates. What breaks?"><svg class="ic" aria-hidden="true"><use href="#hz-code"></use></svg> Review my code</button>' +
+      '<button class="sugg" data-p="Brainstorm 10 names for a lo-fi study app"><svg class="ic" aria-hidden="true"><use href="#hz-spark"></use></svg> Brainstorm ideas</button>' +
+      "</div></div>";
+  }
+  msgsEl.addEventListener("click", function (e) {
+    var s = e.target.closest(".sugg");
+    if (s) { inputEl.value = s.dataset.p; inputEl.focus(); autoGrow(); submit(); }
+  });
+
+  $("btn-new").addEventListener("click", function () { currentId = null; temporary = false; showWelcome(); renderChatList(); inputEl.focus(); });
+  $("btn-temp").addEventListener("click", function () {
+    currentId = null; temporary = true; showWelcome(); renderChatList(); inputEl.focus();
+    convTitle.textContent = "Temporary chat";
+  });
+
+  /* ======================= rendering ======================= */
+  var WELCOME_STRIP = null; // welcome screen removed while messages exist
+
+  function renderMessages() {
+    var c = activeChat();
+    if (!c) return;
+    msgsEl.innerHTML = "";
+    c.messages.forEach(function (m) { appendMsg(m.role, m.content); });
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+  function appendMsg(role, text, streaming) {
+    var w = msgsEl.querySelector(".welcome");
+    if (w) w.remove();
+    var div = document.createElement("div");
+    div.className = "msg " + role;
+    div.innerHTML = '<div class="avatar">' + (role === "user" ? "You" [0] : "AI") + "</div>" +
+      '<div class="bubble"><div class="who">' + (role === "user" ? "You" : currentModelName()) + '</div><div class="text"></div></div>';
+    setBubbleText(div.querySelector(".text"), text);
+    if (streaming) div.querySelector(".text").insertAdjacentHTML("beforeend", '<span class="cursor"></span>');
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return div;
+  }
+  function setBubbleText(el, text) {
+    el.innerHTML = formatMd(String(text));
+  }
+  function formatMd(t) {
+    /* small safe markdown: escape first, then code fences / inline code / bold */
+    var esc = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    esc = esc.replace(/```(\w*)\n?([\s\S]*?)```/g, function (_, l, c) {
+      return "<pre><code>" + c.replace(/\n$/, "") + "</code></pre>";
+    });
+    esc = esc.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+    esc = esc.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    return esc;
+  }
+  function currentModelName() {
+    return currentModelLabel();
+  }
+
+  /* ======================= sending ======================= */
+  function autoGrow() { inputEl.style.height = "auto"; inputEl.style.height = Math.min(180, inputEl.scrollHeight) + "px"; }
+  inputEl.addEventListener("input", autoGrow);
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+  });
+  $("composer").addEventListener("submit", function (e) { e.preventDefault(); submit(); });
+
+  var busy = false;
+
+  function submit() {
+    if (busy) return;
+    var text = inputEl.value.trim();
+    if (!text) return;
+
+    var pid = currentPid(), p = PROVIDERS[pid];
+
+    var c = activeChat();
+    if (!c) {
+      c = { id: uid(), title: text.slice(0, 60), messages: [] };
+      chats.unshift(c);
+      currentId = c.id;
+      convTitle.textContent = c.title;
+      renderChatList();
+    }
+    c.messages.push({ role: "user", content: text });
+    if (!temporary) saveChats();
+    appendMsg("user", text);
+    inputEl.value = ""; autoGrow();
+
+    var aiDiv = appendMsg("assistant", "", true);
+    var aiTextEl = aiDiv.querySelector(".text");
+    var acc = "";
+    busy = true; sendBtn.disabled = true;
+
+    callModel(pid, c.messages, {
+      onDelta: function (d) {
+        acc += d;
+        aiTextEl.innerHTML = formatMd(acc) + '<span class="cursor"></span>';
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      },
+      onDone: function () {
+        aiTextEl.innerHTML = formatMd(acc);
+        busy = false; sendBtn.disabled = false;
+        if (!acc.trim()) acc = "(empty response)";
+        c.messages.push({ role: "assistant", content: acc });
+        if (!temporary) saveChats();
+      },
+      onError: function (msg) {
+        aiTextEl.innerHTML = '<span class="warn"><svg class="ic" aria-hidden="true"><use href="#hz-warn"></use></svg><span>' + escHtml(msg) + "</span></span>";
+        busy = false; sendBtn.disabled = false;
+      }
+    });
+  }
+  function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function callModel(pid, messages, cb) {
+    var p = PROVIDERS[pid];
+    var modelId = currentModelId();
+    var headers = { "Content-Type": "application/json" };
+
+    var body;
+    if (p.format === "anthropic") {
+      var sys = "";
+      var msgs = messages.filter(function (m) { return m.role !== "system"; }).map(function (m) { return { role: m.role, content: m.content }; });
+      body = JSON.stringify({ model: modelId, max_tokens: 2048, messages: msgs, stream: true });
+    } else {
+      body = JSON.stringify({ model: modelId, messages: messages, stream: true, referrer: "haze", local: true });
+    }
+
+    fetch((typeof HazeApi === "function" ? HazeApi(p.endpoint) : p.endpoint), { method: "POST", headers: headers, body: body, signal: AbortSignal.timeout(120000) })
+      .then(function (res) {
+        /* the free relay always returns SSE (upstream is forced to stream) */
+        if (!res.ok) {
+          return res.text().then(function (t) {
+            throw new Error("HTTP " + res.status + (t ? " — " + t.slice(0, 200) : ""));
+          });
+        }
+        var reader = res.body.getReader();
+        var dec = new TextDecoder();
+        var buf = "";
+        function pump() {
+          return reader.read().then(function (r) {
+            if (r.done) { cb.onDone(); return; }
+            buf += dec.decode(r.value, { stream: true });
+            var lines = buf.split("\n");
+            buf = lines.pop();
+            lines.forEach(function (line) {
+              line = line.trim();
+              if (!line || !line.startsWith("data:")) return;
+              var payload = line.slice(5).trim();
+              if (payload === "[DONE]") { return; }
+              try {
+                var j = JSON.parse(payload);
+                if (p.format === "anthropic") {
+                  if (j.type === "content_block_delta" && j.delta && (j.delta.text || j.delta.thinking)) cb.onDelta(j.delta.text || "");
+                } else {
+                  var d = j.choices && j.choices[0] && (j.choices[0].delta || j.choices[0].message);
+                  if (d && d.content) cb.onDelta(d.content);
+                }
+              } catch {}
+            });
+            return pump();
+          });
+        }
+        return pump();
+      })
+      .catch(function (err) {
+        cb.onError(err.name === "TimeoutError" ? "Request timed out." : (err.message || "Request failed."));
+      });
+  }
+
+  /* ======================= image studio ======================= */
+  var ISU_KEY = "haze-ai-images";
+  var isuOverlay = $("isu-overlay"), isuPrompt = $("isu-prompt"), isuStyle = $("isu-style"), isuSize = $("isu-size"), isuGo = $("isu-go"), isuOut = $("isu-out");
+  var isuImages = jget(ISU_KEY, []);
+
+  function escHtml2(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function renderIsuOut() {
+    if (!isuImages.length) {
+      isuOut.innerHTML = '<div class="isu-empty">Your generated images will appear here. They stay on your device.</div>';
+      return;
+    }
+    isuOut.innerHTML = "";
+    isuImages.forEach(function (item, i) {
+      var card = document.createElement("div"); card.className = "isu-card";
+      var img = document.createElement("img"); img.src = item.url; img.alt = item.prompt; img.title = item.prompt;
+      img.style.aspectRatio = "auto";
+      // pollinations may take a few seconds; show a loading shimmer via opacity
+      img.style.transition = "opacity .4s"; img.style.opacity = "0";
+      img.onload = function () { img.style.opacity = "1"; };
+      img.onerror = function () { card.style.opacity = ".4"; card.title = "Failed to load"; };
+      var dl = document.createElement("button"); dl.className = "dl"; dl.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-download"></use></svg> Save'; dl.type = "button";
+      dl.addEventListener("click", function () {
+        var a = document.createElement("a");
+        a.href = item.url;
+        a.download = "haze-image-" + (item.seed || i) + ".jpg";
+        a.target = "_blank";
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+      var del = document.createElement("button"); del.className = "dl"; del.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-x"></use></svg>'; del.type = "button"; del.style.right = "84px";
+      del.addEventListener("click", function () {
+        isuImages.splice(i, 1); jset(ISU_KEY, isuImages); renderIsuOut();
+      });
+      card.appendChild(img); card.appendChild(dl); card.appendChild(del);
+      isuOut.appendChild(card);
+    });
+  }
+
+  function openIsu() { isuOverlay.classList.add("open"); renderIsuOut(); isuPrompt.focus(); }
+  function closeIsu() { isuOverlay.classList.remove("open"); }
+  $("btn-images").addEventListener("click", openIsu);
+  $("isu-close").addEventListener("click", closeIsu);
+  isuOverlay.addEventListener("click", function (e) { if (e.target === isuOverlay) closeIsu(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeIsu(); });
+
+  isuGo.addEventListener("click", function () {
+    var raw = isuPrompt.value.trim();
+    if (!raw) { isuPrompt.focus(); return; }
+    var style = isuStyle.value;
+    var fullPrompt = style ? (raw + " — " + style) : raw;
+    var size = isuSize.value;
+    var seed = Math.floor(Math.random() * 1000000);
+    var url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(fullPrompt) +
+      "?width=" + size.split("x")[0] + "&height=" + size.split("x")[1] +
+      "&seed=" + seed + "&nologo=true&referrer=haze";
+    isuImages.unshift({ prompt: raw, url: url, seed: seed, at: Date.now(), size: size });
+    if (isuImages.length > 12) isuImages.length = 12;
+    jset(ISU_KEY, isuImages);
+    isuGo.disabled = true;
+    isuGo.textContent = "Generating…";
+    renderIsuOut();
+    // loading state quickly releases — we can't know exactly when upstream finishes rendering
+    setTimeout(function () { isuGo.disabled = false; isuGo.textContent = "Generate"; }, 3500);
+  });
+
+  /* ======================= boot ======================= */
+  renderChatList();
+  showWelcome();
+  inputEl.focus();
+})();
+</script>
+</body>
+</html>
