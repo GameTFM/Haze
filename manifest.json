@@ -1,0 +1,1 @@
+{"assetsDirectory": "./public", "compatibilityDate": "2026-10-01", "entrypoint": "index.js", "modules": [{"name": "index.js", "path": "./worker.js", "type": "esm"}], "spa": true}

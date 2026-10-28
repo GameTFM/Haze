@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0b0b0d"/>
+  <!-- soft ambient glow behind the word -->
+  <circle cx="256" cy="256" r="150" fill="#ffffff" opacity="0.05" filter="url(#glow)"/>
+  <text x="256" y="252"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif"
+        font-size="132"
+        font-weight="700"
+        letter-spacing="-6"
+        fill="#ffffff"
+        filter="url(#glow)">haze</text>
+  <!-- the underline that draws itself under the home logo -->
+  <rect x="146" y="322" width="220" height="6" rx="3" fill="#ffffff" opacity="0.85"/>
+</svg>
