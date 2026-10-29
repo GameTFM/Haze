@@ -20,7 +20,7 @@ Opens at **http://localhost:8000**
 
 One click — pick a host. Railway, Render, Koyeb, DigitalOcean, Heroku, and Google Cloud Run run the full Node backend (proxy + wisp + APIs). Vercel, Netlify, and Cloudflare Pages serve the UI + stateless APIs; point `haze-wisp-url` at a Node backend to enable browsing there (see [DEPLOY.md](DEPLOY.md)).
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.app/new/template?template=https://github.com/GameTFM/Haze)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/GameTFM/Haze)
 [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/GameTFM/Haze&branch=main&name=haze)
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/GameTFM/Haze/tree/main)

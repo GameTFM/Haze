@@ -34,7 +34,12 @@ Chat persists via `chat-data.json` (set `CHAT_DB_PATH=/data/chat-data.json` with
 ```
 
 Music / games / AI / ephemeral chat work out of the box. Browsing shows the
-proxy UI but can't tunnel until you set a wisp backend:
+proxy UI but can't tunnel until you set a wisp backend — paste it into
+**Settings → Proxy engine** (wisp server field, e.g.
+`wss://your-node-backend/wisp/`; API server field routes ALL APIs incl.
+persistent chat at the Node backend). It reloads automatically.
+
+ equivalents if you prefer code over clicks:
 
 - `localStorage.setItem("haze-wisp-url", "wss://your-node-backend/wisp/")`, or
 - `<script>window.__HAZE_WISP_URL="wss://your-node-backend/wisp/"</script>` before `haze-config.js`, or

@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>haze apps</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -170,6 +172,7 @@
         { id: "music",  name: "hazefy",      icon: "\uD83C\uDFB5", kind: "go", view: "music",    desc: "Spotify-style search, playlists, queue and liked songs." },
         { id: "ai",     name: "haze ai",     icon: "\uD83E\uDD16", kind: "go", view: "ai",       desc: "18+ models, streaming answers and side-by-side runs." },
         { id: "games",  name: "haze games",  icon: "\uD83C\uDFAE", kind: "go", view: "games",    desc: "Game zones ready to play, no proxy needed." },
+        { id: "cloud",  name: "cloud gaming", icon: "\uD83C\uDF10", kind: "go", view: "cloud",    desc: "Stream full PC games through your stratus-api backend." },
         { id: "keys",   name: "hazekeys",    icon: "\uD83D\uDD11", kind: "go", view: "settings", desc: "Proxy engine, keys and haze preferences." },
 
         // ---- github desktops / OS shells ----
@@ -303,6 +306,7 @@
       var FAVS_KEY = "haze-hub-favs";
       var RECENT_KEY = "haze-hub-recent";
       var CUSTOM_KEY = "haze-hub-custom";
+      var ICONS_KEY = "haze-hub-icons";
       var sections = document.getElementById("a-sections");
       var status = document.getElementById("a-status");
       var count = document.getElementById("a-count");
@@ -317,7 +321,7 @@
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
       }
       function allApps() {
-        return HUB.concat(WEBAPPS, loadJson(CUSTOM_KEY, "[]"));
+        return WEBAPPS;
       }
       function byId(id) {
         var list = allApps();
@@ -345,9 +349,69 @@
 
       function iconHtml(tile) {
         if (tile.img) {
-          return '<span class="a-icon"><img src="' + esc(tile.img) + '" alt="" loading="lazy" onerror="this.remove()">' + "</span>";
+          var cached = iconCache[tile.id];
+          var src = cached ? cached : esc(tile.img);
+          return '<span class="a-icon"><img src="' + src + '" alt="" loading="lazy" decoding="async" data-id="' + esc(tile.id) + '" onerror="this.remove()">' + "</span>";
         }
         return '<span class="a-icon">' + esc(tile.icon || "\uD83C\uDF10") + "</span>";
+      }
+
+      /* icon cache: first visit warms localStorage with data URLs so every
+         later load paints instantly with zero network requests */
+      var iconCache = loadJson(ICONS_KEY, "{}");
+      var iconPending = {}; // id -> true while fetching
+
+      function saveIconCache() {
+        try {
+          var total = JSON.stringify(iconCache).length;
+          if (total > 3 * 1024 * 1024) {
+            var keys = Object.keys(iconCache);
+            var i = 0;
+            while (JSON.stringify(iconCache).length > 2 * 1024 * 1024 && i < keys.length) {
+              delete iconCache[keys[i++]];
+            }
+          }
+          localStorage.setItem(ICONS_KEY, JSON.stringify(iconCache));
+        } catch (e) { /* quota full - cache is best-effort */ }
+      }
+
+      function warmIcons(list) {
+        var todo = [];
+        for (var t of list) {
+          if (!t.img) continue;
+          if (!iconCache[t.id] && !iconPending[t.id]) todo.push(t);
+        }
+        var MAX_CONC = 6;
+        var i = 0;
+        function next() {
+          if (i >= todo.length) return;
+          var tile = todo[i++];
+          iconPending[tile.id] = true;
+          fetch(tile.img, { mode: "cors", cache: "force-cache" })
+            .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.blob(); })
+            .then(function (blob) {
+              return new Promise(function (res) {
+                var fr = new FileReader();
+                fr.onload = function () { res(fr.result); };
+                fr.onerror = function () { res(null); };
+                fr.readAsDataURL(blob);
+              });
+            })
+            .then(function (dataUrl) {
+              if (dataUrl && String(dataUrl).length <= 30000) {
+                iconCache[tile.id] = dataUrl;
+                saveIconCache();
+                var imgs = sections.querySelectorAll("img[data-id='" + tile.id + "']");
+                for (var im of imgs) im.src = dataUrl;
+              }
+            })
+            .catch(function () {})
+            .then(function () {
+              delete iconPending[tile.id];
+              setTimeout(next, 40);
+            });
+        }
+        for (var k = 0; k < MAX_CONC && k < todo.length; k++) next();
       }
 
       function tileHtml(tile) {
@@ -392,22 +456,14 @@
         return wrap;
       }
 
-      var GH_GROUPS = {
-        "GitHub desktops": ["nautilus", "fluxos", "nebuli", "nebulis", "anura", "aeos", "helium", "uranium", "xenos", "skyline"],
-        "GitHub game hubs": ["gug", "fluxv3", "chicken", "bigfoot", "totally", "bloxcraft", "dogehub", "onekey"],
-        "GitHub cloaked pages": ["infamous", "premiumhub", "english", "garnish", "chalkie", "sussy"],
-        "GitHub tools & web apps": ["yt", "ggr", "dlhub", "arsenic"]
-      };
-
       function render() {
         var q = search.value.trim().toLowerCase();
         var favs = loadJson(FAVS_KEY, "[]");
-        var all = allApps();
-        var list = all;
+        var list = allApps();
 
         if (q) {
           list = list.filter(function (t) {
-            return (t.name + " " + (t.by || "") + " " + t.desc).toLowerCase().indexOf(q) !== -1;
+            return (t.name + " " + t.desc).toLowerCase().indexOf(q) !== -1;
           });
         }
         if (favMode) list = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
@@ -424,23 +480,8 @@
         }
         status.hidden = true;
 
-        if (!q && !favMode) {
-          var recents = loadJson(RECENT_KEY, "[]").map(byId).filter(Boolean).slice(0, 6);
-          if (recents.length) sections.appendChild(section("\u23F1 Recently opened", recents.map(tileHtml).join(""), "forget"));
-          var favTiles = all.filter(function (t) { return favs.indexOf(t.id) !== -1; });
-          if (favTiles.length) sections.appendChild(section("\u2605 Favorites", favTiles.map(tileHtml).join("")));
-          var custom = loadJson(CUSTOM_KEY, "[]");
-          sections.appendChild(section("\uD83D\uDC8C Your apps", custom.map(tileHtml).join("") + ADD_TILE, custom.length ? "clear all" : null));
-          sections.appendChild(section("Built into haze", HUB.filter(function (t) { return t.kind === "go"; }).map(tileHtml).join("")));
-          for (var g in GH_GROUPS) {
-            var ids = GH_GROUPS[g];
-            var tiles = HUB.filter(function (t) { return ids.indexOf(t.id) !== -1; });
-            if (tiles.length) sections.appendChild(section(g, tiles.map(tileHtml).join("")));
-          }
-          sections.appendChild(section("\u25A6 Web apps (Interstellar)", WEBAPPS.map(tileHtml).join("")));
-        } else {
-          sections.appendChild(section(favMode ? "\u2605 Favorites" : "Results", list.map(tileHtml).join("")));
-        }
+        sections.appendChild(section(favMode ? "\u2605 Favorites" : "Web apps", list.map(tileHtml).join("")));
+        warmIcons(list);
       }
 
       function addCustomApp() {
@@ -525,8 +566,7 @@
 
       // exposed for the parent haze command palette ("Open a random app")
       window.hazeRandomApp = function () {
-        var all = HUB.concat(WEBAPPS);
-        openTile(all[Math.floor(Math.random() * all.length)]);
+        openTile(WEBAPPS[Math.floor(Math.random() * WEBAPPS.length)]);
       };
 
       render();

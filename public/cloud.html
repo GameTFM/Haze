@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>haze cloud</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --aa: #ffffff;
+      --aa-ink: #0a0a0a;
+      --pill: #0f0f0f;
+      --pill-brd: #262626;
+      --muted: #9a9a9a;
+    }
+    html { scrollbar-color: #333 #050505; }
+    body {
+      background: #050505; color: #f5f5f5;
+      font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+      padding: 14px 18px 60px;
+      min-height: 100vh;
+    }
+    .cb-nav {
+      position: sticky; top: 12px; z-index: 20;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid var(--pill-brd); border-radius: 999px;
+      padding: 5px; backdrop-filter: blur(10px);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+      max-width: calc(100vw - 36px);
+    }
+    .cb-nav button {
+      height: 34px; border-radius: 999px; border: none; background: transparent;
+      color: #e8e8e8; font-family: inherit; font-size: 0.85rem;
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      padding: 0 12px; transition: background 0.15s ease;
+    }
+    .cb-nav button:hover { background: #1d1d1d; }
+    .cb-nav .cb-logo {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 999px;
+      background: var(--aa); color: var(--aa-ink);
+      font-weight: 700; font-size: 0.85rem;
+      white-space: nowrap; cursor: pointer; border: none; font-family: inherit;
+    }
+    .cb-nav .cb-div { width: 1px; height: 18px; background: #2a2a2a; margin: 0 3px; flex: none; }
+    .cb-nav .cb-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
+
+    h2 { font-size: 0.95rem; margin: 26px 2px 12px; color: #e8e8e8; letter-spacing: -0.01em; }
+    .cb-sub { color: var(--muted); font-size: 0.8rem; margin: -8px 2px 14px; line-height: 1.5; }
+
+    .cb-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+    .cb-tile {
+      position: relative; cursor: pointer; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: inherit; font-family: inherit; outline: none;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 13px 14px; text-align: left;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .cb-tile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.32); background: rgba(255, 255, 255, 0.07); }
+    .cb-tile:active { transform: scale(0.98); }
+    .cb-ico { width: 46px; height: 46px; border-radius: 13px; flex: none; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    .cb-ico img { width: 34px; height: 34px; border-radius: 8px; object-fit: contain; }
+    .cb-name { font-size: 0.86rem; font-weight: 700; }
+    .cb-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+    .cb-kind {
+      display: inline-block; margin-top: 7px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18); color: #cfcfcf;
+    }
+    .cb-kind.quick { border-color: #7ab8ff; color: #7ab8ff; }
+    .cb-kind.stratus { border-color: var(--aa); color: var(--aa); }
+
+    form.cb-form {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px; padding: 16px;
+      display: grid; gap: 10px; max-width: 620px;
+    }
+    .cb-form label { display: grid; gap: 5px; font-size: 0.78rem; color: #d8d8d8; }
+    .cb-form label span small { color: var(--muted); font-weight: 400; }
+    .cb-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .cb-row > label { flex: 1 1 220px; }
+    .cb-form input, .cb-form button {
+      font-family: inherit; border-radius: 10px; font-size: 0.85rem;
+    }
+    .cb-form input {
+      background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f5f5f5; padding: 9px 11px; outline: none; width: 100%;
+    }
+    .cb-form input:focus { border-color: var(--aa); }
+    .cb-form .cb-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .cb-form button[type="submit"] {
+      background: var(--aa); color: var(--aa-ink); border: none;
+      padding: 9px 18px; font-weight: 700; cursor: pointer;
+    }
+    .cb-form button.ghost {
+      background: transparent; color: #d8d8d8; border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 9px 14px; cursor: pointer;
+    }
+    .cb-form button:disabled { opacity: 0.5; cursor: default; }
+
+    .cb-log {
+      background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px; padding: 12px 14px; font-size: 0.76rem;
+      color: #cfcfcf; line-height: 1.6; max-height: 190px; overflow-y: auto;
+      white-space: pre-wrap; display: none;
+    }
+    .cb-log.on { display: block; }
+    .cb-log .ok { color: #9fe6a0; }
+    .cb-log .bad { color: #ff8f8f; }
+
+    .cb-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .cb-presets button {
+      font-size: 0.68rem; cursor: pointer; font-family: inherit;
+      background: rgba(255,255,255,0.06); color: #cfcfcf;
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 4px 10px;
+    }
+    .cb-presets button:hover { border-color: var(--aa); color: #fff; }
+
+    /* ---------- fullscreen player ---------- */
+    #playerWrap { position: fixed; inset: 0; z-index: 900; background: #000; display: none; }
+    #playerWrap.on { display: block; }
+    #stream {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      background: #000; object-fit: contain; cursor: default;
+    }
+    #ambient {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: fill; opacity: 0.55; filter: blur(3px);
+      transition: opacity 0.35s ease; pointer-events: none;
+      background: #050505;
+    }
+    #ambient.visible { opacity: 0.8; }
+    #stream.visible { opacity: 1; }
+    .cb-connect {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; text-align: center;
+      background: rgba(5, 5, 5, 0.92); z-index: 10;
+      transition: opacity 0.4s ease;
+    }
+    .cb-connect.gone { opacity: 0; pointer-events: none; }
+    .cb-connect .cb-dots { font-size: 0.85rem; color: #e8e8e8; letter-spacing: 0.3em; }
+    .cb-connect .cb-cmsg { color: var(--muted); font-size: 0.8rem; max-width: 420px; line-height: 1.6; }
+    .cb-ended {
+      position: absolute; inset: 0; display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px; text-align: center;
+      background: rgba(5, 5, 5, 0.94); z-index: 12;
+    }
+    .cb-ended.on { display: flex; }
+    .cb-ended .big { font-size: 1.5rem; font-weight: 700; }
+    .cb-ended p { color: var(--muted); font-size: 0.8rem; max-width: 420px; line-height: 1.6; }
+    .cb-ended button {
+      margin-top: 6px; font-family: inherit; cursor: pointer;
+      background: var(--aa); color: var(--aa-ink); border: none;
+      border-radius: 999px; padding: 8px 18px; font-weight: 700; font-size: 0.8rem;
+    }
+    #audioOverlay {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 14; display: none;
+      background: rgba(15,15,15,0.92); border: 1px solid var(--pill-brd);
+      border-radius: 999px; padding: 9px 16px; color: #f5f5f5;
+      font-family: inherit; font-size: 0.78rem; cursor: pointer;
+    }
+    #audioOverlay.visible { display: inline-flex; align-items: center; gap: 8px; }
+    #hud {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 14; display: none; align-items: center; gap: 10px;
+      background: rgba(15,15,15,0.85); border: 1px solid var(--pill-brd);
+      border-radius: 999px; padding: 7px 14px; font-size: 0.72rem; color: #d8d8d8;
+      opacity: 0; transition: opacity 0.25s ease; pointer-events: none; gap: 8px;
+    }
+    #hud.visible { display: inline-flex; opacity: 1; pointer-events: auto; }
+    #hud button {
+      font-family: inherit; font-size: 0.7rem; cursor: pointer;
+      background: transparent; border: 1px solid rgba(255,255,255,0.25);
+      color: #f5f5f5; border-radius: 999px; padding: 4px 10px;
+    }
+    #hud button.danger { border-color: #ff8f8f; color: #ff8f8f; }
+    #hud .cb-time { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <nav class="cb-nav">
+    <button class="cb-logo" id="cb-home" type="button">&#9632;&nbsp; cloud gaming</button>
+    <span class="cb-div"></span>
+    <span class="cb-count" id="cb-count"></span>
+  </nav>
+
+  <h2>Play real cloud gaming services</h2>
+  <p class="cb-sub">Full game-streaming platforms that run straight from the browser. Tiles launch through the haze proxy.</p>
+  <div class="cb-grid" id="cb-quick"></div>
+
+  <h2>stratus-api sessions</h2>
+  <p class="cb-sub">Runs a game on a remote GPU machine through a <a href="https://github.com/x8rr/stratus-api" target="_blank" rel="noopener" style="color:var(--aa)">stratus-api</a> deployment &mdash; account pool, queue, WebRTC video and a full gamepad/keyboard/mouse link, all from this page. Connect it once and it is saved on this device.</p>
+  <form class="cb-form" id="cb-form">
+    <div class="cb-row">
+      <label><span>stratus backend URL <small>— your deployment, https only</small></span>
+        <input id="cb-base" type="text" placeholder="https://stratus.example.com" autocomplete="off" />
+      </label>
+      <label><span>site API key <small>— the api_key from sites.json</small></span>
+        <input id="cb-key" type="password" placeholder="sk_live_..." autocomplete="off" />
+      </label>
+    </div>
+    <label><span>game key <small>— e.g. the game_key your backend passes to createSession</small></span>
+      <input id="cb-game" type="text" placeholder="e.g. Minecraft" autocomplete="off" list="cb-game-list" />
+      <datalist id="cb-game-list"></datalist>
+    </label>
+    <div class="cb-btns">
+      <button type="submit" id="cb-go">&#9654;&nbsp; Start session</button>
+      <button type="button" class="ghost" id="cb-save">Save settings</button>
+    </div>
+    <div class="cb-log" id="cb-log"></div>
+  </form>
+
+  <div id="playerWrap">
+    <canvas id="ambient" width="128" height="72"></canvas>
+    <video id="stream" autoplay playsinline muted></video>
+    <div class="cb-connect" id="connectOverlay">
+      <span class="cb-dots" id="connectDots">CONNECTING</span>
+      <span class="cb-cmsg" id="connectMsg">Signalling &amp; WebRTC…</span>
+    </div>
+    <div class="cb-ended" id="endedOverlay">
+      <span class="big">cloud session ended</span>
+      <p id="endedMsg">Time is up or the stream closed.</p>
+      <button id="endedBack" type="button">Back to lobby</button>
+    </div>
+    <button id="audioOverlay" type="button">&#128266;&nbsp; Click to unmute</button>
+    <div id="hud">
+      <span class="cb-time" id="hud-time">--:--</span>
+      <button id="hud-fs" type="button">Fullscreen</button>
+      <button id="hud-quit" type="button" class="danger">Quit session</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var QUICK = [
+        { name: "Geforce NOW", desc: "NVIDIA's full RTX cloud rig — free tier with queues.", ico: "\uD83D\uDFE9", da: "https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/geforce-now.webp", url: "https://play.geforcenow.com" },
+        { name: "Amazon Luna",  desc: "Amazon's cloud gaming channel service.",           ico: "\uD83C\uDF13", da: "https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/amazon-luna.webp", url: "https://luna.amazon.com/" },
+        { name: "RaccoonGame",  desc: "Free browser cloud gaming — the service stratus-api pools.", ico: "\uD83E\uDD48", url: "https://www.raccoongame.com" },
+        { name: "Now.GG",       desc: "Android games on cloud phones, free.",             ico: "\uD83D\uDEE9", da: "https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/shuttle.webp", url: "https://nowgg.me" },
+        { name: "Google Play now.gg", desc: "Full Android cloud devices from now.gg.", ico: "\u25B6\uFE0F", da: "https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/now-gg.webp", url: "https://now.gg" },
+        { name: "GBA Games",    desc: "Full emulator library — instant retro play.",      ico: "\uD83C\uDFAE", da: "https://cdn.jsdelivr.net/gh/InterstellarNetwork/Interstellar@main/static/assets/media/icons/gba.png", url: "https://gba.js.org/" }
+      ];
+
+      var CFG_KEY = "haze-cloud-config";
+      var GAMES_KEY = "haze-cloud-games";
+
+      var el = document.getElementById.bind(document);
+      var base = el("cb-base"), apiKey = el("cb-key"), gameKey = el("cb-game");
+      var logBox = el("cb-log"), goBtn = el("cb-go");
+      var playerWrap = el("playerWrap");
+      var loader = el("ambient").getContext("2d", { alpha: false });
+      var streamEl = el("stream"), ambientEl = el("ambient");
+      var connectOverlay = el("connectOverlay");
+      var endedOverlay = el("endedOverlay"), endedMsg = el("endedMsg");
+      var audioOverlay = el("audioOverlay"), hud = el("hud"), hudTime = el("hud-time");
+
+      function esc(s) { return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+      function loadJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch (e) { return fallback; } }
+      function saveJson(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+      function launch(url) {
+        try { if (window.parent !== window && window.parent.hazeLaunch) { window.parent.hazeLaunch(url); return; } } catch (e) {}
+        window.open(url, "_blank", "noopener");
+      }
+      function goHome() {
+        try { if (window.parent !== window && window.parent.hazeGo) { window.parent.hazeGo("home"); return; } } catch (e) {}
+      }
+      el("cb-home").addEventListener("click", goHome);
+
+      // ---- quick tiles ----
+      var quickWrap = el("cb-quick");
+      QUICK.forEach(function (q, i) {
+        var t = document.createElement("button");
+        t.type = "button"; t.className = "cb-tile";
+        t.innerHTML =
+          '<span class="cb-ico">' +
+          (q.da ? '<img src="' + esc(q.da) + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">' : esc(q.ico)) +
+          "</span><span><span class=\"cb-name\">" + esc(q.name) + "</span>" +
+          '<span class="cb-desc" style="display:block">' + esc(q.desc) + "</span>" +
+          '<span class="cb-kind quick">cloud play</span></span>';
+        t.addEventListener("click", function () { launch(q.url); });
+        quickWrap.appendChild(t);
+      });
+      el("cb-count").textContent = QUICK.length + " services ready";
+
+      // ---- remembered settings ----
+      var cfg = loadJson(CFG_KEY, {}) || {};
+      base.value = cfg.base || "";
+      apiKey.value = cfg.key || "";
+      (cfg.games || []).forEach(function (g) {
+        var o = document.createElement("option");
+        o.value = g;
+        el("cb-game-list").appendChild(o);
+      });
+      gameKey.value = cfg.game || (cfg.games && cfg.games[0]) || "";
+
+      el("cb-save").addEventListener("click", function () {
+        persist();
+        logLine("Settings saved on this device.", "ok");
+      });
+      function persist() {
+        cfg.base = base.value.trim().replace(/\/+$/, "");
+        cfg.key = apiKey.value.trim();
+        cfg.game = gameKey.value.trim();
+        var games = loadJson(GAMES_KEY, []);
+        if (cfg.game && games.indexOf(cfg.game) === -1) { games.unshift(cfg.game); games = games.slice(0, 12); }
+        saveJson(GAMES_KEY, games);
+        var seen = {};
+        el("cb-game-list").innerHTML = "";
+        games.forEach(function (g) {
+          if (seen[g]) return; seen[g] = 1;
+          var o = document.createElement("option");
+          o.value = g;
+          el("cb-game-list").appendChild(o);
+        });
+        saveJson(CFG_KEY, cfg);
+      }
+
+      function logLine(text, cls) {
+        logBox.classList.add("on");
+        var line = document.createElement("div");
+        line.className = cls || "";
+        line.textContent = text;
+        logBox.appendChild(line);
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+      function note(text) { logBox.classList.add("on"); logLine(text); }
+
+      var statusLine = "", statusTitle = "";
+      function setStatus(s, title) {
+        statusLine = s;
+        if (title !== undefined) statusTitle = title;
+        el("cb-count").textContent = (statusTitle ? statusTitle + " · " : "") + statusLine;
+      }
+
+      document.querySelectorAll("a[href]").forEach(function (a) { a.target = "_blank"; a.rel = "noopener"; });
+
+      // ---------- relay helpers ----------
+      function relayUrl(kind) {
+        var b = base.value.trim().replace(/\/+$/, "");
+        if (!/^https:\/\//i.test(b)) throw new Error("Backend URL must start with https://");
+        return "/api/cloud/" + kind + "?base=" + encodeURIComponent(b);
+      }
+      function relayHeaders() {
+        var k = apiKey.value.trim();
+        if (!k) throw new Error("Add the site API key from your stratus-api's sites.json.");
+        return { "Content-Type": "application/json", "x-api-key": k };
+      }
+
+      // ---------- session start ----------
+      var session = null; // { uuid, base, key, maxSeconds }
+      var pingTimer = null;
+      var gameKeyOf = "";
+
+      el("cb-form").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        if (session) return;
+        persist();
+        logBox.innerHTML = "";
+        logLine("Connecting to " + cfg.base + "…");
+
+        var uuid = "";
+        try {
+          var res = await fetch(relayUrl("create"), { method: "POST", headers: relayHeaders(), body: JSON.stringify({ game_key: cfg.game }) });
+          if (!res.ok) {
+            var errText = "";
+            try { errText = (await res.json()).error || ""; } catch (e) {}
+            logLine("createSession failed (" + res.status + ") " + errText, "bad");
+            return;
+          }
+          var reader = res.body.getReader();
+          var dec = new TextDecoder();
+          var buf = "";
+          var done = false;
+          while (!done) {
+            var chunk = await reader.read();
+            if (chunk.value) buf += dec.decode(chunk.value, { stream: true });
+            else done = true;
+            var idx;
+            while ((idx = buf.indexOf("\n")) !== -1) {
+              var line = buf.slice(0, idx).trim();
+              buf = buf.slice(idx + 1);
+              if (!line) continue;
+              var m;
+              try { m = JSON.parse(line); } catch (e2) { continue; }
+              if (m.status === "creating_account") logLine("Creating account…");
+              else if (m.status === "account_ready") logLine("Account ready.", "ok");
+              else if (m.status === "requesting_game") logLine("Requesting " + cfg.game + "…");
+              else if (m.status === "queue") { logLine("Queued — position " + (m.queue_pos || "?") + ". Waiting…"); setStatus("queued #" + (m.queue_pos || "?")); }
+              else if (m.status === "finished_queue") { uuid = m.uuid; logLine("Server assigned — starting session…", "ok"); done = true; break; }
+              else if (m.status === "error") { logLine("Backend error: " + (m.error || "unknown"), "bad"); return; }
+            }
+          }
+          if (!uuid) { logLine("Backend closed before session was ready.", "bad"); return; }
+        } catch (e) {
+          logLine(String(e.message || e), "bad");
+          return;
+        }
+
+        // ----- startGame + WebRTC -----
+        try {
+          var startRes = await fetch(relayUrl("start"), { method: "POST", headers: relayHeaders(), body: JSON.stringify({ uuid: uuid }) });
+          var start = await startRes.json();
+          if (!startRes.ok) { logLine("startGame failed: " + (start.error || startRes.status), "bad"); return; }
+          session = { uuid: uuid, maxSeconds: start.max_seconds || 0 };
+          logLine("Streaming — session " + uuid.slice(0, 8), "ok");
+          setStatus("live " + cfg.game, "session " + uuid.slice(0, 8));
+          startWebRtc(start.ice_servers, shapeSignalWs(start.signaling_ws, uuid));
+          openPlayer();
+        } catch (e2) {
+          logLine(String(e2.message || e2), "bad");
+        }
+      });
+
+      // ---------- ping loop keeps the session alive ----------
+      function startPingLoop() {
+        stopPingLoop();
+        var tick = 0;
+        pingTimer = setInterval(async function () {
+          if (!session) return;
+          tick++;
+          try {
+            var r = await fetch(relayUrl("ping"), { method: "POST", headers: relayHeaders(), body: JSON.stringify({ uuid: session.uuid }) });
+            if (!r.ok) logLine("ping failed " + r.status, "bad");
+            if (r.ok) {
+              var d = await r.json();
+              var used = d.session_time_used_seconds || 0;
+              var left = session.maxSeconds ? Math.max(session.maxSeconds - used, 0) : null;
+              hudTime.textContent = (left != null) ? ("time left " + pad(Math.floor(left / 60)) + ":" + pad(Math.floor(left % 60)) + (left < 60 ? " — closing soon" : "")) : "playing";
+            }
+          } catch (e) {}
+        }, 20_000);
+      }
+      function stopPingLoop() {
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      }
+      function pad(n) { return String(n).padStart(2, "0"); }
+
+      // ---------- player ----------
+      function openPlayer() {
+        playerWrap.classList.add("on");
+        connectOverlay.classList.remove("gone");
+        connectOverlay.style.display = "";
+        endedOverlay.classList.remove("on");
+        streamEl.classList.remove("visible");
+        streamEl.style.cursor = "";
+        dotsTimer();
+      }
+      function closePlayer() {
+        playerWrap.classList.remove("on");
+        endedOverlay.classList.remove("on");
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+      }
+
+      // ---------- WebRTC + input protocol (same wire format the stratus embed uses) ----------
+      var pc = null, dc = null, sigWs = null;
+      // rewrite the backend signal ws to haze's own relay (/cloud/signal/<uuid>)
+      function shapeSignalWs(raw, uuid) {
+        var ws = String(raw || "");
+        try {
+          var u = new URL(ws);
+          var m = u.pathname.match(/cloud\/v1\/signal\/([0-9a-fA-F-]+)/);
+          if (m) {
+            return (location.protocol === "https:" ? "wss://" : "ws://") + location.host +
+              "/cloud/signal/" + m[1] + "?base=" + encodeURIComponent(cfg.base);
+          }
+        } catch (e) {}
+        return ws;
+      }
+      var streamFocused = false, pointerLocked = false;
+      var vMouseX = 0, vMouseY = 0, curX = 0, curY = 0, mouseButtons = 0;
+      var activeKeys = new Set();
+      var escHoldTimer = null;
+      var MIMEMAP = { 0: "image/x-icon", 1: "image/jpeg", 2: "image/png", 3: "image/gif" };
+
+      function startWebRtc(iceServers, signalingWs) {
+        if (sigWs) { try { sigWs.close(); } catch (e) {} sigWs = null; }
+        if (!signalingWs) return;
+        sigWs = new WebSocket(signalingWs);
+        sigWs.onmessage = async function (e) {
+          var msg;
+          try { msg = JSON.parse(e.data); } catch (err) { return; }
+          if (msg.type === "game_ready") { onGameReady(iceServers); }
+          else if (msg.type === "rtc_answer" && pc) { pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)).catch(function () {}); }
+          else if (msg.type === "rtc_candidate" && pc && msg.candidate) {
+            var c = typeof msg.candidate === "string" ? { candidate: msg.candidate } : msg.candidate;
+            pc.addIceCandidate(new RTCIceCandidate(c)).catch(function () {});
+          }
+        };
+        sigWs.onclose = function () {
+          if (sigWsForcedClose) return;
+          if (session) showEnded("Signalling closed — the stream ended.");
+        };
+        sigWs.onerror = function () {};
+        sigWsForcedClose = false;
+      }
+      var sigWsForcedClose = false;
+
+      function onGameReady(iceServers) {
+        pc = new RTCPeerConnection({ iceServers: iceServers || [] });
+        pc.addTransceiver("audio", { direction: "recvonly" });
+        pc.addTransceiver("video", { direction: "recvonly" });
+        var dcv = pc.createDataChannel("JYSDK", { id: 1, ordered: false, maxRetransmits: 0 });
+        dcv.onopen = function () { dc = dcv; setupCursorHandling(dcv); };
+        pc.ondatachannel = function (evc) { if (evc.channel.label === "JYSDK") dc = evc.channel; };
+        pc.ontrack = function (evt) {
+          if (!streamEl.srcObject) streamEl.srcObject = new MediaStream();
+          streamEl.srcObject.addTrack(evt.track);
+        };
+        pc.onicecandidate = function (ev) { if (ev.candidate) sigSend({ type: "rtc_candidate", candidate: ev.candidate.toJSON() }); };
+        pc.oniceconnectionstatechange = function () {
+          var s = pc.iceConnectionState;
+          if (s === "connected" || s === "completed") onLive();
+          if (s === "failed") showEnded("The stream connection dropped — start another session.");
+        };
+        pc.createOffer().then(async function (offer) {
+          await pc.setLocalDescription(offer);
+          sigSend({ type: "rtc_offer", sdp: offer.sdp });
+        });
+      }
+
+      function sigSend(obj) { if (sigWs && sigWs.readyState === WebSocket.OPEN) sigWs.send(JSON.stringify(obj)); }
+
+      function onLive() {
+        clearInterval(dotsInterval);
+        hideConnect();
+        streamEl.classList.add("visible");
+        streamEl.muted = false;
+        streamEl.play().catch(function () { streamEl.muted = true; streamEl.play().catch(function () {}); audioOverlay.classList.add("visible"); });
+        hud.classList.add("visible");
+        startPingLoop();
+        startAmbient();
+      }
+      function hideConnect() {
+        connectOverlay.classList.add("gone");
+      }
+      function showEnded(msg) {
+        stopPingLoop();
+        connectOverlay.classList.remove("gone");
+        endedOverlay.classList.add("on");
+        if (msg) endedMsg.textContent = msg;
+        hud.classList.remove("visible");
+        streamEl.classList.remove("visible");
+        stopAmbient();
+        if (pc) { try { pc.close(); } catch (e) {} pc = null; }
+      }
+      el("endedBack").addEventListener("click", function () {
+        sigWsForcedClose = true;
+        if (sigWs) { try { sigWs.close(); } catch (e) {} sigWs = null; }
+        sigWsForcedClose = false;
+        session = null; dc = null;
+        statusTitle = ""; setStatus("ready");
+        closePlayer();
+        logLine("Player closed — start another session when ready.");
+      });
+      el("hud-quit").addEventListener("click", async function () {
+        if (session) {
+          try { await fetch(relayUrl("quit"), { method: "POST", headers: relayHeaders(), body: JSON.stringify({ uuid: session.uuid }) }); } catch (e) {}
+        }
+        sigWsForcedClose = true;
+        if (sigWs) { try { sigWs.close(); } catch (e) {} sigWs = null; }
+        session = null;
+        showEnded("Session quit — start another when your backend frees up.");
+        logLine("Session quit.");
+      });
+      el("hud-fs").addEventListener("click", function () {
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+        else playerWrap.requestFullscreen().catch(function () {});
+      });
+
+      function setupCursorHandling(dcv) {
+        dcv.onmessage = function (e) {
+          if (!(e.data instanceof ArrayBuffer)) return;
+          var v = new DataView(e.data);
+          if (v.byteLength > 4 && v.getUint8(0) === 163 && v.getUint8(1) === 6) {
+            if (v.byteLength <= 32) {
+              streamEl.style.cursor = "none";
+              if (currentCursorUrl) { URL.revokeObjectURL(currentCursorUrl); currentCursorUrl = null; }
+            } else {
+              var mime = MIMEMAP[v.getUint8(2)] || "image/png";
+              var hotX = v.getUint8(3), hotY = v.getUint8(4);
+              var blob = new Blob([e.data.slice(5)], { type: mime });
+              if (currentCursorUrl) URL.revokeObjectURL(currentCursorUrl);
+              currentCursorUrl = URL.createObjectURL(blob);
+              streamEl.style.cursor = "url(" + currentCursorUrl + ") " + hotX + " " + hotY + ", default";
+              if (document.pointerLockElement === streamEl) document.exitPointerLock();
+            }
+          }
+        };
+      }
+      var currentCursorUrl = null;
+
+      window.addEventListener("beforeunload", function (e) {
+        if (streamFocused) { e.preventDefault(); e.returnValue = ""; }
+      });
+
+      function getVideoRect() {
+        var rect = streamEl.getBoundingClientRect();
+        var vw = streamEl.videoWidth || rect.width;
+        var vh = streamEl.videoHeight || rect.height;
+        var scale = Math.min(rect.width / vw, rect.height / vh);
+        var rw = vw * scale, rh = vh * scale;
+        return { left: rect.left + (rect.width - rw) / 2, top: rect.top + (rect.height - rh) / 2, width: rw, height: rh };
+      }
+
+      document.addEventListener("pointerlockchange", function () {
+        pointerLocked = document.pointerLockElement === streamEl;
+        if (pointerLocked) {
+          var r = getVideoRect();
+          vMouseX = curX - r.left;
+          vMouseY = curY - r.top;
+        } else {
+          try { navigator.keyboard && navigator.keyboard.unlock && navigator.keyboard.unlock(); } catch (e) {}
+        }
+      });
+      streamEl.addEventListener("click", function () {
+        if (!dc) return;
+        streamFocused = true;
+        try { navigator.keyboard && navigator.keyboard.lock && navigator.keyboard.lock().catch(function () {}); } catch (e) {}
+      });
+      document.addEventListener("click", function (e) {
+        if (streamFocused && !streamEl.contains(e.target)) { streamFocused = false; }
+      });
+      document.addEventListener("mousemove", function (e) {
+        if (streamFocused && dc) {
+          var moveX = e.movementX || 0, moveY = e.movementY || 0;
+          if (pointerLocked) {
+            var r = getVideoRect();
+            vMouseX = Math.max(0, Math.min(r.width, vMouseX + moveX));
+            vMouseY = Math.max(0, Math.min(r.height, vMouseY + moveY));
+            curX = r.left + vMouseX;
+            curY = r.top + vMouseY;
+          } else { curX = e.clientX; curY = e.clientY; }
+          sendMouse(moveX, moveY, 0);
+        } else { curX = e.clientX; curY = e.clientY; }
+      });
+      document.addEventListener("mousedown", function (e) {
+        if (!streamFocused || !dc) return;
+        if (streamEl.style.cursor === "none" && !pointerLocked) { streamEl.requestPointerLock().catch(function () {}); }
+        mouseButtons = e.buttons;
+        sendMouse(0, 0, 0);
+      });
+      document.addEventListener("mouseup", function (e) {
+        if (!streamFocused || !dc) return;
+        mouseButtons = e.buttons;
+        sendMouse(0, 0, 0);
+      });
+      document.addEventListener("contextmenu", function (e) { if (streamFocused) e.preventDefault(); });
+      streamEl.addEventListener("wheel", function (e) {
+        if (!streamFocused) return;
+        e.preventDefault();
+        sendMouse(0, 0, e.deltaY > 0 ? -1 : 1);
+      }, { passive: false });
+      document.addEventListener("keydown", function (e) {
+        if (e.target === base || e.target === apiKey || e.target === gameKey) return;
+        if (!streamFocused || !dc) return;
+        e.preventDefault(); e.stopPropagation();
+        if (e.repeat) return;
+        if (e.keyCode === 27 && !escHoldTimer) {
+          escHoldTimer = setTimeout(function () {
+            if (document.pointerLockElement) document.exitPointerLock();
+            streamFocused = false;
+            escHoldTimer = null;
+          }, 1200);
+        }
+        sendKey(e.keyCode, true);
+      }, { capture: true });
+      document.addEventListener("keyup", function (e) {
+        if (e.target === base || e.target === apiKey || e.target === gameKey) return;
+        if (!streamFocused || !dc) return;
+        e.preventDefault(); e.stopPropagation();
+        if (e.keyCode === 27) { clearTimeout(escHoldTimer); escHoldTimer = null; }
+        sendKey(e.keyCode, false);
+      }, { capture: true });
+
+      function sendKey(keyCode, isDown) {
+        if (isDown) activeKeys.add(keyCode); else activeKeys.delete(keyCode);
+        var buf = new ArrayBuffer(24), v = new DataView(buf);
+        v.setUint8(0, 1); v.setUint8(2, 1); v.setUint8(3, 1);
+        v.setUint16(4, keyCode); v.setUint8(6, isDown ? 1 : 0);
+        var offset = 7;
+        activeKeys.forEach(function (k) {
+          if (k !== keyCode && k > 0 && k < 255 && offset < 21) {
+            v.setUint16(offset, k); offset += 2;
+            v.setUint8(offset, 1); offset++;
+          }
+        });
+        v.setUint8(offset++, 255);
+        v.setUint8(1, offset - 1);
+        dcSend(buf.slice(0, offset));
+      }
+      function sendMouse(moveX, moveY, scroll) {
+        moveX = Math.max(-127, Math.min(127, moveX));
+        moveY = Math.max(-127, Math.min(127, moveY));
+        var r = getVideoRect();
+        var absX = Math.floor(((curX - r.left) / r.width) * 10000);
+        var absY = Math.floor(((curY - r.top) / r.height) * 10000);
+        var buf = new ArrayBuffer(12), v = new DataView(buf);
+        v.setUint8(0, 1); v.setUint8(1, 11); v.setUint8(2, 2); v.setUint8(3, 8);
+        v.setUint16(4, Math.max(0, Math.min(10000, absX)));
+        v.setUint16(6, Math.max(0, Math.min(10000, absY)));
+        v.setInt8(8, moveX); v.setInt8(9, moveY);
+        v.setUint8(10, mouseButtons); v.setInt8(11, scroll);
+        dcSend(buf);
+      }
+      var GAMEPAD_BTN_MASK = [4096, 8192, 16384, 32768, 256, 512, 0, 0, 32, 16, 64, 128, 1, 2, 4, 8, 0];
+      function sendGamepad() {
+        var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+        for (var i = 0; i < pads.length; i++) {
+          var gp = pads[i];
+          if (!gp) continue;
+          var mask = 0, lt = 0, rt = 0;
+          for (var b = 0; b < Math.min(gp.buttons.length, 17); b++) {
+            var btn = gp.buttons[b];
+            var pressed = typeof btn === "object" ? btn.pressed : btn > 0;
+            var value = typeof btn === "object" ? btn.value : btn;
+            if (pressed) {
+              if (b === 6) lt = Math.round(value * 255);
+              else if (b === 7) rt = Math.round(value * 255);
+              else mask |= GAMEPAD_BTN_MASK[b];
+            }
+          }
+          var ax = gp.axes;
+          var lx = ax[0] ? Math.round(32767 * ax[0]) : 0;
+          var ly = ax[1] ? Math.round(-32767 * ax[1]) : 0;
+          var rx = ax[2] ? Math.round(32767 * ax[2]) : 0;
+          var ry = ax[3] ? Math.round(-32767 * ax[3]) : 0;
+          var buf = new ArrayBuffer(17), v = new DataView(buf);
+          v.setUint8(0, 1); v.setUint8(1, 16); v.setUint8(2, 3); v.setUint8(3, 2); v.setUint8(4, i);
+          v.setUint16(5, mask); v.setUint8(7, lt); v.setUint8(8, rt);
+          v.setInt16(9, lx); v.setInt16(11, ly); v.setInt16(13, rx); v.setInt16(15, ry);
+          dcSend(buf);
+        }
+      }
+      function dcSend(buf) {
+        try { if (dc && dc.readyState === "open") dc.send(buf); } catch (e) {}
+      }
+      (function inputLoop() {
+        if (dc && dc.readyState === "open") sendGamepad();
+        requestAnimationFrame(inputLoop);
+      })();
+
+      // ambient loading dots
+      function dotsTimer() {
+        clearInterval(dotsInterval);
+        dotsInterval = setInterval(function () {
+          dotsStep = (dotsStep + 1) % 7;
+          el("connectDots").textContent = "CONNECTING " + ".".repeat(Math.max(dotsStep, 1)).slice(0, 5).padEnd(5);
+        }, 240);
+      }
+      var dotsInterval = null, dotsStep = 0;
+      var ambientInterval = null;
+      function startAmbient() {
+        ambientEl.classList.add("visible");
+        clearInterval(ambientInterval);
+        ambientInterval = setInterval(function () {
+          if (streamEl.readyState >= 2) loader.drawImage(streamEl, 0, 0, 128, 72);
+        }, 150);
+      }
+      function stopAmbient() {
+        clearInterval(ambientInterval);
+        ambientInterval = null;
+        ambientEl.classList.remove("visible");
+      }
+
+      audioOverlay.addEventListener("click", function () {
+        streamEl.muted = false;
+        streamEl.play().catch(function () {});
+        audioOverlay.classList.remove("visible");
+      });
+
+      statusLine = "ready";
+      setStatus("ready");
+      setStatus(cfg.base ? cfg.base.replace(/^https?:\/\//, "") : "no backend set", "");
+    })();
+  </script>
+</body>
+</html>

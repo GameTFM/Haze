@@ -5,11 +5,17 @@
 // websocket proxy — serverless hosts serve these stateless APIs + static UI.
 
 export const UA = "haze/1.0";
+// music catalogs (Apple/Deezer) reject datacenter requests carrying an
+// unknown UA — Cloudflare Workers egress is datacenter space, so the
+// catalog fetches pose as a browser. The games mirror accepts anything,
+// so it keeps the honest haze UA.
+export const MUSIC_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-export async function fetchJson(url, timeoutMs = 8000) {
+export async function fetchJson(url, timeoutMs = 8000, ua = UA) {
   const r = await fetch(url, {
     signal: AbortSignal.timeout(timeoutMs),
-    headers: { "User-Agent": UA },
+    headers: { "User-Agent": ua, Accept: "application/json" },
   });
   if (!r.ok) throw new Error(`upstream ${r.status}`);
   return r.json();
@@ -23,10 +29,11 @@ const norm = (s) =>
     .trim();
 
 export async function musicSearch(q, limit = 24) {
-  limit = Math.min(Math.max(parseInt(limit) || 24, 1), 40);
-  const itunes = fetchJson(
-    `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=${Math.ceil(limit / 2)}`
-  )
+  limit = Math.min(Math.max(parseInt(limit) || 24, 1), 40);    const itunes = fetchJson(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=${Math.ceil(limit / 2)}`,
+      8000,
+      MUSIC_UA
+    )
     .then((data) =>
       (data.results || []).map((t) => ({
         title: String(t.trackName || ""),
@@ -38,10 +45,11 @@ export async function musicSearch(q, limit = 24) {
         spotify: `https://open.spotify.com/search/${encodeURIComponent(`${t.artistName || ""} ${t.trackName || ""}`)}`,
       }))
     )
-    .catch(() => []);
-  const deezer = fetchJson(
-    `https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=${limit}`
-  )
+    .catch(() => []);    const deezer = fetchJson(
+      `https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+      8000,
+      MUSIC_UA
+    )
     .then((data) =>
       (data.data || [])
         .slice()

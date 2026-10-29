@@ -591,8 +591,25 @@ html[data-theme^="glass"] .glass-blobs {
   border-color: var(--border);
 }
 
+/* bottom rail: discord link + settings gear (icon-only) */
+.side-bottom {
+  margin-top: auto;
+  display: flex; flex-direction: column; gap: 2px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.side-ico {
+  width: 44px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid transparent;
+  color: var(--muted); cursor: pointer; text-decoration: none;
+  transition: all 0.15s ease;
+}
+.side-ico svg { width: 22px; height: 22px; }
+.side-ico:hover { color: var(--text); background: var(--glow); }
+.side-ico.active { color: var(--accent); background: var(--glow); border-color: var(--border); }
+
 .sidebar-foot {
-  margin-top: auto; padding: 12px 10px 0;
+  margin-top: 10px; padding: 12px 10px 0;
   font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -674,6 +691,7 @@ html[data-theme^="glass"] .glass-blobs {
 }
 #games-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
 #apps-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
+#cloud-frame { width: 100%; height: calc(100vh - 210px); border: none; display: block; }
 
 .games-head {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -1121,9 +1139,11 @@ html[data-theme^="glass"] .hero-quote-text { text-shadow: 0 1px 16px rgba(0, 0, 
   }
   .sidebar-logo { border-bottom: none; padding: 0 6px 0 0; margin: 0; font-size: 1.25rem; }
   .side-nav { flex-direction: row; flex-wrap: wrap; }
+  .side-bottom { flex-direction: row; margin: 0 0 0 auto; padding: 0; border-top: none; }
+  .side-ico { width: 40px; height: 40px; }
   .sidebar-foot { display: none; }
   .view { padding: 22px 18px 40px; }
-  #games-frame, #apps-frame { height: calc(100vh - 280px); }
+  #games-frame, #apps-frame, #cloud-frame { height: calc(100vh - 280px); }
   .chat-room { height: calc(100vh - 300px); }
   .chat-msg { max-width: 92%; }
 }

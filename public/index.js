@@ -3516,6 +3516,7 @@ function paletteCommands() {
     { label: "Go: Home", run: () => clickNav("home"), key: "1" },
     { label: "Go: haze games", run: () => clickNav("games"), key: "2" },
     { label: "Go: haze apps", run: () => clickNav("apps"), key: "a" },
+    { label: "Go: Cloud gaming", run: () => clickNav("cloud"), key: "c" },
     { label: "Open a random app", run: () => { clickNav("apps"); const f = document.getElementById("apps-frame"); if (f) f.onload = () => { setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 80); }; setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 400); } },
 
     { label: "Go: Music", run: () => clickNav("music"), key: "3" },
