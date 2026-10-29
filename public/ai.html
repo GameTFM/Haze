@@ -88,7 +88,7 @@
     .mdu-railbtn:hover { background: var(--bg-elev); }
     .mdu-railbtn.active { background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--border); }
     .mdu-railbtn.active .lbl { color: var(--text); }
-    .mdu-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .mdu-body { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
     .mdu-searchrow { display: flex; gap: 10px; padding: 14px 18px 10px; }
     .mdu-search { flex: 1; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 11px 16px; font: inherit; font-size: 14px; outline: none; }
     .mdu-search:focus { border-color: var(--accent); }
@@ -99,7 +99,7 @@
     .mdu-tokenrow button:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
     .mdu-tokenlink { font-size: 12px; color: var(--accent); text-decoration: none; white-space: nowrap; }
     .mdu-tokenlink:hover { text-decoration: underline; }
-    .mdu-list { flex: 1; overflow-y: auto; padding: 4px 18px 18px; }
+    .mdu-list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 18px 18px; }
     .mdu-group { padding: 16px 2px 8px; font-size: 11px; letter-spacing: .13em; color: var(--muted); font-weight: 600; }
     .mdu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 1px solid transparent; background: none; color: var(--text); font: inherit; border-radius: 14px; padding: 12px 14px; cursor: pointer; }
     .mdu-item:hover { background: var(--bg-elev); }
@@ -379,7 +379,8 @@
      fallback below still gives one real, working free model. */
 
   var FREE_FALLBACK = [
-    { id: "openai-fast", name: "OpenAI: GPT-OSS 20B", vendor: "openai", sub: "Text · Reasoning · Tools" }
+    { id: "openai/gpt-oss-20b", tier: "key", name: "OpenAI GPT-OSS 20B", vendor: "openai", sub: "Text · Reasoning · openrouter" },
+    { id: "openai/gpt-oss-120b", tier: "key", name: "OpenAI GPT-OSS 120B", vendor: "openai", sub: "Text · Reasoning · openrouter" }
   ];
 
   function prettyModelId(raw) {
@@ -394,7 +395,7 @@
 
   var PROVIDERS = {
     free: {
-      label: "Free (no key)", endpoint: "/ai/relay",
+      label: "OpenAI (free)", endpoint: "/ai/openrouter",
       format: "openai", keyless: true, local: true,
       models: FREE_FALLBACK.slice()
     },
@@ -497,36 +498,10 @@
   function setOlKey(t) { try { t ? localStorage.setItem(OLKEY_KEY, String(t || "").trim()) : localStorage.removeItem(OLKEY_KEY); } catch {} }
   function olReady() { return olKey().length >= 10; }
 
-  function loadFreeModels() {
-    try {
-      /* the catalog HIDES seed-tier models unless the request carries the token */
-      var hdr = seedReady() ? { Authorization: "Bearer " + aiToken() } : {};
-      fetch("https://text.pollinations.ai/models", { headers: hdr, signal: AbortSignal.timeout(10000) })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (list) {
-          if (!Array.isArray(list)) return;
-          var any = list.filter(function (m) { return (m.output_modalities || ["text"]).indexOf("text") !== -1 && ["anonymous", "seed"].indexOf(m.tier || "anonymous") !== -1; });
-          if (!any.length) return;
-          PROVIDERS.free.models = any.map(function (m) {
-            var vendor = vendorKeyFor([m.name, (m.aliases || []).join(" "), m.description]);
-            return {
-              id: m.name,
-              tier: m.tier || "anonymous",
-              name: vendorLabelFor({ vendor: vendor }) + ": " + titleFromDescription(m.description),
-              vendor: vendor,
-              sub: ["Text", m.reasoning ? "Reasoning" : null, m.tools ? "Tools" : null].filter(Boolean).join(" · ")
-            };
-          });
-          /* if the saved model left the list, fall back to the first anonymous one */
-          var pid = "free";
-          var saved = pref && pref[pid];
-          if (saved && !PROVIDERS.free.models.some(function (m) { return m.id === saved; })) pref[pid] = (PROVIDERS.free.models.find(function (m) { return m.tier === "anonymous"; }) || PROVIDERS.free.models[0]).id;
-          updateModelBar();
-          if ($("mdu-overlay").classList.contains("open")) renderModelList($("mdu-search").value);
-        })
-        .catch(function () {});
-    } catch (e) {}
-  }
+  /* OpenAI models now run on the OpenRouter shelf (server key); the old
+     Pollinations catalog polled live at /models kept failing its per-IP rate
+     limit, so it is gone. */
+  function loadFreeModels() {}
 
   /* ======================= state ======================= */
   var PREF_KEY = "haze-ai-pref", HIST_KEY = "haze-ai-chats";
@@ -535,7 +510,8 @@
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
   function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
   function loadPref() {
-    var p = jget(PREF_KEY, { provider: "free", model: "openai-fast" }) || {};
+    var p = jget(PREF_KEY, { provider: "free", model: "openai/gpt-oss-20b" }) || {};
+    if (p.model === "openai-fast") p.model = "openai/gpt-oss-20b";
     if (p.provider !== "free" && p.provider !== "nvidia" && p.provider !== "groq" && p.provider !== "deepseek" && p.provider !== "ollama") p.provider = "free";
     return p;
   }
@@ -658,7 +634,7 @@
         var g = document.createElement("div"); g.className = "mdu-group";
         g.textContent = tier === "anonymous" ? "· FREE · NO KEY NEEDED ·"
           : tier === "seed" ? "· FREE · SEED TIER — PASTE YOUR FREE POLLINATIONS TOKEN ABOVE ·"
-          : tier === "key" ? "· FREE — PASTE A FREE OPENROUTER KEY ABOVE (openrouter.ai/settings/keys) ·"
+          : tier === "key" ? "· FREE — RUNS ON THE SITE'S OPENROUTER KEY ·"
           : tier === "groq" ? "· FREE — PASTE A FREE GROQ KEY ABOVE (console.groq.com/keys) ·"
           : tier === "ds" ? "· PAID — PASTE A DEEPSEEK API KEY ABOVE (platform.deepseek.com/api_keys) ·"
           : "· FREE PLAN — PASTE YOUR OLLAMA API KEY ABOVE (ollama.com/settings/keys) ·";
@@ -667,7 +643,10 @@
         var b = document.createElement("button"); b.type = "button";
         total++;
         var selected = pid === currentPid() && m.id === currentModelId();
-        var locked = (m.tier === "seed" && !seedReady()) || (m.tier === "key" && !orReady()) || (m.tier === "groq" && !gqReady()) || (m.tier === "ds" && !dsReady()) || (m.tier === "ol" && !olReady());
+        /* OpenRouter rows unlock without a pasted key: the server keeps a
+           key in Sites → Secrets, and without it /ai/openrouter answers with
+           a clear setup message. */
+        var locked = (m.tier === "seed" && !seedReady()) || (m.tier === "groq" && !gqReady()) || (m.tier === "ds" && !dsReady()) || (m.tier === "ol" && !olReady());
         b.className = "mdu-item" + (selected ? " selrow" : "") + (locked ? " locked" : "");
         var ico = iconFor(m);
         var ic = document.createElement("div"); ic.className = "mico"; ic.style.background = ico.bg; ic.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#' + ico.svg + '"></use></svg>';
@@ -688,7 +667,6 @@
         if (selected) { var c = document.createElement("span"); c.className = "mdu-check"; c.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-check"></use></svg>'; b.appendChild(c); }
         b.addEventListener("click", function () {
           if (m.tier === "seed" && !seedReady()) { $("mdu-token").focus(); return; }
-          if (m.tier === "key" && !orReady()) { $("mdu-orkey").focus(); return; }
           if (m.tier === "groq" && !gqReady()) { $("mdu-gqkey").focus(); return; }
           if (m.tier === "ds" && !dsReady()) { $("mdu-dskey").focus(); return; }
           if (m.tier === "ol" && !olReady()) { $("mdu-olkey").focus(); return; }
@@ -926,16 +904,7 @@
     var headers = { "Content-Type": "application/json" };
 
     var body;
-    var mo = currentModelObj();
-    if (mo.tier === "seed" && !seedReady()) {
-      cb.onError("That model needs a free Pollinations token. Open Models, paste one from auth.pollinations.ai, then pick it again.");
-      return;
-    }
-    if (mo.tier === "key" && !orReady()) {
-      cb.onError("Nemotron needs a free OpenRouter key. Get one at openrouter.ai/settings/keys, then paste it in Models — it stays in your browser.");
-      return;
-    }
-    if (mo.tier === "groq" && !gqReady()) {
+    var mo = currentModelObj();    if (mo.tier === "groq" && !gqReady()) {
       cb.onError("Groq models need a free Groq key. Get one at console.groq.com/keys, then paste it in Models — it stays in your browser.");
       return;
     }

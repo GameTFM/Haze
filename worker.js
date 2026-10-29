@@ -254,9 +254,9 @@ var routes = {
     const body = await readBody(request);
     const { model, messages: messages2 } = body || {};
     if (!Array.isArray(messages2) || !messages2.length) return json({ error: "messages required" }, 400);
-    const modelId = /^(nvidia\/nemotron-3-ultra-550b-a55b|nvidia\/nemotron-3\.5-super-vl|google\/gemma-4-26b-a4b-it)$/.test(model)
+    const modelId = /^(nvidia\/nemotron-3-ultra-550b-a55b|nvidia\/nemotron-3\.5-super-vl|google\/gemma-4-26b-a4b-it|openai\/gpt-oss-120b|openai\/gpt-oss-20b)$/.test(model)
       ? model
-      : "nvidia/nemotron-3-ultra-550b-a55b";
+      : "openai/gpt-oss-20b";
     try {
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
