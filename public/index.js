@@ -2707,6 +2707,93 @@ document.querySelectorAll(".shortcuts button").forEach((btn) => {
 });
 
 /* ================================================================
+   search suggestions (type in the address bar, pick one)
+   ================================================================ */
+
+const suggestBox = document.createElement("div");
+suggestBox.className = "sj-suggestlist";
+suggestBox.hidden = true;
+form.appendChild(suggestBox);
+
+let suggestTimer = null;
+let suggestItems = [];
+let suggestIndex = -1;
+let suggestCtl = null;
+
+function hideSuggestions() {
+  suggestIndex = -1;
+  suggestItems = [];
+  suggestBox.hidden = true;
+  suggestBox.innerHTML = "";
+}
+
+function renderSuggestions(list) {
+  suggestBox.innerHTML = "";
+  suggestItems = list;
+  suggestIndex = -1;
+  if (!list.length) { hideSuggestions(); return; }
+  list.forEach((text) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    b.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // don't blur the input before we launch
+      pick(text);
+    });
+    suggestBox.appendChild(b);
+  });
+  suggestBox.hidden = false;
+}
+
+async function fetchSuggestions(q) {
+  if (!q || q.length < 2) { hideSuggestions(); return; }
+  try {
+    if (suggestCtl) suggestCtl.abort();
+    suggestCtl = new AbortController();
+    const res = await fetch(`/search/suggest?q=${encodeURIComponent(q)}`, { signal: suggestCtl.signal });
+    if (!res.ok) { hideSuggestions(); return; }
+    const data = await res.json();
+    const list = (data && Array.isArray(data.suggestions)) ? data.suggestions.slice(0, 8) : [];
+    if (address.value.trim() !== q) return; // stale answer for an older query
+    renderSuggestions(list);
+  } catch (e) {
+    if (!e || e.name !== "AbortError") hideSuggestions();
+  }
+}
+
+function pick(text) {
+  hideSuggestions();
+  address.value = text;
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+}
+
+address.addEventListener("input", () => {
+  clearTimeout(suggestTimer);
+  const q = address.value.trim();
+  if (!q) { hideSuggestions(); return; }
+  suggestTimer = setTimeout(() => fetchSuggestions(q), 180);
+});
+
+address.addEventListener("keydown", (e) => {
+  if (suggestBox.hidden) return;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    suggestIndex = (suggestIndex + 1) % suggestItems.length;
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    suggestIndex = (suggestIndex - 1 + suggestItems.length) % suggestItems.length;
+  } else if (e.key === "Escape") {
+    hideSuggestions();
+    return;
+  } else return;
+  [...suggestBox.children].forEach((b, i) => b.classList.toggle("active", i === suggestIndex));
+  if (suggestIndex >= 0 && suggestItems[suggestIndex]) address.value = suggestItems[suggestIndex];
+});
+
+address.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
+form.addEventListener("submit", hideSuggestions);
+
+/* ================================================================
    shared ui helpers: toast, modal, prompt
    ================================================================ */
 
