@@ -289,6 +289,7 @@ const heroClockTime = document.getElementById("hero-clock-time");
 const heroClockDate = document.getElementById("hero-clock-date");
 
 function tickHeroClock() {
+  if (!heroClockTime || !heroClockDate) return;
   const now = new Date();
   heroClockTime.textContent = now.toLocaleTimeString([], {
     hour: "2-digit",
@@ -4324,4 +4325,243 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
       }
     }
   } catch (e) {}
+})();
+/* ================================================================
+   browser shell — dock tiles, tab strip, chrome buttons
+   ================================================================ */
+
+(function initShellChrome() {
+  const shell$ = (id) => document.getElementById(id);
+  const VIEW_LABELS = {
+    home: "Home", games: "Games", music: "Music", ai: "AI",
+    chat: "Chat", apps: "Apps", cloud: "Cloud", settings: "Settings",
+  };
+
+  /* ---- dock: real favicons on the pinned shortcuts ---- */
+  const dock = shell$("shortcuts");
+
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  }
+
+  function paintTiles() {
+    if (!dock) return;
+    dock.querySelectorAll("button[data-url]").forEach((btn) => {
+      if (btn.dataset.tiled === "1") return;
+      const url = btn.dataset.url || "";
+      const host = hostOf(url);
+      const label = (btn.textContent || "").trim() || host || "site";
+      btn.dataset.tiled = "1";
+      btn.classList.add("dock-tile");
+      btn.title = label + (host ? " — " + host : "");
+      btn.setAttribute("aria-label", label);
+      btn.textContent = "";
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.width = 22;
+      img.height = 22;
+      img.src =
+        "https://www.google.com/s2/favicons?sz=128&domain=" + encodeURIComponent(host);
+      img.addEventListener(
+        "error",
+        () => {
+          img.remove();
+          if (!btn.querySelector(".dock-letter")) {
+            const s = document.createElement("span");
+            s.className = "dock-letter";
+            s.textContent = label.slice(0, 1).toUpperCase();
+            btn.appendChild(s);
+          }
+        },
+        { once: true }
+      );
+      btn.appendChild(img);
+    });
+  }
+
+  paintTiles();
+  if (dock && "MutationObserver" in window) {
+    new MutationObserver(paintTiles).observe(dock, { childList: true });
+  }
+
+  /* ---- tab strip, mirroring the view switcher ---- */
+  const tabsEl = shell$("rail-tabs");
+  const openTabs = new Map([["home", "Home"]]);
+  let activeView = "home";
+
+  function renderTabs() {
+    if (!tabsEl) return;
+    tabsEl.textContent = "";
+    openTabs.forEach((label, view) => {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "rail-tab" + (view === activeView ? " on" : "");
+      const name = document.createElement("span");
+      name.textContent = label;
+      tab.appendChild(name);
+      if (view !== "home") {
+        const x = document.createElement("span");
+        x.className = "rail-tab-x";
+        x.setAttribute("role", "button");
+        x.setAttribute("aria-label", "Close tab");
+        x.textContent = "\u2715";
+        x.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openTabs.delete(view);
+          if (activeView === view) go("home");
+          else renderTabs();
+        });
+        tab.appendChild(x);
+      }
+      tab.addEventListener("click", () => go(view));
+      tabsEl.appendChild(tab);
+    });
+  }
+
+  function go(view) {
+    const target = hasView(view) ? view : "home";
+    activeView = target;
+    if (!openTabs.has(target)) openTabs.set(target, VIEW_LABELS[target] || target);
+    toggleView(target);
+    renderTabs();
+    document.body.classList.remove("rail-open");
+  }
+
+  /* the apps hub iframe and palette call this too — keep it in sync */
+  window.hazeGo = (v) => go(v);
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      const nav = e.target.closest && e.target.closest(".nav-item[data-view]");
+      if (nav) go(nav.dataset.view);
+    },
+    true
+  );
+
+  shell$("rail-newtab")?.addEventListener("click", () => {
+    go("home");
+    setTimeout(() => shell$("sj-address")?.focus(), 60);
+  });
+
+  shell$("dock-add")?.addEventListener("click", () => {
+    go("settings");
+    setTimeout(() => shell$("bookmark-add-input")?.focus(), 90);
+  });
+
+  /* ---- collapse / reopen the rail ---- */
+  const RAIL_KEY = "haze-rail-collapsed";
+  let collapsed = false;
+  try {
+    collapsed = localStorage.getItem(RAIL_KEY) === "1";
+  } catch {}
+  const applyRail = () => document.body.classList.toggle("rail-collapsed", collapsed);
+  const rememberRail = () => {
+    try {
+      localStorage.setItem(RAIL_KEY, collapsed ? "1" : "0");
+    } catch {}
+  };
+  applyRail();
+
+  shell$("rail-collapse")?.addEventListener("click", () => {
+    collapsed = true;
+    applyRail();
+    rememberRail();
+  });
+  shell$("bar-panel")?.addEventListener("click", () => {
+    if (window.innerWidth <= 900) {
+      document.body.classList.toggle("rail-open");
+      return;
+    }
+    collapsed = !collapsed;
+    applyRail();
+    rememberRail();
+  });
+
+  /* ---- back / forward across proxied pages ---- */
+  const backStack = [];
+  let backAt = -1;
+  const urlLabel = shell$("shell-url-tx");
+
+  function showUrl(url) {
+    const host = hostOf(url);
+    if (urlLabel && host) urlLabel.textContent = host;
+  }
+
+  function noteUrl(url) {
+    if (!url || backStack[backAt] === url) {
+      if (url) showUrl(url);
+      return;
+    }
+    backStack.splice(backAt + 1);
+    backStack.push(url);
+    if (backStack.length > 60) backStack.shift();
+    backAt = backStack.length - 1;
+    showUrl(url);
+  }
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      const tile = e.target.closest && e.target.closest("#shortcuts button[data-url]");
+      if (tile) noteUrl(tile.dataset.url);
+    },
+    true
+  );
+  form.addEventListener(
+    "submit",
+    () => {
+      const raw = address.value.trim();
+      if (!raw) return;
+      noteUrl(window.search(raw, searchEngine.value));
+    },
+    true
+  );
+  window.hazeLaunch = (url) => {
+    noteUrl(url);
+    return launch(url);
+  };
+
+  function step(dir) {
+    const next = backAt + dir;
+    if (next < 0) {
+      hazeToast("Nothing further back");
+      return;
+    }
+    if (next >= backStack.length) {
+      hazeToast("Nothing further forward");
+      return;
+    }
+    backAt = next;
+    launch(backStack[next]).catch(() => {});
+    showUrl(backStack[next]);
+  }
+
+  shell$("bar-back")?.addEventListener("click", () => step(-1));
+  shell$("bar-fwd")?.addEventListener("click", () => step(1));
+  shell$("bar-reload")?.addEventListener("click", () => location.reload());
+  shell$("bar-full")?.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.()?.catch?.(() => {});
+  });
+  shell$("bar-theme")?.addEventListener("click", () => {
+    const root = document.documentElement;
+    root.dataset.theme = root.dataset.theme === "cream" ? "haze" : "cream";
+  });
+  shell$("shell-url")?.addEventListener("click", () => {
+    go("home");
+    setTimeout(() => shell$("sj-address")?.focus(), 60);
+  });
+  shell$("shell-sync")?.addEventListener("click", () => {
+    go("settings");
+    hazeToast("No account needed — your setup is saved on this device");
+  });
+
+  renderTabs();
 })();
