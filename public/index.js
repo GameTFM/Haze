@@ -271,10 +271,28 @@ engineSelect.addEventListener("change", () => {
 
 const proxyEngineSelect = document.getElementById("proxy-engine-select");
 const engineFoot = document.getElementById("engine-foot");
+
+// scramjet + ultraviolet run inside this page (service worker + wisp).
+// gust, rammerhead, holy unblocker and corrosion are whole proxy apps that
+// need a server of their own, so they open as their own page.
 const PROXY_ENGINES = {
-  scramjet: { label: "scramjet v2", foot: "scramjet v2" },
-  ultraviolet: { label: "Ultraviolet", foot: "ultraviolet" },
+  scramjet: { label: "Scramjet v2", short: "scramjet", foot: "scramjet v2", kind: "engine" },
+  ultraviolet: { label: "Ultraviolet", short: "ultraviolet", foot: "ultraviolet", kind: "engine" },
+  gust: { label: "GUST", short: "gust", foot: "gust", kind: "external", server: "https://gust-browser.vercel.app", entry: "" },
+  rammerhead: { label: "Rammerhead", short: "rammerhead", foot: "rammerhead", kind: "external", server: "", entry: "/rammerhead.html" },
+  holy: { label: "Holy Unblocker", short: "holy", foot: "holy unblocker", kind: "external", server: "", entry: "/" },
+  corrosion: { label: "Corrosion", short: "corrosion", foot: "corrosion", kind: "external", server: "", entry: "/" },
 };
+
+function proxyServers() {
+  const map = loadSettings().proxyServers;
+  return map && typeof map === "object" ? map : {};
+}
+
+function proxyServerFor(id) {
+  const saved = proxyServers()[id];
+  return (saved || PROXY_ENGINES[id]?.server || "").replace(/\/+$/, "");
+}
 
 function applyProxyEngine(id) {
   const engine = PROXY_ENGINES[id] ? id : "scramjet";
@@ -282,6 +300,22 @@ function applyProxyEngine(id) {
   address.placeholder =
     ENGINE_PLACEHOLDERS[loadSettings().engine] || ENGINE_PLACEHOLDERS.duckduckgo;
   engineFoot.textContent = PROXY_ENGINES[engine].foot;
+  const chip = document.getElementById("shell-proxy-tx");
+  if (chip) chip.textContent = PROXY_ENGINES[engine].short;
+  const row = document.getElementById("proxy-server-row");
+  const note = document.getElementById("proxy-server-note");
+  const external = PROXY_ENGINES[engine].kind === "external";
+  if (row) row.hidden = !external;
+  if (note) {
+    note.textContent = external
+      ? PROXY_ENGINES[engine].label +
+        (proxyServerFor(engine)
+          ? " opens at " + proxyServerFor(engine) + " in a new tab; the address you searched is copied for you to paste inside it."
+          : " needs a server — paste yours above (a full URL).")
+      : "";
+  }
+  const input = document.getElementById("proxy-server-input");
+  if (input && external) input.value = proxyServers()[engine] || "";
 }
 
 /* ---- hero clock (top of home) ---- */
@@ -771,6 +805,48 @@ proxyEngineSelect.addEventListener("change", () => {
   // reload-loop when the other engine's service worker takes over
   sessionStorage.setItem("haze-engine-switch", String(Date.now()));
   location.reload();
+});
+
+// per-engine server url (gust / rammerhead / holy unblocker / corrosion)
+document.getElementById("proxy-server-save")?.addEventListener("click", () => {
+  const input = document.getElementById("proxy-server-input");
+  const id = proxyEngineSelect.value;
+  const url = (input?.value || "").trim().replace(/\/+$/, "");
+  const map = { ...proxyServers() };
+  if (url) map[id] = url;
+  else delete map[id];
+  saveSettings({ proxyServers: map });
+  applyProxyEngine(id);
+  hazeToast(url ? "Server saved for " + PROXY_ENGINES[id].label : "Server cleared");
+});
+
+// wisp server: the transport scramjet/ultraviolet speak to
+const wispInput = document.getElementById("wisp-url-input");
+if (wispInput) {
+  try {
+    wispInput.value = localStorage.getItem("haze-wisp-url") || "";
+  } catch {}
+}
+document.getElementById("wisp-url-save")?.addEventListener("click", () => {
+  const url = (wispInput?.value || "").trim();
+  try {
+    if (url) localStorage.setItem("haze-wisp-url", url);
+    else localStorage.removeItem("haze-wisp-url");
+    localStorage.removeItem("haze-wisp-bad");
+  } catch {}
+  hazeToast(url ? "Wisp saved — reloading" : "Wisp reset — reloading");
+  setTimeout(() => location.reload(), 500);
+});
+
+// the chip in the home chrome bar jumps to the proxy card
+document.getElementById("shell-proxy")?.addEventListener("click", () => {
+  window.hazeGo?.("settings");
+  setTimeout(() => {
+    const card = document.getElementById("proxy-card");
+    card?.scrollIntoView({ behavior: "smooth", block: "center" });
+    card?.classList.add("proxy-card-flash");
+    setTimeout(() => card?.classList.remove("proxy-card-flash"), 1400);
+  }, 120);
 });
 
 /* ---- restore saved settings ---- */
@@ -2527,7 +2603,40 @@ function ensureFrame() {
   frameExit.hidden = false;
 }
 
+/* ---- external proxies: gust, rammerhead, holy unblocker, corrosion ---- */
+
+function openExternalProxy(id, url) {
+  const mode = PROXY_ENGINES[id];
+  const server = proxyServerFor(id);
+  if (!server) {
+    error.textContent =
+      mode.label + " needs its own server — add one in Settings → Proxy engine.";
+    toggleView(hasView("settings") ? "settings" : "home");
+    return Promise.resolve();
+  }
+  // these proxies do not document a deep-link parameter, so the address is
+  // copied to the clipboard and pasted inside the app instead of guessing
+  const dest = server + (mode.entry || "/");
+  window.open(dest, "_blank", "noopener");
+  if (url) {
+    try {
+      navigator.clipboard?.writeText(url).catch(() => {});
+    } catch {}
+  }
+  hazeToast(
+    mode.label + " opened in a new tab" + (url ? " — address copied, paste it there" : "")
+  );
+  return Promise.resolve();
+}
+
 function launch(url) {
+  const engineId = loadSettings().proxyEngine || "scramjet";
+  const mode = PROXY_ENGINES[engineId];
+  if (mode && mode.kind === "external") {
+    error.textContent = "";
+    errorCode.textContent = "";
+    return openExternalProxy(engineId, url);
+  }
   if (!proxyReady) {
     error.textContent = "Still initializing — try again in a moment.";
     return Promise.resolve();
@@ -2545,7 +2654,86 @@ function launch(url) {
       return Promise.reject(e);
     }
   }
+  watchProxiedPage(url);
   return Promise.resolve();
+}
+
+/* ---- wisp watchdog: a dead wisp shows up as the controller's internal
+   error page inside the frame. when that happens, rotate to the next wisp
+   server and reopen the same address instead of leaving the error on screen. */
+
+const WISP_CANDIDATES = [
+  "wss://wisp.mercurywork.shop/",
+  (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/",
+];
+
+function markWispBad(url) {
+  try {
+    localStorage.setItem("haze-wisp-bad", url);
+  } catch {}
+}
+
+function nextWisp(current) {
+  let bad = "";
+  try {
+    bad = localStorage.getItem("haze-wisp-bad") || "";
+  } catch {}
+  const list = [...new Set([current, ...WISP_CANDIDATES].filter(Boolean))];
+  const clean = list.filter((u) => u !== bad);
+  const pool = clean.length ? clean : list;
+  return pool.find((u) => u !== current) || "";
+}
+
+let wispWatch = null;
+function watchProxiedPage(url) {
+  clearInterval(wispWatch);
+  const started = Date.now();
+  wispWatch = setInterval(() => {
+    const el = document.getElementById("sj-frame");
+    if (!el) {
+      clearInterval(wispWatch);
+      return;
+    }
+    let txt = "";
+    try {
+      txt = (el.contentDocument?.body?.innerText || "").slice(0, 600);
+    } catch {
+      clearInterval(wispWatch); // cross-origin: nothing we can inspect
+      return;
+    }
+    if (/Wisp WebSocket failed|websocket did not open|Internal Service Worker Error/i.test(txt)) {
+      clearInterval(wispWatch);
+      const current = typeof HazeWisp === "function" ? HazeWisp() : "";
+      const next = nextWisp(current);
+      if (!next) {
+        error.textContent = "The wisp server refused the connection. Paste a working wisp in Settings → Proxy engine.";
+        return;
+      }
+      let tries = 0;
+      try {
+        tries = Number(sessionStorage.getItem("haze-wisp-tries") || 0);
+      } catch {}
+      if (tries >= 2) {
+        error.textContent = "No wisp server would connect. Paste a working one in Settings → Proxy engine.";
+        return;
+      }
+      try {
+        sessionStorage.setItem("haze-wisp-tries", String(tries + 1));
+        sessionStorage.setItem("haze-resume", url || "");
+        localStorage.setItem("haze-wisp-url", next);
+      } catch {}
+      markWispBad(current);
+      error.textContent = "Wisp didn't connect — retrying with " + next.replace(/^wss?:\/\//, "") + "…";
+      setTimeout(() => location.reload(), 900);
+      return;
+    }
+    if (txt.trim().length > 0 || Date.now() - started > 15000) {
+      clearInterval(wispWatch);
+      try {
+        sessionStorage.removeItem("haze-wisp-tries");
+      } catch {}
+    }
+  }, 1200);
 }
 
 frameExit.addEventListener("click", () => {
@@ -2644,6 +2832,16 @@ async function init() {
   const engine = PROXY_ENGINES[loadSettings().proxyEngine]
     ? loadSettings().proxyEngine
     : "scramjet";
+
+  // gust / rammerhead / holy unblocker / corrosion are their own apps: there is
+  // no service worker of ours to register, searches just open them
+  if (PROXY_ENGINES[engine].kind === "external") {
+    proxyReady = true;
+    error.textContent = "";
+    window.$haze = { controller: null, ready: true, initError: null, engine };
+    return;
+  }
+
   const registration = await navigator.serviceWorker.register(
     engine === "ultraviolet" ? "/uv/sw.js" : "./sw.js",
     engine === "ultraviolet" ? { scope: window.__uv$config.prefix } : undefined
@@ -2692,15 +2890,24 @@ async function init() {
     // epoxy's init() awaits its own embedded wasm before constructing the
     // client, so there is no cold-start race to work around.
     //
-    // the wisp from x8rr/scramjet-templates is the default transport; this
-    // site's own /wisp/ endpoint stays as the fallback (and wins whenever a
-    // wisp is configured explicitly through HazeWisp).
-    let chosenWisp = TEMPLATE_WISP;
-    if (!(await wispAlive(TEMPLATE_WISP)) && wispUrl !== TEMPLATE_WISP) {
-      if (await wispAlive(wispUrl)) {
-        chosenWisp = wispUrl;
-        console.warn("haze: template wisp unreachable, falling back to" + wispUrl);
+    // a wisp the user saved by hand wins; otherwise try the one that ships
+    // with x8rr/scramjet-templates first and this site's own /wisp/ after it
+    let configuredWisp = "";
+    try {
+      configuredWisp = localStorage.getItem("haze-wisp-url") || "";
+    } catch {}
+    if (!configuredWisp && window.__HAZE_WISP_URL) configuredWisp = window.__HAZE_WISP_URL;
+
+    const wispOrder = [...new Set([configuredWisp, TEMPLATE_WISP, wispUrl].filter(Boolean))];
+    let chosenWisp = wispOrder[0];
+    for (const candidate of wispOrder) {
+      if (await wispAlive(candidate)) {
+        chosenWisp = candidate;
+        break;
       }
+    }
+    if (chosenWisp !== wispOrder[0]) {
+      console.warn("haze: wisp fallback →", chosenWisp);
     }
 
     const transport = new SJTransport({ wisp: chosenWisp });
@@ -2727,6 +2934,26 @@ init().catch((err) => {
   error.textContent = "Failed to initialize the proxy.";
   errorCode.textContent = String(err);
 });
+
+/* reopen the page that was loading when the wisp watchdog rotated servers */
+(function resumeAfterWispSwap() {
+  let url = "";
+  try {
+    url = sessionStorage.getItem("haze-resume") || "";
+    sessionStorage.removeItem("haze-resume");
+  } catch {}
+  if (!url) return;
+  let ticks = 0;
+  const timer = setInterval(() => {
+    ticks++;
+    if (window.$haze?.ready) {
+      clearInterval(timer);
+      launch(url).catch(() => {});
+    } else if (ticks > 40) {
+      clearInterval(timer);
+    }
+  }, 500);
+})();
 
 /* ================================================================
    home form + shortcuts

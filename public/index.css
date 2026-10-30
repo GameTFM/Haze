@@ -2216,3 +2216,24 @@ html.icons-sidebar .sidebar { width: var(--rail-w); }
 html.icons-sidebar .main { margin-left: 0; }
 html.icons-sidebar .side-nav .nav-item span { display: inline; }
 html.icons-sidebar .side-nav .nav-item { justify-content: flex-start; padding: 7px 9px; }
+
+/* ---- proxy chip in the chrome bar + settings card ---- */
+.shell-proxy {
+  height: 22px; padding: 0 9px; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #8b8b96; font: inherit; font-size: 0.66rem; font-weight: 500;
+  letter-spacing: 0.02em; cursor: pointer; white-space: nowrap;
+}
+.shell-proxy:hover { color: #fff; border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08); }
+
+#proxy-card.proxy-card-flash {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 0 42px rgba(120, 110, 255, 0.28);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.wisp-field { display: block; flex: none; }
+.wisp-field input { width: 100%; margin-top: 6px; }
+
+/* hidden proxy rows really hide (display:flex otherwise wins over [hidden]) */
+#proxy-server-row[hidden] { display: none; }

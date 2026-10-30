@@ -149,6 +149,9 @@
           </button>
 
           <div class="shell-right">
+            <button class="shell-proxy" id="shell-proxy" type="button" title="Proxy engine — Scramjet is the default">
+              <span id="shell-proxy-tx">scramjet</span>
+            </button>
             <span class="b-online"><span class="b-dot" aria-hidden="true"></span><span id="b-online-tx">online</span></span>
             <button class="bar-btn" id="bar-theme" type="button" title="Toggle light / dark" aria-label="Toggle theme">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 18.1v2.4M2.5 12h2.4M18.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
@@ -581,13 +584,29 @@
             </select>
           </div>
 
-          <div class="settings-card">
+          <div class="settings-card" id="proxy-card">
             <h3>Proxy engine</h3>
-            <p class="muted">How sites load inside the frame. Switching reloads haze.</p>
+            <p class="muted">Scramjet is the default. Ultraviolet runs in this page too; the rest are separate proxy apps that need their own server.</p>
             <select id="proxy-engine-select">
               <option value="scramjet">Scramjet v2 (default)</option>
               <option value="ultraviolet">Ultraviolet</option>
+              <option value="gust">GUST</option>
+              <option value="rammerhead">Rammerhead</option>
+              <option value="holy">Holy Unblocker</option>
+              <option value="corrosion">Corrosion</option>
             </select>
+            <div class="cloak-custom-row" id="proxy-server-row" hidden>
+              <input id="proxy-server-input" type="text" placeholder="https://your-proxy.example.com" maxlength="300" />
+              <button id="proxy-server-save" class="ghost-btn" type="button">Save</button>
+            </div>
+            <p class="muted widget-toggle-note" id="proxy-server-note"></p>
+            <div class="cloak-custom-row">
+              <label class="music-speed-label wisp-field">Wisp server
+                <input id="wisp-url-input" type="text" placeholder="wss://wisp.example.com/" maxlength="300" />
+              </label>
+              <button id="wisp-url-save" class="ghost-btn" type="button">Save &amp; reload</button>
+            </div>
+            <p class="muted widget-toggle-note">Scramjet and Ultraviolet browse through a wisp server. If pages die with “websocket did not open”, haze rotates to the next one automatically — you can also paste a known-good wisp here.</p>
           </div>
 
           <div class="settings-card">
