@@ -203,6 +203,59 @@ async function readBody(request) {
   }
 }
 var routes = {
+  // ---- vercel ai gateway relay (one key, ~500 models across every vendor) ----
+  // The key never reaches the browser: it lives in Sites → Secrets as
+  // AI_GATEWAY_API_KEY and is swapped in here.
+  async gwModels(request, env) {
+    const key = String((env && env.AI_GATEWAY_API_KEY) || "").trim();
+    if (!key) return json({ error: "AI Gateway key is not set (Sites → Secrets → AI_GATEWAY_API_KEY)." }, 501);
+    try {
+      const r = await fetch("https://ai-gateway.vercel.sh/v1/models", {
+        headers: { Authorization: "Bearer " + key },
+        signal: AbortSignal.timeout(15000)
+      });
+      return new Response(await r.text().catch(() => ""), {
+        status: r.status,
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+    } catch (e) {
+      return json({ error: String(e?.message || e) }, 502);
+    }
+  },
+  async gwChat(request, env) {
+    if (request.method !== "POST") return json({ error: "POST only." }, 405);
+    const key = String((env && env.AI_GATEWAY_API_KEY) || "").trim();
+    if (!key) return json({ error: "Vercel AI Gateway is not configured on this deployment yet (add AI_GATEWAY_API_KEY in Sites → Secrets)." }, 501);
+    const body = await readBody(request);
+    const model = String((body && body.model) || "");
+    const messages2 = body && body.messages;
+    if (!Array.isArray(messages2) || !messages2.length) return json({ error: "messages required" }, 400);
+    // gateway ids are always "vendor/model"; anything else 400s upstream anyway
+    if (!/^[a-z0-9][a-z0-9._-]{0,40}\/[a-z0-9][a-z0-9._:-]{0,80}$/.test(model)) return json({ error: "bad model id" }, 400);
+    try {
+      const r = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+        body: JSON.stringify({ model: model, messages: messages2, stream: true }),
+        signal: AbortSignal.timeout(120000)
+      });
+      if (!r.ok) {
+        const raw = await r.text().catch(() => "");
+        let msg = raw.slice(0, 300);
+        try { const j = JSON.parse(raw); if (j && j.error && j.error.message) msg = j.error.message; } catch {}
+        if (r.status === 403 && /credit card|customer_verification_required/i.test(raw)) {
+          msg = "The Vercel AI Gateway key is valid, but the account has no card on file yet, so it will not serve requests. Add one at vercel.com → AI (free credits), then send again.";
+        }
+        return json({ error: msg }, r.status);
+      }
+      return new Response(r.body, {
+        status: 200,
+        headers: { "Content-Type": r.headers.get("content-type") || "text/event-stream", "Cache-Control": "no-store" }
+      });
+    } catch (e) {
+      return json({ error: String(e?.message || e) }, 502);
+    }
+  },
   // ---- airforce relay (api.airforce, OpenAI-compatible; hosts claude-fable-5.1 etc.) ----
   // The browser sends its locally-stored key in the x-airforce-key header;
   // we swap it into Authorization upstream and stream the answer straight back.
@@ -948,6 +1001,8 @@ var worker_default = {
     if (p === "/ai/groq") return routes.gqChat(request, env);
     if (p === "/ai/deepseek") return routes.dsChat(request, env);
     if (p === "/ai/ollama") return routes.olChat(request, env);
+    if (p === "/ai/gateway/models") return routes.gwModels(request, env);
+    if (p === "/ai/gateway") return routes.gwChat(request, env);
     if (p === "/api/online") return routes.onlineBeat(url);
     if (p === "/wisp/" || p.startsWith("/wisp/"))
       return handleWisp(request, ctx);
