@@ -246,12 +246,13 @@ const ENGINES = {
   bing: "https://www.bing.com/search?q=%s",
   startpage: "https://www.startpage.com/sp/search?query=%s",
 };
+const SEARCH_PLACEHOLDER = "Search anything\u2026";
 const ENGINE_PLACEHOLDERS = {
-  brave: "Search Brave or type a URL",
-  google: "Search Google or type a URL",
-  duckduckgo: "Search DuckDuckGo or type a URL",
-  bing: "Search Bing or type a URL",
-  startpage: "Search Startpage or type a URL",
+  brave: SEARCH_PLACEHOLDER,
+  google: SEARCH_PLACEHOLDER,
+  duckduckgo: SEARCH_PLACEHOLDER,
+  bing: SEARCH_PLACEHOLDER,
+  startpage: SEARCH_PLACEHOLDER,
 };
 
 function applyEngine(id) {
@@ -2529,7 +2530,7 @@ function ensureFrame() {
 function launch(url) {
   if (!proxyReady) {
     error.textContent = "Still initializing — try again in a moment.";
-    return;
+    return Promise.resolve();
   }
   error.textContent = "";
   errorCode.textContent = "";
@@ -2538,8 +2539,13 @@ function launch(url) {
     activeFrame.src =
       window.__uv$config.prefix + window.__uv$config.encodeUrl(url);
   } else {
-    activeFrame.go(url);
+    try {
+      activeFrame.go(url);
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
+  return Promise.resolve();
 }
 
 frameExit.addEventListener("click", () => {
@@ -2596,6 +2602,41 @@ async function waitForControl(timeoutMs = 10000) {
   await Promise.race([ready, changed, sleep(timeoutMs)]);
 }
 
+// wisp server the x8rr/scramjet-templates html template ships with - used as a
+// fallback when this site's own /wisp/ socket refuses to open
+const TEMPLATE_WISP = "wss://wisp.mercurywork.shop/";
+
+function wispAlive(url, ms = 6000) {
+  return new Promise((resolve) => {
+    let ws;
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      resolve(false);
+      return;
+    }
+    let settled = false;
+    const done = (ok) => {
+      if (settled) return;
+      settled = true;
+      try {
+        ws.close();
+      } catch {}
+      resolve(ok);
+    };
+    const timer = setTimeout(() => done(false), ms);
+    ws.addEventListener("open", () => {
+      clearTimeout(timer);
+      done(true);
+    }, { once: true });
+    ws.addEventListener("error", () => {
+      clearTimeout(timer);
+      done(false);
+    }, { once: true });
+    ws.addEventListener("close", () => done(false), { once: true });
+  });
+}
+
 async function init() {
   error.textContent = "starting proxy engine...";
   errorCode.textContent = "";
@@ -2650,7 +2691,19 @@ async function init() {
     // own defaultConfig - and controller.wait() gates on wasm + RPC readiness.
     // epoxy's init() awaits its own embedded wasm before constructing the
     // client, so there is no cold-start race to work around.
-    const transport = new SJTransport({ wisp: wispUrl });
+    //
+    // the wisp from x8rr/scramjet-templates is the default transport; this
+    // site's own /wisp/ endpoint stays as the fallback (and wins whenever a
+    // wisp is configured explicitly through HazeWisp).
+    let chosenWisp = TEMPLATE_WISP;
+    if (!(await wispAlive(TEMPLATE_WISP)) && wispUrl !== TEMPLATE_WISP) {
+      if (await wispAlive(wispUrl)) {
+        chosenWisp = wispUrl;
+        console.warn("haze: template wisp unreachable, falling back to" + wispUrl);
+      }
+    }
+
+    const transport = new SJTransport({ wisp: chosenWisp });
     await transport.init();
 
     controller = new Controller({
