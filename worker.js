@@ -326,6 +326,67 @@ var routes = {
       return json({ error: String(e?.message || e) }, 502);
     }
   },
+  // ---- gemini relay (Google Generative Language; the key is a server secret) ----
+  // Google SSE is translated to OpenAI-style chunks so the page parses one format.
+  async gmChat(request, env) {
+    if (request.method !== "POST") return json({ error: "POST only." }, 405);
+    const key = String((env && env.GEMINI_API_KEY) || "").trim();
+    if (!key) return json({ error: "Gemini is not configured on this site." }, 401);
+    const body = await readBody(request);
+    const { model, messages: gmMsgs } = body || {};
+    if (!Array.isArray(gmMsgs) || !gmMsgs.length) return json({ error: "messages required" }, 400);
+    /* Google retires model ids often (2.5 flash already 404s on new keys), so any
+       well-formed id passes through; the fallback is the current stable flash. */
+    const modelId = /^[a-z0-9][a-z0-9.-]{2,60}$/i.test(String(model || ""))
+      ? String(model)
+      : "gemini-3.5-flash";
+    const sys = gmMsgs.filter((m) => m.role === "system").map((m) => String(m.content || "")).join("\n").trim();
+    const contents = gmMsgs.filter((m) => m.role !== "system").map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: String(m.content || "") }]
+    }));
+    const payload = { contents, generationConfig: { thinkingConfig: { includeThoughts: true } } };
+    if (sys) payload.systemInstruction = { parts: [{ text: sys }] };
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelId) + ":streamGenerateContent?alt=sse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(120000)
+      });
+      if (!r.ok) return new Response(await r.text().catch(() => ""), { status: r.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+      const dec = new TextDecoder();
+      const enc = new TextEncoder();
+      let buf = "";
+      const out = new TransformStream({
+        transform(chunk, ctrl) {
+          buf += dec.decode(chunk, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop();
+          for (const raw of lines) {
+            const line = raw.trim();
+            if (!line.startsWith("data:")) continue;
+            const data = line.slice(5).trim();
+            if (!data) continue;
+            let j;
+            try { j = JSON.parse(data); } catch { continue; }
+            const cand = j.candidates && j.candidates[0];
+            const parts = (cand && cand.content && cand.content.parts) || [];
+            for (const p of parts) {
+              const text = typeof p.text === "string" ? p.text : "";
+              if (!text) continue;
+              const delta = p.thought ? { reasoning: text } : { content: text };
+              ctrl.enqueue(enc.encode("data: " + JSON.stringify({ choices: [{ delta }] }) + "\n\n"));
+            }
+          }
+        },
+        flush(ctrl) { ctrl.enqueue(enc.encode("data: [DONE]\n\n")); }
+      });
+      return new Response(r.body.pipeThrough(out), { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-store" } });
+    } catch (e) {
+      return json({ error: String(e?.message || e) }, 502);
+    }
+  },
   // ---- groq relay (free-tier groq models: llama, gpt-oss, kimi, qwen, gemma) ----
   // Browser-sent key wins (x-groq-key, free at console.groq.com/keys), then server secret.
   async gqChat(request, env) {
@@ -998,6 +1059,7 @@ var worker_default = {
     if (p === "/ai/airforce/models") return routes.afModels(request, env);
     if (p === "/ai/airforce") return routes.afChat(request, env);
     if (p === "/ai/openrouter") return routes.orChat(request, env);
+    if (p === "/ai/gemini") return routes.gmChat(request, env);
     if (p === "/ai/groq") return routes.gqChat(request, env);
     if (p === "/ai/deepseek") return routes.dsChat(request, env);
     if (p === "/ai/ollama") return routes.olChat(request, env);

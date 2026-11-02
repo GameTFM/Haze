@@ -381,6 +381,14 @@
                { id: "nvidia/nemotron-3.5-super-vl", tier: "key", name: "NVIDIA Nemotron 3.5 Super VL", vendor: "nvidia", sub: "Text · Vision · free" },
                { id: "google/gemma-4-26b-a4b-it", tier: "key", name: "Google Gemma 4 26B A4B", vendor: "google", sub: "Text · free" }]
     },
+    /* Google Gemini through the site's own key — no key needed in the browser */
+    google: {
+      label: "Gemini (free)", endpoint: "/ai/gemini",
+      format: "openai", keyless: true,
+      models: [{ id: "gemini-3.5-flash", tier: "key", name: "Gemini 3.5 Flash", vendor: "google", sub: "Text · Vision · free" },
+               { id: "gemini-3.1-flash-lite", tier: "key", name: "Gemini 3.1 Flash Lite", vendor: "google", sub: "Text · fast · free" },
+               { id: "gemini-3.1-pro-preview", tier: "key", name: "Gemini 3.1 Pro", vendor: "google", sub: "Text · Reasoning · free" }]
+    },
     /* YOUR machine: the FreeLLM API on 127.0.0.1:31415. The list is read live
        from that server's /v1/models, so whatever it can serve shows up here. */
     local: {
@@ -609,7 +617,7 @@
         var models = groups[tier];
         if (!models) return;
         var g = document.createElement("div"); g.className = "mdu-group";
-        g.textContent = tier === "key" ? "· FREE — RUNS ON THE SITE'S OPENROUTER KEY ·"
+        g.textContent = tier === "key" ? "· FREE — RUNS ON THE SITE'S OWN KEYS ·"
           : tier === "local" ? "· LOCAL — YOUR OWN API ON 127.0.0.1:31415 ·"
           : "· FREE · NO KEY NEEDED ·";
         list.appendChild(g);
