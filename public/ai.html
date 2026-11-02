@@ -170,33 +170,31 @@
     .dl { display: inline-flex; align-items: center; gap: 6px; }
     .dl .ic { width: 13px; height: 13px; }
 
-    /* ---------- haze look: grayscale + hero + pill composer ---------- */
-    :root { --bg: #0b0b0d; --bg-panel: #101012; --bg-elev: #17171a; --border: rgba(255,255,255,.08); --muted: rgba(255,255,255,.55); }
-    body { background: radial-gradient(1000px 480px at 50% -10%, rgba(255,255,255,.05), transparent 60%), var(--bg); }
+    /* ---------- sidebar extras (kept from the workspace shell) ---------- */
     .side-newrow { display: flex; gap: 8px; }
     .side-btn.grow { flex: 1; }
     .side-btn.ico { flex: none; width: 42px; padding: 10px 0; justify-content: center; }
     .side-options { padding: 4px 16px 12px; border-top: 1px solid var(--border); }
     .ai-use { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
     .ai-usebar { height: 6px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--border); margin-top: 6px; overflow: hidden; }
-    .ai-usebar div { height: 100%; width: 0; background: #f2f2f4; border-radius: 999px; transition: width .2s; }
+    .ai-usebar div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .2s; }
     .side-local { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
     body.ai-side-hide .side { display: none; }
-    .top .title { font-weight: 600; }
-    .welcome { margin-top: 9vh; }
+    .welcome { margin-top: 12vh; }
     .welcome-eyebrow { font-size: 12px; letter-spacing: .18em; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
-    .welcome h1 { font-size: 40px; margin: 0 0 8px; }
     .welcome-sub { color: var(--muted); margin: 0 0 26px; font-size: 15px; }
-    .composer.nx-pill {
-      display: flex; align-items: center; gap: 10px;
-      border-radius: 999px; padding: 8px 8px 8px 8px;
-      background: var(--bg-panel);
-    }
-    .composer.nx-pill .keybtn { flex: none; border-radius: 999px; display: flex; align-items: center; gap: 6px; }
-    .composer.nx-pill textarea { flex: 1; padding: 10px 6px; }
-    .composer.nx-pill .send { margin: 0; flex: none; width: 38px; height: 38px; border-radius: 50%; background: #f2f2f4; color: #0b0b0d; border: none; font-weight: 700; }
-    .composer.nx-pill .send:hover { filter: brightness(.92); }
-    @media (max-width: 760px) { .composer.nx-pill .keybtn b { display: none; } }
+
+    /* ---------- thinking: hidden until you click it ---------- */
+    .think { margin: 0 0 9px; }
+    .think-toggle { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--bg-panel); color: var(--muted); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .think-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .think-toggle .ic { width: 12px; height: 12px; transform: rotate(-90deg); transition: transform .15s ease; }
+    .think.open .think-toggle .ic { transform: rotate(0deg); }
+    .think-body { display: none; white-space: pre-wrap; overflow-wrap: break-word; color: var(--muted); font-size: 12.5px; line-height: 1.5; border-left: 2px solid var(--border); padding: 4px 0 4px 12px; margin: 9px 0 3px; max-height: 320px; overflow-y: auto; }
+    .think.open .think-body { display: block; }
+    .mdu-tokenrow select { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 13px; outline: none; }
+
+
   </style>
   <script src="haze-config.js"></script>
 </head>
@@ -314,10 +312,12 @@
     </div>
 
     <div class="composer-wrap">
-      <form class="composer nx-pill" id="composer" autocomplete="off">
-        <button class="keybtn" id="btn-models" title="Choose model" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-spark" /></svg> <b id="cur-model-label">Free</b> <svg class="ic" aria-hidden="true"><use href="#hz-chev" /></svg></button>
+      <form class="composer" id="composer" autocomplete="off">
         <textarea id="input" rows="1" placeholder="Message haze AI..."></textarea>
-        <button class="send" id="send" type="submit"><svg class="ic" aria-hidden="true"><use href="#hz-send" /></svg></button>
+        <div class="composer-row">
+          <button class="keybtn" id="btn-models" title="Choose model" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-spark" /></svg> <b id="cur-model-label">Free</b> <svg class="ic" aria-hidden="true"><use href="#hz-chev" /></svg></button>
+          <button class="send" id="send" type="submit"><svg class="ic" aria-hidden="true"><use href="#hz-send" /></svg></button>
+        </div>
       </form>
       <p class="fineprint" id="fineprint">haze AI can make mistakes. Text chats are saved on this device (up to 50 recent). Temporary chats keep nothing.</p>
     </div>
@@ -336,29 +336,13 @@
             <input class="mdu-search" id="mdu-search" placeholder="Search models, companies, or tasks" />
           </div>
           <div class="mdu-tokenrow">
-            <input id="mdu-token" type="text" spellcheck="false" autocomplete="off" placeholder="Optional: free pollinations.ai token — unlocks the seed-tier models below" />
-            <button id="mdu-token-save" type="button">Save</button>
-            <a class="mdu-tokenlink" href="https://auth.pollinations.ai" target="_blank" rel="noopener">get one</a>
+            <input id="mdu-lbase" type="text" spellcheck="false" autocomplete="off" placeholder="Local API base — http://127.0.0.1:31415" />
+            <select id="mdu-lfmt" title="Local API format"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option></select>
           </div>
           <div class="mdu-tokenrow">
-            <input id="mdu-orkey" type="text" spellcheck="false" autocomplete="off" placeholder="Optional: free OpenRouter key for Nemotron — get one at openrouter.ai/settings/keys" />
-            <button id="mdu-orkey-save" type="button">Save</button>
-            <a class="mdu-tokenlink" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">get one</a>
-          </div>
-          <div class="mdu-tokenrow">
-            <input id="mdu-gqkey" type="text" spellcheck="false" autocomplete="off" placeholder="Optional: free Groq key for the fast models — console.groq.com/keys" />
-            <button id="mdu-gqkey-save" type="button">Save</button>
-            <a class="mdu-tokenlink" href="https://console.groq.com/keys" target="_blank" rel="noopener">get one</a>
-          </div>
-          <div class="mdu-tokenrow">
-            <input id="mdu-dskey" type="text" spellcheck="false" autocomplete="off" placeholder="DeepSeek key for DeepSeek Flash / V4 Pro — platform.deepseek.com/api_keys" />
-            <button id="mdu-dskey-save" type="button">Save</button>
-            <a class="mdu-tokenlink" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">get one</a>
-          </div>
-          <div class="mdu-tokenrow">
-            <input id="mdu-olkey" type="text" spellcheck="false" autocomplete="off" placeholder="Optional: Ollama API key for cloud models — ollama.com/settings/keys" />
-            <button id="mdu-olkey-save" type="button">Save</button>
-            <a class="mdu-tokenlink" href="https://ollama.com/settings/keys" target="_blank" rel="noopener">get one</a>
+            <input id="mdu-lkey" type="text" spellcheck="false" autocomplete="off" placeholder="Local API key (stays in your browser)" />
+            <button id="mdu-lsave" type="button">Save</button>
+            <span class="mdu-tokenlink" style="cursor:default">local only</span>
           </div>
           <div class="mdu-list" id="mdu-list"></div>
         </div>
@@ -394,75 +378,27 @@
   var AF_PID_LIST = AF_FAMILIES.map(function (f) { return f.pid; });
 
   var PROVIDERS = {
+    /* free models that run on the site's own OpenRouter relay — you need no key */
     free: {
       label: "OpenAI (free)", endpoint: "/ai/openrouter",
-      format: "openai", keyless: true, local: true,
+      format: "openai", keyless: true,
       models: FREE_FALLBACK.slice()
     },
     nvidia: {
       label: "OpenRouter (free)", endpoint: "/ai/openrouter",
-      format: "openai", keyless: true, local: true,
-      models: [{ id: "nvidia/nemotron-3-ultra-550b-a55b", tier: "key", name: "NVIDIA Nemotron 3 Ultra", vendor: "nvidia", sub: "Text · Reasoning · openrouter free" },
-               { id: "nvidia/nemotron-3.5-super-vl", tier: "key", name: "NVIDIA Nemotron 3.5 Super VL", vendor: "nvidia", sub: "Text · Vision+ · openrouter free" },
-               { id: "google/gemma-4-26b-a4b-it", tier: "key", name: "Google Gemma 4 26B A4B", vendor: "google", sub: "Text · openrouter free" }]
+      format: "openai", keyless: true,
+      models: [{ id: "nvidia/nemotron-3-ultra-550b-a55b", tier: "key", name: "NVIDIA Nemotron 3 Ultra", vendor: "nvidia", sub: "Text · Reasoning · free" },
+               { id: "nvidia/nemotron-3.5-super-vl", tier: "key", name: "NVIDIA Nemotron 3.5 Super VL", vendor: "nvidia", sub: "Text · Vision · free" },
+               { id: "google/gemma-4-26b-a4b-it", tier: "key", name: "Google Gemma 4 26B A4B", vendor: "google", sub: "Text · free" }]
     },
-    groq: {
-      label: "Groq (fast)", endpoint: "/ai/groq",
+    /* YOUR machine: the FreeLLM API on 127.0.0.1:31415. The list is read live
+       from that server's /v1/models, so whatever it can serve shows up here. */
+    local: {
+      label: "Local API", endpoint: "local",
       format: "openai", keyless: true, local: true,
-      models: [{ id: "openai/gpt-oss-120b", tier: "groq", name: "OpenAI GPT-OSS 120B", vendor: "openai", sub: "Text · Reasoning · Groq free" },
-               { id: "openai/gpt-oss-20b", tier: "groq", name: "OpenAI GPT-OSS 20B", vendor: "openai", sub: "Text · Reasoning · Groq free" },
-               { id: "qwen/qwen3.8-27b", tier: "groq", name: "Alibaba Qwen 3.8 27B", vendor: "qwen", sub: "Text · Groq free" },
-               { id: "allam-2-7b", tier: "groq", name: "SDAIA ALLAM 2 7B", vendor: "other", sub: "Text · Groq free" }]
-    },
-    deepseek: {
-      label: "DeepSeek", endpoint: "/ai/deepseek",
-      format: "anthropic", keyless: true, local: true,
-      models: [{ id: "deepseek-flash", tier: "ds", name: "DeepSeek Flash", vendor: "deepseek", sub: "Text · deepseek paid key" },
-               { id: "deepseek-v4-pro", tier: "ds", name: "DeepSeek V4 Pro", vendor: "deepseek", sub: "Text · Reasoning · deepseek paid key" }]
-    },
-    ollama: {
-      label: "Ollama (cloud)", endpoint: "/ai/ollama",
-      format: "openai", keyless: true, local: true,
-      models: [{ id: "gemma4:31b", tier: "ol", name: "Google Gemma 4 31B", vendor: "google", sub: "Text · ollama free plan" },
-               { id: "gpt-oss:20b", tier: "ol", name: "OpenAI GPT-OSS 20B", vendor: "openai", sub: "Text · Reasoning · ollama free plan" },
-               { id: "beam", tier: "ol", name: "Beam", vendor: "other", sub: "Text · Reasoning · ollama free plan" },
-               { id: "nemotron-3-nano:30b", tier: "ol", name: "NVIDIA Nemotron 3 Nano 30B", vendor: "nvidia", sub: "Text · Reasoning · ollama free plan" },
-               { id: "nemotron-3-super", tier: "ol", name: "NVIDIA Nemotron 3 Super", vendor: "nvidia", sub: "Text · Reasoning · ollama free plan" }]
-    },
-    /* Vercel AI Gateway: one server-side key, every major vendor. The key is
-       a Sites secret (AI_GATEWAY_API_KEY) and /ai/gateway relays for us. */
-    gateway: {
-      label: "Gateway (Vercel)", endpoint: "/ai/gateway",
-      format: "openai", keyless: true, local: true,
-      models: [
-        { id: "anthropic/claude-opus-5.5", tier: "gw", name: "Claude Opus 5.5", vendor: "anthropic", sub: "Text · Reasoning · AI Gateway" },
-        { id: "anthropic/claude-sonnet-5.5", tier: "gw", name: "Claude Sonnet 5.5", vendor: "anthropic", sub: "Text · Reasoning · AI Gateway" },
-        { id: "anthropic/claude-haiku-4.5", tier: "gw", name: "Claude Haiku 4.5", vendor: "anthropic", sub: "Text · Fast · AI Gateway" },
-        { id: "anthropic/claude-fable-5.1", tier: "gw", name: "Claude Fable 5.1", vendor: "anthropic", sub: "Text · Reasoning · AI Gateway" },
-        { id: "openai/gpt-5", tier: "gw", name: "OpenAI GPT-5", vendor: "openai", sub: "Text · Reasoning · AI Gateway" },
-        { id: "openai/gpt-4o", tier: "gw", name: "OpenAI GPT-4o", vendor: "openai", sub: "Text · Vision · AI Gateway" },
-        { id: "openai/gpt-4.1-mini", tier: "gw", name: "OpenAI GPT-4.1 Mini", vendor: "openai", sub: "Text · Fast · AI Gateway" },
-        { id: "openai/gpt-4.1-nano", tier: "gw", name: "OpenAI GPT-4.1 Nano", vendor: "openai", sub: "Text · Fast · AI Gateway" },
-        { id: "google/gemini-3.1-pro-preview", tier: "gw", name: "Google Gemini 3.1 Pro", vendor: "google", sub: "Text · Reasoning · AI Gateway" },
-        { id: "google/gemini-3.8-flash", tier: "gw", name: "Google Gemini 3.8 Flash", vendor: "google", sub: "Text · Fast · AI Gateway" },
-        { id: "google/gemini-2.5-pro", tier: "gw", name: "Google Gemini 2.5 Pro", vendor: "google", sub: "Text · Reasoning · AI Gateway" },
-        { id: "deepseek/deepseek-v4-pro", tier: "gw", name: "DeepSeek V4 Pro", vendor: "deepseek", sub: "Text · Reasoning · AI Gateway" },
-        { id: "deepseek/deepseek-v4.1-flash", tier: "gw", name: "DeepSeek V4.1 Flash", vendor: "deepseek", sub: "Text · Fast · AI Gateway" },
-        { id: "meta/llama-4-maverick", tier: "gw", name: "Meta Llama 4 Maverick", vendor: "meta", sub: "Text · Open weights · AI Gateway" },
-        { id: "moonshotai/kimi-k3.1-pro", tier: "gw", name: "Moonshot Kimi K3.1 Pro", vendor: "kimi", sub: "Text · Reasoning · AI Gateway" },
-        { id: "mistral/mistral-large-4", tier: "gw", name: "Mistral Large 4", vendor: "mistral", sub: "Text · AI Gateway" },
-        { id: "alibaba/qwen3.8-max", tier: "gw", name: "Alibaba Qwen 3.8 Max", vendor: "qwen", sub: "Text · Reasoning · AI Gateway" }
-      ]
+      models: [{ id: "auto", tier: "local", name: "Auto (router picks)", vendor: "other", sub: "Local · 127.0.0.1:31415" }]
     }
   };
-  AF_FAMILIES.forEach(function (f) {
-    PROVIDERS[f.pid] = {
-      label: f.label, endpoint: "/ai/airforce",
-      format: "openai", keyless: false, local: true,
-      models: [{ id: f.def, tier: "api", name: prettyModelId(f.def), vendor: f.vendor, sub: "Text · api.airforce" }]
-    };
-  });
-
   /* real display names in normal letters, vendor → logo symbol in defs */
   var VENDOR_NAMES = {
     openai: "OpenAI", gpt: "OpenAI", o4: "OpenAI",
@@ -502,26 +438,52 @@
     return t || "reasoning model";
   }
 
-  var TOKEN_KEY = "haze-ai-token";
-  function aiToken() { try { return String(localStorage.getItem(TOKEN_KEY) || "").trim(); } catch { return ""; } }
-  function setAiToken(t) { try { t ? localStorage.setItem(TOKEN_KEY, String(t || "").trim()) : localStorage.removeItem(TOKEN_KEY); } catch {} }
-  function seedReady() { return aiToken().length >= 20; }
-  var ORKEY_KEY = "haze-openrouter-key";
-  function orKey() { try { return String(localStorage.getItem(ORKEY_KEY) || "").trim(); } catch { return ""; } }
-  function setOrKey(t) { try { t ? localStorage.setItem(ORKEY_KEY, String(t || "").trim()) : localStorage.removeItem(ORKEY_KEY); } catch {} }
-  function orReady() { return orKey().length >= 10; }
-  var GQKEY_KEY = "haze-groq-key";
-  function gqKey() { try { return String(localStorage.getItem(GQKEY_KEY) || "").trim(); } catch { return ""; } }
-  function setGqKey(t) { try { t ? localStorage.setItem(GQKEY_KEY, String(t || "").trim()) : localStorage.removeItem(GQKEY_KEY); } catch {} }
-  function gqReady() { return gqKey().length >= 10; }
-  var DSKEY_KEY = "haze-deepseek-key";
-  function dsKey() { try { return String(localStorage.getItem(DSKEY_KEY) || "").trim(); } catch { return ""; } }
-  function setDsKey(t) { try { t ? localStorage.setItem(DSKEY_KEY, String(t || "").trim()) : localStorage.removeItem(DSKEY_KEY); } catch {} }
-  function dsReady() { return dsKey().length >= 5; }
-  var OLKEY_KEY = "haze-ollama-key";
-  function olKey() { try { return String(localStorage.getItem(OLKEY_KEY) || "").trim(); } catch { return ""; } }
-  function setOlKey(t) { try { t ? localStorage.setItem(OLKEY_KEY, String(t || "").trim()) : localStorage.removeItem(OLKEY_KEY); } catch {} }
-  function olReady() { return olKey().length >= 10; }
+  /* ---------- local API on this machine (FreeLLM) ---------- */
+  /* claude code points at BASE_URL=http://127.0.0.1:31415 (Anthropic: /v1/messages)
+     and codex at BASE_URL=http://127.0.0.1:31415/v1 (OpenAI: /v1/chat/completions).
+     Both are the same server, so the base is stored once, without a trailing /v1. */
+  var LBASE_KEY = "haze-local-base", LKEY_KEY = "haze-local-key", LFMT_KEY = "haze-local-format";
+  var LBASE_DEF = "http://127.0.0.1:31415";
+  var LKEY_DEF = "freellmapi-e10e1e61d412cea5b1a428bf36d4a313fa22eae469e693e8";
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? (d || "") : String(v); } catch { return d || ""; } }
+  function lsSet(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} }
+  function localBaseRaw() { return (lsGet(LBASE_KEY, LBASE_DEF) || LBASE_DEF).trim(); }
+  function localBase() {
+    var b = localBaseRaw().replace(/\/+$/, "");
+    if (!/^https?:\/\//i.test(b)) b = "http://" + b;
+    return b.replace(/\/v1$/i, "");
+  }
+  function localKey() { return (lsGet(LKEY_KEY, LKEY_DEF) || "").trim(); }
+  function localFmt() { return (lsGet(LFMT_KEY, "openai") || "openai").toLowerCase() === "anthropic" ? "anthropic" : "openai"; }
+  function localEndpoint() {
+    return localBase() + (localFmt() === "anthropic" ? "/v1/messages" : "/v1/chat/completions");
+  }
+  function localHeaders() {
+    var k = localKey();
+    var h = { "Content-Type": "application/json", Authorization: "Bearer " + k };
+    h["x-api-key"] = k;
+    if (localFmt() === "anthropic") h["anthropic-version"] = "2023-06-01";
+    return h;
+  }
+  /* ask the local server what it can actually serve right now */
+  function loadLocalModels(done) {
+    fetch(localBase() + "/v1/models", { headers: localHeaders(), signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var list = (j && j.data) || [];
+        var models = list.filter(function (m) { return m && m.id && m.available !== false; }).map(function (m) {
+          var label = m.name || m.id;
+          return { id: m.id, tier: "local", name: label, vendor: vendorKeyFor([String(m.id), String(label)]), sub: "Local · " + (m.owned_by || "freellmapi") };
+        });
+        if (!models.length) models = [{ id: "auto", tier: "local", name: "Auto (router picks)", vendor: "other", sub: "Local · no models available yet" }];
+        PROVIDERS.local.models = models;
+        if (typeof done === "function") done(true);
+      })
+      .catch(function () {
+        PROVIDERS.local.models = [{ id: "auto", tier: "local", name: "Auto (router picks)", vendor: "other", sub: "Local · unreachable from this page" }];
+        if (typeof done === "function") done(false);
+      });
+  }
 
   /* OpenAI models now run on the OpenRouter shelf (server key); the old
      Pollinations catalog polled live at /models kept failing its per-IP rate
@@ -653,17 +615,13 @@
       /* group by tier: anonymous (keyless) first, seed tier after */
       var groups = {};
       matches.forEach(function (m) { (groups[m.tier || "anonymous"] = groups[m.tier || "anonymous"] || []).push(m); });
-      ["anonymous", "seed", "key", "gw", "groq", "ds", "ol"].forEach(function (tier) {
+      ["key", "local"].forEach(function (tier) {
         var models = groups[tier];
         if (!models) return;
         var g = document.createElement("div"); g.className = "mdu-group";
-        g.textContent = tier === "anonymous" ? "· FREE · NO KEY NEEDED ·"
-          : tier === "seed" ? "· FREE · SEED TIER — PASTE YOUR FREE POLLINATIONS TOKEN ABOVE ·"
-          : tier === "key" ? "· FREE — RUNS ON THE SITE'S OPENROUTER KEY ·"
-          : tier === "gw" ? "· VERCEL AI GATEWAY — ONE KEY, EVERY VENDOR ·"
-          : tier === "groq" ? "· FREE — PASTE A FREE GROQ KEY ABOVE (console.groq.com/keys) ·"
-          : tier === "ds" ? "· PAID — PASTE A DEEPSEEK API KEY ABOVE (platform.deepseek.com/api_keys) ·"
-          : "· FREE PLAN — PASTE YOUR OLLAMA API KEY ABOVE (ollama.com/settings/keys) ·";
+        g.textContent = tier === "key" ? "· FREE — RUNS ON THE SITE'S OPENROUTER KEY ·"
+          : tier === "local" ? "· LOCAL — YOUR OWN API ON 127.0.0.1:31415 ·"
+          : "· FREE · NO KEY NEEDED ·";
         list.appendChild(g);
         models.forEach(function (m) {
         var b = document.createElement("button"); b.type = "button";
@@ -672,7 +630,7 @@
         /* OpenRouter rows unlock without a pasted key: the server keeps a
            key in Sites → Secrets, and without it /ai/openrouter answers with
            a clear setup message. */
-        var locked = (m.tier === "seed" && !seedReady()) || (m.tier === "groq" && !gqReady()) || (m.tier === "ds" && !dsReady()) || (m.tier === "ol" && !olReady());
+        var locked = false;
         b.className = "mdu-item" + (selected ? " selrow" : "") + (locked ? " locked" : "");
         var ico = iconFor(m);
         var ic = document.createElement("div"); ic.className = "mico"; ic.style.background = ico.bg; ic.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#' + ico.svg + '"></use></svg>';
@@ -686,16 +644,12 @@
         if (p.keyless) {
           var chip = document.createElement("span");
           chip.className = "nokeychip";
-          chip.textContent = (m.tier || "anonymous") === "anonymous" ? "NO KEY" : m.tier === "seed" ? "SEED" : m.tier === "ds" ? "PAID" : m.tier === "gw" ? "NO KEY" : "KEY";
+          chip.textContent = (m.tier || "key") === "local" ? "LOCAL" : "FREE";
           tagEl.appendChild(chip);
         }
         b.appendChild(ic); b.appendChild(tx); b.appendChild(tagEl);
         if (selected) { var c = document.createElement("span"); c.className = "mdu-check"; c.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#hz-check"></use></svg>'; b.appendChild(c); }
         b.addEventListener("click", function () {
-          if (m.tier === "seed" && !seedReady()) { $("mdu-token").focus(); return; }
-          if (m.tier === "groq" && !gqReady()) { $("mdu-gqkey").focus(); return; }
-          if (m.tier === "ds" && !dsReady()) { $("mdu-dskey").focus(); return; }
-          if (m.tier === "ol" && !olReady()) { $("mdu-olkey").focus(); return; }
           pref.provider = pid; pref[pid] = m.id; jset(PREF_KEY, pref);
           updateModelBar(); renderRail(""); renderModelList($("mdu-search").value);
           closeModels();
@@ -710,52 +664,35 @@
     }
   }
 
-  function openModels() { $("mdu-overlay").classList.add("open"); $("mdu-search").value = ""; renderRail(""); renderModelList(""); $("mdu-search").focus(); }
+  function openModels() {
+    $("mdu-overlay").classList.add("open"); $("mdu-search").value = "";
+    renderRail(""); renderModelList(""); $("mdu-search").focus();
+    loadLocalModels(function () { renderRail(""); renderModelList($("mdu-search").value); updateModelBar(); });
+  }
   function closeModels() { $("mdu-overlay").classList.remove("open"); }
   $("btn-models").addEventListener("click", openModels);
   $("mdu-close").addEventListener("click", closeModels);
   $("mdu-overlay").addEventListener("click", function (e) { if (e.target === $("mdu-overlay")) closeModels(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModels(); });
   $("mdu-search").addEventListener("input", function () { renderRail(this.value); renderModelList(this.value); });
-  $("mdu-token").value = aiToken();
-  $("mdu-token-save").addEventListener("click", function () {
-    setAiToken($("mdu-token").value);
-    loadFreeModels();
-    renderRail($("mdu-search").value);
-    renderModelList($("mdu-search").value);
-  });
-  $("mdu-token").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mdu-token-save").click(); } });
-  $("mdu-orkey").value = orKey();
-  $("mdu-orkey-save").addEventListener("click", function () {
-    setOrKey($("mdu-orkey").value);
-    renderRail($("mdu-search").value);
-    renderModelList($("mdu-search").value);
-  });
-          $("mdu-orkey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mdu-orkey-save").click(); } });
-  $("mdu-gqkey").value = gqKey();
-  $("mdu-gqkey-save").addEventListener("click", function () {
-    setGqKey($("mdu-gqkey").value);
-    renderRail($("mdu-search").value);
-    renderModelList($("mdu-search").value);
-  });
-  $("mdu-gqkey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mdu-gqkey-save").click(); } });
-  $("mdu-dskey").value = dsKey();
-  $("mdu-dskey-save").addEventListener("click", function () {
-    setDsKey($("mdu-dskey").value);
-    renderRail($("mdu-search").value);
-    renderModelList($("mdu-search").value);
-  });
-  $("mdu-dskey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mdu-dskey-save").click(); } });
-  $("mdu-olkey").value = olKey();
-  $("mdu-olkey-save").addEventListener("click", function () {
-    setOlKey($("mdu-olkey").value);
-    renderRail($("mdu-search").value);
-    renderModelList($("mdu-search").value);
-  });
-  $("mdu-olkey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mdu-olkey-save").click(); } });
+  $("mdu-lbase").value = localBaseRaw();
+  $("mdu-lkey").value = localKey();
+  $("mdu-lfmt").value = localFmt();
+  function saveLocal() {
+    lsSet(LBASE_KEY, $("mdu-lbase").value.trim());
+    lsSet(LKEY_KEY, $("mdu-lkey").value.trim());
+    lsSet(LFMT_KEY, $("mdu-lfmt").value);
+    $("mdu-lbase").value = localBaseRaw();
+    loadLocalModels(function () { renderRail($("mdu-search").value); renderModelList($("mdu-search").value); updateModelBar(); });
+  }
+  $("mdu-lsave").addEventListener("click", saveLocal);
+  $("mdu-lbase").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveLocal(); } });
+  $("mdu-lkey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveLocal(); } });
+  $("mdu-lfmt").addEventListener("change", saveLocal);
 
   updateModelBar();
   loadFreeModels();
+  loadLocalModels(function () { updateModelBar(); });
 
   /* ======================= chats (sidebar) ======================= */
   function chatById(id) { return chats.find(function (c) { return c.id === id; }); }
@@ -818,6 +755,12 @@
       "</div></div>";
   }
   msgsEl.addEventListener("click", function (e) {
+    var t = e.target.closest(".think-toggle");
+    if (t) {
+      var box = t.closest(".think");
+      if (box) box.classList.toggle("open");
+      return;
+    }
     var s = e.target.closest(".sugg");
     if (s) { inputEl.value = s.dataset.p; inputEl.focus(); autoGrow(); submit(); }
   });
@@ -835,16 +778,25 @@
     var c = activeChat();
     if (!c) return;
     msgsEl.innerHTML = "";
-    c.messages.forEach(function (m) { appendMsg(m.role, m.content); });
+    c.messages.forEach(function (m) {
+      appendMsg(m.role === "assistant" ? "ai" : "user", m.content, m.thinking);
+    });
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
-  function appendMsg(role, text, streaming) {
+  function appendMsg(role, text, thinking, streaming) {
     var w = msgsEl.querySelector(".welcome");
     if (w) w.remove();
+    var ai = role !== "user";
     var div = document.createElement("div");
-    div.className = "msg " + role;
-    div.innerHTML = '<div class="avatar">' + (role === "user" ? "You" [0] : "AI") + "</div>" +
-      '<div class="bubble"><div class="who">' + (role === "user" ? "You" : currentModelName()) + '</div><div class="text"></div></div>';
+    div.className = "msg " + (ai ? "ai" : "user");
+    div.innerHTML = '<div class="avatar">' + (ai ? "AI" : "You".charAt(0)) + "</div>" +
+      '<div class="bubble"><div class="who">' + escHtml(ai ? currentModelName() : "You") + "</div>" +
+      '<div class="think" hidden><button class="think-toggle" type="button"><svg class="ic" aria-hidden="true"><use href="#hz-chev"></use></svg><span>Thinking</span></button><div class="think-body"></div></div>' +
+      '<div class="text"></div></div>';
+    if (thinking) {
+      div.querySelector(".think").hidden = false;
+      div.querySelector(".think-body").innerHTML = formatMd(thinking);
+    }
     setBubbleText(div.querySelector(".text"), text);
     if (streaming) div.querySelector(".text").insertAdjacentHTML("beforeend", '<span class="cursor"></span>');
     msgsEl.appendChild(div);
@@ -878,13 +830,19 @@
 
   var busy = false;
 
+  /* some models wrap reasoning in tags — keep it out of the answer */
+  function splitThink(text) {
+    var th = "", out = String(text || "");
+    out = out.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, function (_, inner) { th += inner; return ""; });
+    return { text: out, thinking: th };
+  }
+
   function submit() {
     if (busy) return;
     var text = inputEl.value.trim();
     if (!text) return;
 
-    var pid = currentPid(), p = PROVIDERS[pid];
-
+    var pid = currentPid();
     var c = activeChat();
     if (!c) {
       c = { id: uid(), title: text.slice(0, 60), messages: [] };
@@ -898,9 +856,11 @@
     appendMsg("user", text);
     inputEl.value = ""; autoGrow();
 
-    var aiDiv = appendMsg("assistant", "", true);
+    var aiDiv = appendMsg("ai", "", "", true);
     var aiTextEl = aiDiv.querySelector(".text");
-    var acc = "";
+    var thinkEl = aiDiv.querySelector(".think");
+    var thinkBody = aiDiv.querySelector(".think-body");
+    var acc = "", think = "";
     busy = true; sendBtn.disabled = true;
 
     callModel(pid, c.messages, {
@@ -909,11 +869,19 @@
         aiTextEl.innerHTML = formatMd(acc) + '<span class="cursor"></span>';
         msgsEl.scrollTop = msgsEl.scrollHeight;
       },
+      onThinking: function (t) {
+        think += t;
+        thinkEl.hidden = false;
+        thinkBody.innerHTML = formatMd(think);
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      },
       onDone: function () {
-        aiTextEl.innerHTML = formatMd(acc);
+        var split = splitThink(acc);
+        if (split.thinking) { think += split.thinking; acc = split.text; }
+        if (think) { thinkEl.hidden = false; thinkBody.innerHTML = formatMd(think); }
+        aiTextEl.innerHTML = formatMd(acc.trim() ? acc : (think.trim() ? "(no answer text — open Thinking)" : "(empty response)"));
         busy = false; sendBtn.disabled = false;
-        if (!acc.trim()) acc = "(empty response)";
-        c.messages.push({ role: "assistant", content: acc });
+        c.messages.push({ role: "assistant", content: acc, thinking: think || undefined });
         if (!temporary) saveChats();
       },
       onError: function (msg) {
@@ -927,47 +895,43 @@
   function callModel(pid, messages, cb) {
     var p = PROVIDERS[pid];
     var modelId = currentModelId();
-    var headers = { "Content-Type": "application/json" };
+    var format = pid === "local" ? localFmt() : p.format;
+    var endpoint = pid === "local"
+      ? localEndpoint()
+      : (typeof HazeApi === "function" ? HazeApi(p.endpoint) : p.endpoint);
+    var headers = pid === "local" ? localHeaders() : { "Content-Type": "application/json" };
 
-    var body;
-    var mo = currentModelObj();    if (mo.tier === "groq" && !gqReady()) {
-      cb.onError("Groq models need a free Groq key. Get one at console.groq.com/keys, then paste it in Models — it stays in your browser.");
-      return;
-    }
-    if (mo.tier === "ds" && !dsReady()) {
-      cb.onError("DeepSeek models need a DeepSeek API key. Get one at platform.deepseek.com/api_keys, then paste it in Models — it stays in your browser.");
-      return;
-    }
-    if (mo.tier === "ol" && !olReady()) {
-      cb.onError("Ollama models need an Ollama API key. Get one at ollama.com/settings/keys, then paste it in Models — it stays in your browser.");
-      return;
-    }
-    if (p.format === "anthropic") {
-      var sys = "";
-      var msgs = messages.filter(function (m) { return m.role !== "system"; }).map(function (m) { return { role: m.role, content: m.content }; });
-      body = JSON.stringify({ model: modelId, max_tokens: 2048, messages: msgs, stream: true });
+    var bodyObj;
+    if (format === "anthropic") {
+      bodyObj = {
+        model: modelId,
+        max_tokens: 4096,
+        stream: true,
+        messages: messages.filter(function (m) { return m.role !== "system"; })
+          .map(function (m) { return { role: m.role, content: m.content }; })
+      };
     } else {
-      var send = { model: modelId, messages: messages, stream: true, referrer: "haze", local: true };
-      if (seedReady()) send.token = aiToken();
-      body = JSON.stringify(send);
+      bodyObj = { model: modelId, messages: messages, stream: true };
+      if (pid !== "local") { bodyObj.referrer = "haze"; bodyObj.local = true; }
     }
-    if (currentPid() === "nvidia" && orReady()) headers["x-openrouter-key"] = orKey();
-    if (currentPid() === "groq" && gqReady()) headers["x-groq-key"] = gqKey();
-    if (currentPid() === "deepseek" && dsReady()) headers["x-deepseek-key"] = dsKey();
-    if (currentPid() === "ollama" && olReady()) headers["x-ollama-key"] = olKey();
 
-    fetch((typeof HazeApi === "function" ? HazeApi(p.endpoint) : p.endpoint), { method: "POST", headers: headers, body: body, signal: AbortSignal.timeout(120000) })
+    fetch(endpoint, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(bodyObj),
+      signal: AbortSignal.timeout(180000)
+    })
       .then(function (res) {
-        /* the free relay always returns SSE (upstream is forced to stream) */
         if (!res.ok) {
           return res.text().then(function (t) {
-            /* relays answer {"error":"..."} — show that sentence, not the JSON */
+            /* relays answer {"error":{...}} or {"error":"..."} — show the sentence */
             var msg = t || "";
             try {
               var j2 = JSON.parse(t);
-              if (j2 && j2.error) msg = typeof j2.error === "string" ? j2.error : (j2.error.message || msg);
+              var e2 = j2 && (j2.error || j2);
+              if (e2) msg = typeof e2 === "string" ? e2 : (e2.message || msg);
             } catch {}
-            msg = String(msg).replace(/^\s*\{"error":"?|\"\}\s*$/g, "").trim();
+            msg = String(msg).trim();
             throw new Error(msg || "HTTP " + res.status);
           });
         }
@@ -982,19 +946,26 @@
             buf = lines.pop();
             lines.forEach(function (line) {
               line = line.trim();
-              if (!line || !line.startsWith("data:")) return;
+              if (!line || line.indexOf("data:") !== 0) return;
               var payload = line.slice(5).trim();
-              if (payload === "[DONE]") { return; }
-              try {
-                var j = JSON.parse(payload);
-                if (p.format === "anthropic") {
-                  if (j.type === "content_block_delta" && j.delta && (j.delta.text || j.delta.thinking)) cb.onDelta(j.delta.text || "");
-                } else {
-                  var d = j.choices && j.choices[0] && (j.choices[0].delta || j.choices[0].message);
-                  if (d && d.content) cb.onDelta(d.content);
-                  else if (d && (d.reasoning || d.reasoning_content)) cb.onDelta(d.reasoning || d.reasoning_content);
+              if (!payload || payload === "[DONE]") return;
+              var j;
+              try { j = JSON.parse(payload); } catch { return; }
+              if (format === "anthropic") {
+                if (j.type === "content_block_delta" && j.delta) {
+                  if (j.delta.type === "thinking_delta" && j.delta.thinking) cb.onThinking(j.delta.thinking);
+                  else if (j.delta.text) cb.onDelta(j.delta.text);
+                } else if (j.type === "content_block_start" && j.content_block && j.content_block.type === "text" && j.content_block.text) {
+                  cb.onDelta(j.content_block.text);
                 }
-              } catch {}
+              } else {
+                var ch = j.choices && j.choices[0];
+                var d = ch && (ch.delta || ch.message);
+                if (!d) return;
+                var th = d.reasoning || d.reasoning_content || d.thinking;
+                if (typeof th === "string" && th) cb.onThinking(th);
+                if (typeof d.content === "string" && d.content) cb.onDelta(d.content);
+              }
             });
             return pump();
           });
@@ -1002,7 +973,11 @@
         return pump();
       })
       .catch(function (err) {
-        cb.onError(err.name === "TimeoutError" ? "Request timed out." : (err.message || "Request failed."));
+        var m = err && err.name === "TimeoutError" ? "Request timed out." : (err && err.message) || "Request failed.";
+        if (pid === "local" && /failed to fetch|load failed|network ?error/i.test(m)) {
+          m = "The local API (" + localBase() + ") can't be called from this page: it sent no Access-Control-Allow-Origin header, so the browser blocked the request. Start the local FreeLLM API with CORS enabled for " + location.origin + " (and open haze on http://localhost if this page is https).";
+        }
+        cb.onError(m);
       });
   }
 
