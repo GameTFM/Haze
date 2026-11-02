@@ -192,7 +192,6 @@
     .think.open .think-toggle .ic { transform: rotate(0deg); }
     .think-body { display: none; white-space: pre-wrap; overflow-wrap: break-word; color: var(--muted); font-size: 12.5px; line-height: 1.5; border-left: 2px solid var(--border); padding: 4px 0 4px 12px; margin: 9px 0 3px; max-height: 320px; overflow-y: auto; }
     .think.open .think-body { display: block; }
-    .mdu-tokenrow select { border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 13px; outline: none; }
 
 
   </style>
@@ -334,15 +333,6 @@
         <div class="mdu-body">
           <div class="mdu-searchrow">
             <input class="mdu-search" id="mdu-search" placeholder="Search models, companies, or tasks" />
-          </div>
-          <div class="mdu-tokenrow">
-            <input id="mdu-lbase" type="text" spellcheck="false" autocomplete="off" placeholder="Local API base — http://127.0.0.1:31415" />
-            <select id="mdu-lfmt" title="Local API format"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option></select>
-          </div>
-          <div class="mdu-tokenrow">
-            <input id="mdu-lkey" type="text" spellcheck="false" autocomplete="off" placeholder="Local API key (stays in your browser)" />
-            <button id="mdu-lsave" type="button">Save</button>
-            <span class="mdu-tokenlink" style="cursor:default">local only</span>
           </div>
           <div class="mdu-list" id="mdu-list"></div>
         </div>
@@ -675,20 +665,6 @@
   $("mdu-overlay").addEventListener("click", function (e) { if (e.target === $("mdu-overlay")) closeModels(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModels(); });
   $("mdu-search").addEventListener("input", function () { renderRail(this.value); renderModelList(this.value); });
-  $("mdu-lbase").value = localBaseRaw();
-  $("mdu-lkey").value = localKey();
-  $("mdu-lfmt").value = localFmt();
-  function saveLocal() {
-    lsSet(LBASE_KEY, $("mdu-lbase").value.trim());
-    lsSet(LKEY_KEY, $("mdu-lkey").value.trim());
-    lsSet(LFMT_KEY, $("mdu-lfmt").value);
-    $("mdu-lbase").value = localBaseRaw();
-    loadLocalModels(function () { renderRail($("mdu-search").value); renderModelList($("mdu-search").value); updateModelBar(); });
-  }
-  $("mdu-lsave").addEventListener("click", saveLocal);
-  $("mdu-lbase").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveLocal(); } });
-  $("mdu-lkey").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveLocal(); } });
-  $("mdu-lfmt").addEventListener("change", saveLocal);
 
   updateModelBar();
   loadFreeModels();
