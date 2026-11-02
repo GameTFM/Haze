@@ -115,6 +115,9 @@
     </aside>
 
     <main class="main">
+      <button class="rail-toggle" id="rail-toggle" type="button" title="Show or hide the sidebar" aria-label="Toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <!-- ===================== HOME ===================== -->
       <section class="view view-home active" data-view-section="home">
         <div class="home-bg" aria-hidden="true">
@@ -161,6 +164,10 @@
         </header>
 
         <div class="home-stage">
+          <div class="hero-clock">
+            <div class="hero-clock-time" id="hero-clock-time">--:--</div>
+            <div class="hero-clock-date" id="hero-clock-date"></div>
+          </div>
           <h1 class="logo home-logo">haze</h1>
           <p class="greeting" id="greeting" hidden></p>
           <div class="hero-quote" id="hero-quote" hidden>

@@ -2237,3 +2237,85 @@ html.icons-sidebar .side-nav .nav-item { justify-content: flex-start; padding: 7
 
 /* hidden proxy rows really hide (display:flex otherwise wins over [hidden]) */
 #proxy-server-row[hidden] { display: none; }
+
+/* ---------- classic haze home: clock, logo, quote, pill search, chips ---------- */
+
+.view.view-home { background: var(--bg); }
+.view-home .home-bg { display: none; }
+.view-home .shell-bar { display: none; }
+
+.home-stage {
+  min-height: 100vh;
+  padding: 8vh 24px 40px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+}
+
+.hero-clock { margin: 0 0 4px; }
+.hero-clock-time { font-size: clamp(3rem, 9vw, 5.5rem); font-weight: 600; letter-spacing: -0.03em; color: var(--text); }
+.hero-clock-date { font-size: 1rem; color: var(--muted); margin-top: 8px; }
+
+.view-home .home-logo {
+  font-family: inherit;
+  font-size: clamp(3rem, 8vw, 4.6rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1.05;
+  color: var(--text); text-shadow: none; transform: none;
+  margin: 20px 0 0; animation: none;
+}
+.view-home .home-logo::after { content: none; }
+
+.home-stage #sj-form { width: min(640px, 100%); margin: 22px auto 0; }
+.home-stage #sj-address {
+  width: 100%;
+  padding: 15px 24px 15px 48px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 1rem; text-align: left;
+  box-shadow: none; backdrop-filter: none;
+}
+.home-stage #sj-address::placeholder { color: var(--muted); }
+.home-stage #sj-address:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.home-stage .sj-ico { left: 18px; color: var(--muted); }
+.home-stage .sj-ico .ic { width: 16px; height: 16px; }
+
+.home-chips { gap: 10px; margin-top: 22px; }
+.view-home .home-chip {
+  padding: 10px 18px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--border);
+  color: var(--text); font-size: 0.9rem;
+  box-shadow: none; backdrop-filter: none;
+}
+.view-home .home-chip svg { width: 15px; height: 15px; }
+.view-home .home-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent); background: var(--bg-elev); color: var(--text);
+}
+.view-home .home-chip.active {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-contrast);
+}
+
+/* clock island back at the top of the page */
+.di { top: 18px; bottom: auto; background: color-mix(in srgb, var(--panel) 88%, transparent); }
+
+/* corner button that replaces the hidden bar's sidebar toggle */
+.rail-toggle {
+  position: fixed; top: 14px; left: 14px; z-index: 60;
+  width: 34px; height: 34px; border-radius: 9px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--border); color: var(--text);
+  cursor: pointer;
+}
+.rail-toggle svg { width: 17px; height: 17px; }
+.rail-toggle:hover { border-color: var(--accent); background: var(--bg-elev); }
+
+@media (max-width: 900px) {
+  .home-stage { padding: 96px 18px 48px; }
+  .rail-toggle { display: none; }
+}

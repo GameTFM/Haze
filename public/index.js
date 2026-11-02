@@ -4763,6 +4763,8 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     applyRail();
     rememberRail();
   });
+  /* the classic home hides the chrome bar, so its corner button drives the same toggle */
+  shell$("rail-toggle")?.addEventListener("click", () => shell$("bar-panel")?.click());
 
   /* ---- back / forward across proxied pages ---- */
   const backStack = [];
