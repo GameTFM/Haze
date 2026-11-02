@@ -4766,6 +4766,46 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   /* the classic home hides the chrome bar, so its corner button drives the same toggle */
   shell$("rail-toggle")?.addEventListener("click", () => shell$("bar-panel")?.click());
 
+  /* ---- home atmosphere: cursor spotlight + ⌘K to search ---- */
+  const atmoLayer = document.querySelector(".home-atmo");
+  if (atmoLayer && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const rootStyle = document.documentElement.style;
+    let tx = 0.5, ty = 0.34, cx = tx, cy = ty, frame = 0;
+    const paint = () => {
+      cx += (tx - cx) * 0.12;
+      cy += (ty - cy) * 0.12;
+      rootStyle.setProperty("--spot-x", (cx * 100).toFixed(2) + "%");
+      rootStyle.setProperty("--spot-y", (cy * 100).toFixed(2) + "%");
+      if (Math.abs(tx - cx) > 0.0015 || Math.abs(ty - cy) > 0.0015) {
+        frame = requestAnimationFrame(paint);
+      } else {
+        frame = 0;
+      }
+    };
+    window.addEventListener(
+      "pointermove",
+      (e) => {
+        const box = atmoLayer.getBoundingClientRect();
+        if (!box.width || !box.height) return;
+        const nx = (e.clientX - box.left) / box.width;
+        const ny = (e.clientY - box.top) / box.height;
+        tx = Math.min(1, Math.max(0, nx));
+        ty = Math.min(1, Math.max(0, ny));
+        if (!frame) frame = requestAnimationFrame(paint);
+      },
+      { passive: true }
+    );
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (!(e.key === "k" || e.key === "K") || !(e.metaKey || e.ctrlKey)) return;
+    e.preventDefault();
+    if (!document.querySelector(".view-home")?.classList.contains("active")) {
+      document.querySelector('[data-view="home"]')?.click();
+    }
+    setTimeout(() => document.getElementById("sj-address")?.focus(), 40);
+  });
+
   /* ---- back / forward across proxied pages ---- */
   const backStack = [];
   let backAt = -1;
