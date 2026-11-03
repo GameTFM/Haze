@@ -17,10 +17,12 @@
   <script src="/uv/uv.config.js" defer></script>
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="os.css" />
+  <link rel="stylesheet" href="arcade.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
   <script type="module" src="os.js"></script>
   <script type="module" src="vm.js"></script>
+  <script type="module" src="arcade.js"></script>
 </head>
 <body>
   <div class="hz-boot" id="hz-boot" role="status" aria-live="polite">
@@ -932,6 +934,50 @@
   </div>
 
   <button id="frame-exit" class="frame-exit" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#hz-x" /></svg>&nbsp; exit</button>
+
+  <div class="hz-arcade" id="hz-arcade" hidden aria-label="haze arcade">
+    <div class="hz-arcade-shell">
+      <header class="hz-arcade-bar">
+        <div class="hz-arcade-titles">
+          <span class="hz-arcade-name" id="hz-arcade-name">cabinet</span>
+          <span class="hz-arcade-sub" id="hz-arcade-sub">choose a game</span>
+        </div>
+        <div class="hz-arcade-stats">
+          <span>score <b id="hz-arcade-score">0</b></span>
+          <span>best <b id="hz-arcade-best">0</b></span>
+          <span class="hz-arcade-state" id="hz-arcade-state">ready</span>
+        </div>
+        <div class="hz-arcade-actions">
+          <button class="hz-arcade-btn" id="hz-arcade-pause" type="button">pause</button>
+          <button class="hz-arcade-btn" id="hz-arcade-restart" type="button">restart</button>
+          <button class="hz-arcade-btn primary" id="hz-arcade-exit" type="button">exit</button>
+        </div>
+      </header>
+      <div class="hz-arcade-stage no-game" id="hz-arcade-stage">
+        <canvas id="hz-arcade-canvas" aria-label="game canvas"></canvas>
+        <div class="hz-arcade-menu" id="hz-arcade-menu">
+          <div class="hz-arcade-menu-grid" id="hz-arcade-menu-grid"></div>
+        </div>
+        <div class="hz-arcade-msg" id="hz-arcade-msg" hidden>
+          <b id="hz-arcade-msg-title"></b>
+          <span id="hz-arcade-msg-hint"></span>
+        </div>
+        <div class="hz-touch" id="hz-touch">
+          <div class="hz-touch-pad">
+            <button type="button" data-dir="up" aria-label="Up">▲</button>
+            <button type="button" data-dir="left" aria-label="Left">◀</button>
+            <button type="button" data-dir="down" aria-label="Down">▼</button>
+            <button type="button" data-dir="right" aria-label="Right">▶</button>
+          </div>
+          <button class="hz-touch-fire" id="hz-touch-fire" type="button">launch</button>
+        </div>
+      </div>
+      <footer class="hz-arcade-foot">
+        <span id="hz-arcade-help">arrows / wasd · space pause · r restart · esc exit</span>
+        <span class="hz-arcade-brand">haze arcade</span>
+      </footer>
+    </div>
+  </div>
 
   <div class="hz-sheet" id="hz-sheet" hidden>
     <div class="hz-sheet-card" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">

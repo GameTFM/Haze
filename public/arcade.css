@@ -1,0 +1,278 @@
+/* ==========================================================================
+   haze arcade — canvas cabinet, menu, touch pad. Theme-variable only.
+   ========================================================================== */
+
+.hz-arcade {
+  position: fixed;
+  inset: 0;
+  z-index: 640;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2.6vw, 34px);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  color: var(--text);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  animation: hz-arcade-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hz-arcade[hidden] { display: none; }
+
+.hz-arcade-shell {
+  width: min(1060px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  box-shadow:
+    0 60px 160px -70px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.hz-arcade-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.hz-arcade-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.hz-arcade-sub {
+  margin-left: 8px;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hz-arcade-stats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hz-arcade-stats b {
+  margin-left: 5px;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+.hz-arcade-state {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+}
+.hz-arcade-state.on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.hz-arcade-actions { display: flex; gap: 6px; }
+
+.hz-arcade-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.hz-arcade-btn:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.hz-arcade-btn.primary { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+
+.hz-arcade-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  max-height: min(72vh, 680px);
+  background: var(--bg);
+  overflow: hidden;
+  touch-action: none;
+}
+.hz-arcade-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.hz-arcade-stage.no-game canvas { opacity: 0.35; }
+
+/* menu */
+.hz-arcade-menu {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+.hz-arcade-menu[hidden] { display: none; }
+.hz-arcade-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  gap: 12px;
+}
+.hz-arcade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.2, 1), border-color 0.16s ease;
+}
+.hz-arcade-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.hz-arcade-card b { font-size: 0.9rem; letter-spacing: 0.02em; }
+.hz-arcade-card span { font-size: 0.66rem; line-height: 1.5; color: var(--muted); }
+.hz-arcade-card em {
+  margin-top: 6px;
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* message card */
+.hz-arcade-msg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 210px;
+  padding: 16px 22px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  text-align: center;
+  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
+}
+.hz-arcade-msg[hidden] { display: none; }
+.hz-arcade-msg b {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.hz-arcade-msg span {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* touch controls */
+.hz-touch {
+  position: absolute;
+  inset: auto 12px 12px 12px;
+  display: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.hz-touch-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 40px);
+  grid-template-rows: repeat(2, 40px);
+  gap: 6px;
+  pointer-events: auto;
+}
+.hz-touch-pad button,
+.hz-touch-fire {
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  touch-action: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+.hz-touch-pad button:active,
+.hz-touch-fire:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.hz-touch-pad [data-dir="up"] { grid-column: 2; grid-row: 1; }
+.hz-touch-pad [data-dir="left"] { grid-column: 1; grid-row: 2; }
+.hz-touch-pad [data-dir="down"] { grid-column: 2; grid-row: 2; }
+.hz-touch-pad [data-dir="right"] { grid-column: 3; grid-row: 2; }
+.hz-touch-fire {
+  pointer-events: auto;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+}
+
+.hz-arcade-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hz-arcade-foot b { color: var(--text); font-weight: 500; }
+.hz-arcade-brand { letter-spacing: 0.26em; color: color-mix(in srgb, var(--muted) 80%, transparent); }
+
+@keyframes hz-arcade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .hz-touch { display: flex; }
+  .hz-arcade-stage { aspect-ratio: 3 / 4; max-height: 64vh; }
+  .hz-arcade-bar { flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px; }
+  .hz-arcade-stats { order: 3; margin-left: 0; width: 100%; justify-content: space-between; gap: 8px; }
+  .hz-arcade-actions { margin-left: auto; }
+  .hz-arcade-menu-grid { grid-template-columns: minmax(0, 1fr); width: min(320px, 100%); }
+  .hz-arcade-foot { display: none; }
+  .hz-arcade-shell { border-radius: 14px; }
+  .hz-arcade { padding: 8px; }
+}
+
+@media (max-height: 560px) {
+  .hz-arcade-stage { aspect-ratio: 16 / 9; max-height: 78vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-arcade, .hz-arcade-card { animation: none; transition: none; }
+  .hz-arcade-card:hover { transform: none; }
+}
+
+
+body.hz-arcade-open { overflow: hidden; }
+body.hz-arcade-open .di { display: none; }
