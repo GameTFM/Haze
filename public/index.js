@@ -4573,6 +4573,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
    ================================================================ */
 
 (function initBrowserChrome() {
+  if (window.hazeBrowser) return;
   const el = (id) => document.getElementById(id);
   const tabsEl = el("hzb-tabs");
   const page = el("hzb-page");
@@ -4603,6 +4604,8 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   let activeId = null;
   let seq = 0;
   let lastFrameTab = null;
+  let embedFrame = null;
+  let bridgeFrame = null;
 
   const hostOf = (url) => {
     try {
@@ -4616,6 +4619,47 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     return KNOWN[host] || host || "New site";
   };
   const activeTab = () => tabs.find((t) => t.id === activeId) || null;
+  const normalizeUrl = (value) => {
+    try {
+      return new URL(value).href;
+    } catch {
+      return String(value || "");
+    }
+  };
+  const isYouTubeUrl = (url) => {
+    const host = hostOf(url);
+    return /(^|\.)(youtube\.com|youtube-nocookie\.com|youtu\.be)$/i.test(host);
+  };
+  function youtubeIdFromHref(raw) {
+    let text = String(raw || "");
+    if (!text) return "";
+    for (let i = 0; i < 3; i++) {
+      try {
+        const decoded = decodeURIComponent(text);
+        if (decoded === text) break;
+        text = decoded;
+      } catch {
+        break;
+      }
+    }
+    if (!/(youtube\.com|youtube-nocookie\.com|youtu\.be)/i.test(text)) return "";
+    const match = text.match(/(?:[?&]v=|\/embed\/|\/shorts\/|\/live\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+    return match ? match[1] : "";
+  }
+  const youtubeId = (url) => (isYouTubeUrl(url) ? youtubeIdFromHref(url) : "");
+  function youtubeEmbedUrl(url) {
+    const id = youtubeId(url);
+    if (!id) return "";
+    const params = new URLSearchParams({
+      autoplay: "1",
+      playsinline: "1",
+      rel: "0",
+      enablejsapi: "1",
+      origin: location.origin,
+    });
+    return "https://www.youtube.com/embed/" + encodeURIComponent(id) + "?" + params.toString();
+  }
+
 
   function makeTab(data) {
     const tab = {
@@ -4704,15 +4748,99 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     page.hidden = !on;
   }
 
+  function clearEmbed() {
+    if (embedFrame) {
+      try {
+        embedFrame.remove();
+      } catch {}
+      embedFrame = null;
+    }
+    const proxy = document.getElementById("sj-frame");
+    if (proxy) proxy.style.removeProperty("display");
+  }
+
+  function showYouTubeEmbed(tab) {
+    const src = youtubeEmbedUrl(tab.url);
+    const host = document.getElementById("hzb-frame-host");
+    if (!src || !host) return false;
+    setBrowsing(true);
+    const proxy = document.getElementById("sj-frame");
+    if (proxy) proxy.style.display = "none";
+    if (embedFrame) embedFrame.remove();
+    const frame = document.createElement("iframe");
+    frame.id = "hzb-embed-frame";
+    frame.title = "YouTube video";
+    frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.src = src;
+    host.appendChild(frame);
+    embedFrame = frame;
+    note("");
+    return true;
+  }
+
+  function installYouTubeLinkBridge() {
+    const frame = document.getElementById("sj-frame");
+    if (!frame || frame === bridgeFrame) return;
+    bridgeFrame = frame;
+    const attach = () => {
+      let doc = null;
+      try {
+        doc = frame.contentDocument;
+      } catch {}
+      if (!doc || doc.__hzbYtBridge) return;
+      doc.__hzbYtBridge = true;
+      doc.addEventListener(
+        "click",
+        (event) => {
+          const anchor = event.target.closest?.("a[href]");
+          if (!anchor) return;
+          const id =
+            youtubeIdFromHref(anchor.href) ||
+            youtubeIdFromHref(anchor.getAttribute("href"));
+          if (!id) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          const current = activeTab();
+          const stayHere = current?.kind === "url" && isYouTubeUrl(current.url);
+          openUrl("https://www.youtube.com/watch?v=" + encodeURIComponent(id), {
+            current: stayHere,
+          });
+        },
+        true
+      );
+    };
+    frame.addEventListener("load", attach);
+    attach();
+  }
+
   function loadTab(tab, force) {
     if (!tab || tab.kind !== "url") return Promise.resolve();
-    if (!force && lastFrameTab === tab.id && tab.loadedUrl === tab.url) return Promise.resolve();
+    const video = youtubeId(tab.url);
+    const hasCurrentVideo =
+      video && embedFrame && lastFrameTab === tab.id && tab.loadedUrl === tab.url;
+    if (!force && lastFrameTab === tab.id && tab.loadedUrl === tab.url && (!video || hasCurrentVideo)) {
+      return Promise.resolve();
+    }
     tab.loadedUrl = tab.url;
     lastFrameTab = tab.id;
+
+    if (video) {
+      note("Loading YouTube player…");
+      clearEmbed();
+      if (!showYouTubeEmbed(tab)) {
+        note("This YouTube video could not be opened.");
+      }
+      return Promise.resolve();
+    }
+
+    clearEmbed();
     note("Opening " + labelForUrl(tab.url) + "…");
     let pending;
     try {
       pending = launchRaw(tab.url);
+      installYouTubeLinkBridge();
     } catch (error) {
       note("This page could not be opened. " + String(error));
       return Promise.reject(error);
@@ -4729,6 +4857,8 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   }
 
   function showView(tab) {
+    clearEmbed();
+    lastFrameTab = null;
     setBrowsing(false);
     note("");
     toggleView(tab.view);
@@ -4744,7 +4874,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     document.title = tab.label + " · haze";
     paintTabs();
     updateChromeState();
-    loadTab(tab, false);
+    return loadTab(tab, false);
   }
 
   function activate(id) {
@@ -4773,22 +4903,30 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) {
       url = window.search ? window.search(raw, searchEngine?.value) : "https://" + raw;
     }
+    const key = normalizeUrl(url);
     const current = activeTab();
     if (options.current && current?.kind === "url") {
-      current.url = url;
-      current.label = labelForUrl(url);
-      current.loadedUrl = "";
-      current.history = current.history.slice(0, current.at + 1);
-      current.history.push(url);
-      current.at = current.history.length - 1;
+      if (normalizeUrl(current.url) !== key) {
+        current.url = url;
+        current.label = labelForUrl(url);
+        current.loadedUrl = "";
+        current.history = current.history.slice(0, current.at + 1);
+        current.history.push(url);
+        current.at = current.history.length - 1;
+      }
       activeId = current.id;
-      showUrl(current);
-      return loadTab(current, true);
+      return showUrl(current);
+    }
+    const existing = tabs.find(
+      (tab) => tab.kind === "url" && normalizeUrl(tab.url) === key
+    );
+    if (existing) {
+      activeId = existing.id;
+      return showUrl(existing);
     }
     const tab = makeTab({ kind: "url", url, label: labelForUrl(url) });
     activeId = tab.id;
-    showUrl(tab);
-    return loadTab(tab, true);
+    return showUrl(tab);
   }
 
   function closeTab(id) {
@@ -4822,8 +4960,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     tab.url = tab.history[at];
     tab.label = labelForUrl(tab.url);
     tab.loadedUrl = "";
-    showUrl(tab);
-    loadTab(tab, true);
+    return showUrl(tab);
   }
 
   function navigateAddress() {
