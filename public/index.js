@@ -4015,7 +4015,6 @@ function paletteCommands() {
   const cmds = [
     { label: "Go: Home", run: () => clickNav("home"), key: "1" },
     { label: "Go: haze games", run: () => clickNav("games"), key: "2" },
-    { label: "Go: Cloud gaming", run: () => clickNav("cloud"), key: "c" },
 
     { label: "Go: Music", run: () => clickNav("music"), key: "3" },
     { label: "Go: Chat", run: () => clickNav("chat"), key: "4" },
@@ -4767,13 +4766,13 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   };
   const VIEW_LABELS = {
     home: "New tab", apps: "Apps", games: "Games", music: "Music", ai: "AI",
-    chat: "Chat", cloud: "Cloud", settings: "Settings", terminal: "Terminal",
+    chat: "Chat", settings: "Settings", terminal: "Terminal",
   };
 
   const HAZE_VIEWS = {
     home: "home", newtab: "home", new: "home", start: "home",
     apps: "apps", app: "apps", games: "games", music: "music", ai: "ai",
-    chat: "chat", cloud: "cloud", settings: "settings", terminal: "terminal",
+    chat: "chat", settings: "settings", terminal: "terminal",
   };
 
   let tabs = [];
@@ -5345,7 +5344,6 @@ window.hazeOSBridge = {
     { id: "music", name: "Music", glyph: "♫", kind: "haze", view: "music", tone: "rose", desc: "Search, playlists, queue and liked songs." },
     { id: "ai", name: "AI", glyph: "✦", kind: "haze", view: "ai", tone: "cyan", desc: "Chat with free and premium models in one place." },
     { id: "chat", name: "Chat", glyph: "◌", kind: "haze", view: "chat", tone: "amber", desc: "The global haze room — join as a guest or with a name." },
-    { id: "cloud", name: "Cloud gaming", glyph: "☁", kind: "haze", view: "cloud", tone: "blue", desc: "Stream PC games over WebRTC through stratus-api." },
     { id: "terminal", name: "Terminal", glyph: ">_", kind: "haze", view: "terminal", tone: "green", desc: "A real local shell with a virtual filesystem." },
     { id: "settings", name: "Settings", glyph: "⚙", kind: "haze", view: "settings", tone: "slate", desc: "Themes, wallpaper, proxy engine and data controls." },
     { id: "control", name: "Control", glyph: "☰", kind: "tools", action: "control", tone: "violet", desc: "Themes, effects, tab count and one-tap actions." },

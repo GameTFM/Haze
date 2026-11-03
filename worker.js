@@ -943,88 +943,6 @@ class WispProxy {
     })();
   }
 }
-// ---- cloud gaming relay (stratus-api, github.com/x8rr/stratus-api) ----
-// The stratus backend runs on its own server (Node + a disposable-mail
-// pool), not inside this worker. These routes just relay the session API
-// (which sends no CORS headers) and pipe the signaling websocket between
-// the haze client page and that backend.
-function cloudUpstream(url) {
-  const raw = String(url.searchParams.get("base") || "").trim().replace(/\/+$/, "");
-  if (!raw) return null;
-  let u;
-  try { u = new URL(raw); } catch { return null; }
-  if (u.protocol !== "https:") return null;
-  const h = u.hostname;
-  if (h === "localhost" || h === "127.0.0.1" || h === "::1" || /^\d+\.\d+\.\d+\.\d+$/.test(h)) return null;
-  return u.origin;
-}
-async function cloudPass(request, url, apiPath) {
-  const base = cloudUpstream(url);
-  if (!base) return new Response(JSON.stringify({ error: "Set a https:// backend URL for your stratus-api deployment." }), {
-    status: 400,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
-  });
-  const init = { method: request.method, headers: { "Cache-Control": "no-store" } };
-  const key = request.headers.get("x-api-key");
-  if (key) init.headers["x-api-key"] = key.slice(0, 256);
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = await request.arrayBuffer();
-    init.headers["Content-Type"] = request.headers.get("Content-Type") || "application/json";
-  }
-  let r;
-  try { r = await fetch(base + apiPath, init); } catch (e) {
-    return new Response(JSON.stringify({ error: "Cloud backend unreachable: " + (e?.message || e) }), {
-      status: 502,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
-    });
-  }
-  return new Response(r.body, {
-    status: r.status,
-    headers: {
-      "Content-Type": r.headers.get("Content-Type") || "application/json",
-      "Cache-Control": "no-store"
-    }
-  });
-}
-var cloudRoutes = {
-  create: (request, url) => cloudPass(request, url, "/cloud/v1/createSession"),
-  start: (request, url) => cloudPass(request, url, "/cloud/v1/startGame"),
-  ping: (request, url) => cloudPass(request, url, "/cloud/v1/pingSession"),
-  quit: (request, url) => cloudPass(request, url, "/cloud/v1/quitSession")
-};
-async function handleCloudSignal(request, ctx) {
-  if ((request.headers.get("Upgrade") || "").toLowerCase() !== "websocket") {
-    return new Response("Expected websocket upgrade", { status: 426 });
-  }
-  const url = new URL(request.url);
-  const m = url.pathname.match(/^\/cloud\/signal\/([0-9a-fA-F-]+)$/);
-  const base = cloudUpstream(url);
-  if (!m || !base) return new Response("Bad signaling request", { status: 400 });
-  let upstreamResp;
-  try {
-    upstreamResp = await fetch(base + "/cloud/v1/signal/" + m[1], { headers: { Upgrade: "websocket" } });
-  } catch (e) {
-    return new Response("Signaling upstream failed", { status: 502 });
-  }
-  const upstream = upstreamResp.webSocket;
-  if (!upstream) return new Response("Signaling refused", { status: 502 });
-  upstream.accept();
-  const pair = new WebSocketPair();
-  const [client, server] = Object.values(pair);
-  server.accept();
-  const pipe = (from, to) => from.addEventListener("message", (e) => {
-    try { to.send(e.data); } catch {}
-  });
-  pipe(server, upstream);
-  pipe(upstream, server);
-  const closed = new Promise((resolve) => {
-    const end = () => { try { server.close(); } catch {} try { upstream.close(); } catch {} resolve(); };
-    server.addEventListener("close", end);
-    upstream.addEventListener("close", end);
-  });
-  if (ctx && ctx.waitUntil) ctx.waitUntil(closed);
-  return new Response(null, { status: 101, webSocket: client });
-}
 async function handleWisp(request, ctx) {
   if ((request.headers.get("Upgrade") || "").toLowerCase() !== "websocket") {
     return new Response("Expected websocket upgrade", { status: 426 });
@@ -1068,11 +986,6 @@ var worker_default = {
     if (p === "/api/online") return routes.onlineBeat(url);
     if (p === "/wisp/" || p.startsWith("/wisp/"))
       return handleWisp(request, ctx);
-    if (p === "/api/cloud/create") return cloudRoutes.create(request, url);
-    if (p === "/api/cloud/start") return cloudRoutes.start(request, url);
-    if (p === "/api/cloud/ping") return cloudRoutes.ping(request, url);
-    if (p === "/api/cloud/quit") return cloudRoutes.quit(request, url);
-    if (p.startsWith("/cloud/signal/")) return handleCloudSignal(request, ctx);
     return env.ASSETS.fetch(request);
   }
 };

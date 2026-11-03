@@ -695,17 +695,17 @@
             games[i].id = String(games[i].id);
             byId[games[i].id] = games[i];
           }
-          // Pinned external: PlayGTA5 browser build. The playable mirror is
-          // 21GB and lives outside Haze, so launch the maintained Cloudflare
-          // Pages build in a clean tab. Chrome/Edge + WebGPU + Memory64 are
-          // required; the game's own support page explains compatibility.
+          // Pinned external: GTA5 Web community edition. The playable mirror
+          // is 21GB and lives outside Haze, so launch the verified Cloudflare
+          // Pages build with its 720p/30 preset in a clean tab. Chrome/Edge +
+          // WebGPU + Memory64 are required; the project hub explains the rest.
           var gta5 = {
             id: "gta5-webgpu",
-            name: "PlayGTA5 — GTA V (WebGPU • PC)",
+            name: "GTA5 Web — GTA V (WebGPU • PC)",
             url: "external",
-            external: "https://gta5-87g.pages.dev/",
-            repo: "https://github.com/alihammoud21/playgta5",
-            externalNote: "WebGPU + Memory64 - opens in a new tab; Chrome/Edge with hardware acceleration required"
+            external: "https://gta5-87g.pages.dev/?low=1&fps=30&res=1280x720&shadows=0",
+            repo: "https://github.com/hammadshakeelai/gta5-web",
+            externalNote: "Open-source edition - 720p/30 profile; opens in a new tab. Chrome/Edge with hardware acceleration required"
           };
           games.unshift(gta5);
           byId[gta5.id] = gta5;

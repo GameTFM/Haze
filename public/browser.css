@@ -408,10 +408,6 @@ body.fullbleed .ai-wrap {
 body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
 .view-terminal .hz-term { height: calc(100vh - var(--hzb-h) - 16px); }
 
-.view-cloud .games-wrap {
-  height: calc(100vh - var(--hzb-h) - 16px);
-}
-
 .view-music { min-height: calc(100vh - var(--hzb-h)); }
 
 .view-chat { min-height: calc(100vh - var(--hzb-h)); }
@@ -444,8 +440,7 @@ body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
   .home-stage { padding: 34px 14px 26px !important; }
   .home-logo { font-size: clamp(3rem, 16vw, 4.6rem) !important; margin-bottom: 28px !important; }
   body.fullbleed .games-wrap,
-  body.fullbleed .ai-wrap,
-  .view-cloud .games-wrap { height: calc(100vh - var(--hzb-h) - 10px) !important; }
+  body.fullbleed .ai-wrap { height: calc(100vh - var(--hzb-h) - 10px) !important; }
   .view-terminal .hz-term { height: calc(100vh - var(--hzb-h) - 10px); }
 }
 
