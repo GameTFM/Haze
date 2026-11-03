@@ -304,7 +304,8 @@
         var recents = recentMap();
         var plays = recents[g.id] && recents[g.id].plays || 0;
         if (g && g.external) {
-          document.getElementById("g-hero-sub").textContent = "External WebGPU build - needs a gaming PC + big data install";
+          document.getElementById("g-hero-sub").textContent =
+            g.externalNote || "External WebGPU game - opens in a new tab";
         } else {
           document.getElementById("g-hero-sub").textContent =
             plays > 0 ? plays + (plays === 1 ? " play" : " plays") + " · Included in haze — free to play" :
@@ -338,7 +339,7 @@
 
       function cardHtml(g, meta) {
         var badges = "";
-        if (g && g.external) badges += '<span class="g-badge">external</span>';
+        if (g && g.external) badges += '<span class="g-badge">WebGPU</span>';
         if (meta.plays > 0) badges += '<span class="g-badge">\u25b6 ' + meta.plays + "</span>";
         if (meta.last) {
           var mins = Math.floor((Date.now() - meta.last) / 60000);
@@ -510,12 +511,12 @@
       }
 
       function openGame(g) {
-        // External WebGPU build (e.g. GTA V port): not proxied, not iframed.
-        // Opens the hosted build or repo in a real tab / about:blank shell.
+        // External WebGPU games (e.g. PlayGTA5) set COOP/COEP and need
+        // cross-origin isolation plus WebGPU + Memory64. A proxy frame or an
+        // about:blank wrapper breaks that, so always hand off to a clean tab.
         if (g && g.external) {
           var ext = String(g.external);
-          if (gamesBlankOn()) { openBlank(ext, g.name); }
-          else { window.open(ext, "_blank", "noopener"); }
+          window.open(ext, "_blank", "noopener");
           var recents2 = recentMap();
           var meta2 = recents2[g.id] || { plays: 0, last: 0 };
           meta2.plays = (meta2.plays || 0) + 1;
@@ -694,17 +695,17 @@
             games[i].id = String(games[i].id);
             byId[games[i].id] = games[i];
           }
-          // Pinned external: GTA V WebGPU port (MagiczLunchly/gta5-webport-vercel).
-          // Vercel build + ~21GB release packs (game-data-v2) + desktop
-          // Chrome/Edge with WebGPU required. Flip `external` to your
-          // Vercel deployment URL once packs are uploaded and
-          // deployment-status.json reads {"ready":true}.
+          // Pinned external: PlayGTA5 browser build. The playable mirror is
+          // 21GB and lives outside Haze, so launch the maintained Cloudflare
+          // Pages build in a clean tab. Chrome/Edge + WebGPU + Memory64 are
+          // required; the game's own support page explains compatibility.
           var gta5 = {
             id: "gta5-webgpu",
-            name: "Grand Theft Auto V (WebGPU • PC)",
+            name: "PlayGTA5 — GTA V (WebGPU • PC)",
             url: "external",
-            external: "https://gta.ezgames.lol",
-            repo: "https://github.com/MagiczLunchly/gta5-webport-vercel"
+            external: "https://gta5-87g.pages.dev/",
+            repo: "https://github.com/alihammoud21/playgta5",
+            externalNote: "WebGPU + Memory64 - opens in a new tab; Chrome/Edge with hardware acceleration required"
           };
           games.unshift(gta5);
           byId[gta5.id] = gta5;
