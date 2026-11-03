@@ -18,9 +18,11 @@
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="os.css" />
   <link rel="stylesheet" href="browser.css" />
+  <link rel="stylesheet" href="control.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
   <script type="module" src="os.js"></script>
+  <script type="module" src="control.js"></script>
   <script type="module" src="vm.js"></script>
 </head>
 <body>
@@ -324,6 +326,51 @@
 
         <p id="sj-error"></p>
         <pre id="sj-error-code"></pre>
+
+        <div class="hz-hud" id="hz-hud" aria-hidden="true">
+          <span class="hz-hud-item"><i class="hz-hud-dot" id="hz-hud-dot"></i><b id="hz-hud-net">online</b></span>
+          <span class="hz-hud-item"><b id="hz-hud-fps">60</b>fps</span>
+          <span class="hz-hud-item"><b id="hz-hud-mem">—</b>mem</span>
+          <span class="hz-hud-item">up <b id="hz-hud-up">00:00</b></span>
+        </div>
+
+        <nav class="hz-dock" id="hz-dock" aria-label="Dock">
+          <button class="hz-dock-app" id="hz-dock-start" data-dock-action="newtab" data-label="New tab" type="button" aria-label="New tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+          </button>
+
+          <button class="hz-dock-app" data-dock-view="home" data-label="Home" type="button" aria-label="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.6v-6H9.6v6H5a1 1 0 0 1-1-1z"/></svg>
+          </button>
+          <button class="hz-dock-app" data-dock-view="games" data-label="Games" type="button" aria-label="Games">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4m-2-2v4"/><path d="M15.5 11h.01M18 13h.01"/><path d="M17.3 5H6.7a4.7 4.7 0 0 0-4.6 5.6l1 5.2A3 3 0 0 0 8 17.5l1.5-1.5h5L16 17.5a3 3 0 0 0 4.9-1.7l1-5.2A4.7 4.7 0 0 0 17.3 5Z"/></svg>
+          </button>
+          <button class="hz-dock-app" data-dock-view="music" data-label="Music" type="button" aria-label="Music">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </button>
+          <button class="hz-dock-app" data-dock-view="ai" data-label="AI" type="button" aria-label="AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>
+          </button>
+          <button class="hz-dock-app" data-dock-view="chat" data-label="Chat" type="button" aria-label="Chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-settings" data-dock-action="settings" data-label="Settings" type="button" aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </button>
+          <button class="hz-dock-app" data-dock-view="cloud" data-label="Cloud gaming" type="button" aria-label="Cloud gaming">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 6 19h11.5Z"/><path d="M8 15v3m4-4v5m4-6v6"/></svg>
+          </button>
+          <span class="hz-dock-sep" aria-hidden="true"></span>
+          <button class="hz-dock-app" id="hz-dock-palette" data-label="Command ⌘K" type="button" aria-label="Command palette">
+            <span class="hz-dock-glyph">⌘</span>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-theme" data-label="Next theme" type="button" aria-label="Switch theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-help" data-label="Shortcuts ?" type="button" aria-label="Keyboard shortcuts">
+            <span class="hz-dock-glyph">?</span>
+          </button>
+        </nav>
       </section>
 
       <!-- ===================== HAZE GAMES ===================== -->

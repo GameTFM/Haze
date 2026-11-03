@@ -5057,3 +5057,46 @@ window.hazeOSBridge = {
   go: (view) => (window.hazeGo ? window.hazeGo(view) : toggleView(view)),
   toast: hazeToast,
 };
+
+/* restored home chrome — dock navigation and live active state */
+(() => {
+  const browser = window.hazeBrowser;
+  if (!browser) return;
+
+  const viewButtons = [...document.querySelectorAll(".hz-dock [data-dock-view]")];
+  const paint = () => {
+    const active = browser.active?.();
+    const view = active?.kind === "view" ? active.view : "";
+    viewButtons.forEach((button) => {
+      const on = button.dataset.dockView === view;
+      button.classList.toggle("active", on);
+      if (on) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+  };
+
+  viewButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      browser.go(button.dataset.dockView);
+      paint();
+    });
+  });
+
+  document.getElementById("hz-dock-start")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    browser.newTab();
+    paint();
+  });
+
+  document.getElementById("hz-dock-settings")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    browser.go("settings");
+    paint();
+  });
+
+  window.addEventListener("focus", paint);
+  document.addEventListener("click", () => requestAnimationFrame(paint), true);
+  setInterval(paint, 1200);
+  paint();
+})();

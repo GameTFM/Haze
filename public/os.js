@@ -178,7 +178,7 @@ const dayFill = $("hero-clock-day-fill");
 
   const pad = (n) => String(n).padStart(2, "0");
   const paint = () => {
-    fps = frames;
+    fps = frames || fps;
     frames = 0;
     hudFps.textContent = Math.min(240, fps);
 

@@ -326,10 +326,7 @@ body.hzb-browsing .app { display: none !important; }
 .shell-bar,
 .di,
 .rail-toggle,
-.hz-dock,
-.hz-hud,
 .widgets,
-.hz-desk-icons,
 .sidebar,
 .frame-exit { display: none !important; }
 
