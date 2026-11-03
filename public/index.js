@@ -300,7 +300,7 @@ function applyProxyEngine(id) {
   proxyEngineSelect.value = engine;
   address.placeholder =
     ENGINE_PLACEHOLDERS[loadSettings().engine] || ENGINE_PLACEHOLDERS.duckduckgo;
-  engineFoot.textContent = PROXY_ENGINES[engine].foot;
+  if (engineFoot) engineFoot.textContent = PROXY_ENGINES[engine].foot;
   const chip = document.getElementById("shell-proxy-tx");
   if (chip) chip.textContent = PROXY_ENGINES[engine].short;
   const row = document.getElementById("proxy-server-row");
@@ -2597,11 +2597,12 @@ function ensureFrame() {
   const frameEl = document.createElement("iframe");
   frameEl.id = "sj-frame";
   frameEl.style.cssText =
-    "position:fixed;inset:0;width:100%;height:100%;border:none;background:var(--bg);z-index:2000;";
-  document.body.appendChild(frameEl);
+    "position:absolute;inset:0;width:100%;height:100%;border:none;background:var(--bg);";
+  const host = document.getElementById("hzb-frame-host");
+  (host || document.body).appendChild(frameEl);
   activeFrame =
     proxyEngine === "ultraviolet" ? frameEl : controller.createFrame(frameEl);
-  frameExit.hidden = false;
+  frameExit.hidden = true;
 }
 
 /* ---- external proxies: gust, rammerhead, holy unblocker, corrosion ---- */
@@ -2630,7 +2631,7 @@ function openExternalProxy(id, url) {
   return Promise.resolve();
 }
 
-function launch(url) {
+function launchRaw(url) {
   const engineId = loadSettings().proxyEngine || "scramjet";
   const mode = PROXY_ENGINES[engineId];
   if (mode && mode.kind === "external") {
@@ -2657,6 +2658,11 @@ function launch(url) {
   }
   watchProxiedPage(url);
   return Promise.resolve();
+}
+
+function launch(url) {
+  if (window.hazeBrowser?.openUrl) return window.hazeBrowser.openUrl(url);
+  return launchRaw(url);
 }
 
 /* ---- wisp watchdog: a dead wisp shows up as the controller's internal
@@ -2737,7 +2743,7 @@ function watchProxiedPage(url) {
   }, 1200);
 }
 
-frameExit.addEventListener("click", () => {
+frameExit?.addEventListener("click", () => {
   if (activeFrame) {
     try {
       activeFrame.destroy?.();
@@ -3621,14 +3627,6 @@ function hazePromptModal(message, initial) {
     initParticles();
   }
 
-  const sidebarToggle = $haze("sidebar-icon-toggle");
-  sidebarToggle.checked = !!s.iconsSidebar;
-  sidebarToggle.addEventListener("change", () => {
-    saveSettings({ iconsSidebar: sidebarToggle.checked });
-    document.documentElement.classList.toggle("icons-sidebar", sidebarToggle.checked);
-  });
-  if (s.iconsSidebar) document.documentElement.classList.add("icons-sidebar");
-
   const compactToggle = $haze("compact-toggle");
   compactToggle.checked = !!s.compact;
   compactToggle.addEventListener("change", () => {
@@ -3654,43 +3652,6 @@ function hazePromptModal(message, initial) {
   });
   if (s.opaqueMode) document.documentElement.classList.add("opaque-mode");
 
-  // sidebar doubles as a site jump list (YouTube, Discord, ...)
-  const JUMP_SITES = [
-    ["YouTube", "https://www.youtube.com"],
-    ["Discord", "https://discord.com"],
-    ["Spotify", "https://open.spotify.com"],
-    ["TikTok", "https://www.tiktok.com"],
-    ["Twitch", "https://www.twitch.tv"],
-    ["Reddit", "https://reddit.com"],
-  ];
-  const jumpToggle = $haze("jump-sidebar-toggle");
-  const jumpNav = document.createElement("nav");
-  jumpNav.className = "side-jump";
-  jumpNav.hidden = true;
-  for (const [label, url] of JUMP_SITES) {
-    const a = document.createElement("button");
-    a.type = "button";
-    a.className = "side-jump-item";
-    a.textContent = label;
-    a.title = "Open " + label + " through the proxy";
-    a.addEventListener("click", () => {
-      address.value = url;
-      launch(url).catch(() => {});
-    });
-    jumpNav.appendChild(a);
-  }
-  const sidebarFoot = document.querySelector(".sidebar-foot");
-  if (sidebarFoot) sidebarFoot.parentElement.insertBefore(jumpNav, sidebarFoot);
-  const applyJumpSidebar = (on) => {
-    jumpNav.hidden = !on;
-    document.documentElement.classList.toggle("jump-sidebar", on);
-  };
-  jumpToggle.checked = !!s.jumpSidebar;
-  applyJumpSidebar(!!s.jumpSidebar);
-  jumpToggle.addEventListener("change", () => {
-    saveSettings({ jumpSidebar: jumpToggle.checked });
-    applyJumpSidebar(jumpToggle.checked);
-  });
 })();
 
 // quick jump dropdown in Settings -> Browsing
@@ -3884,35 +3845,17 @@ function paletteCommands() {
   const cmds = [
     { label: "Go: Home", run: () => clickNav("home"), key: "1" },
     { label: "Go: haze games", run: () => clickNav("games"), key: "2" },
-    { label: "Go: haze apps", run: () => clickNav("apps"), key: "a" },
     { label: "Go: Cloud gaming", run: () => clickNav("cloud"), key: "c" },
-    { label: "Open a random app", run: () => { clickNav("apps"); const f = document.getElementById("apps-frame"); if (f) f.onload = () => { setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 80); }; setTimeout(() => { try { f.contentWindow.hazeRandomApp?.(); } catch {} }, 400); } },
 
     { label: "Go: Music", run: () => clickNav("music"), key: "3" },
     { label: "Go: Chat", run: () => clickNav("chat"), key: "4" },
     { label: "Go: Settings", run: () => clickNav("settings"), key: "5" },
     { label: "Open terminal", run: () => window.hazeOS?.terminal(), key: "`" },
-    { label: "Start menu", run: () => window.hazeDesktop?.open(), key: "space" },
-    { label: "Lock screen", run: () => window.hazeDesktop?.lock() },
-    { label: "Browse the app library", run: () => clickNav("apps") },
-    { label: "Open Control Center", run: () => window.hazeControl?.open() },
-    { label: "Toggle floating windows", run: () => window.hazeWindows?.toggle() },
-    { label: "Minimize all windows", run: () => window.hazeWindows?.minimizeAll() },
     { label: "Keyboard shortcuts", run: () => window.hazeOS?.shortcuts(), key: "?" },
     { label: "Cycle theme", run: () => window.hazeOS?.nextTheme() },
-    { label: "VM: open text editor", run: () => window.hazeOS?.vm?.editor(), key: "e" },
-    { label: "VM: open todo list", run: () => window.hazeOS?.vm?.todo(), key: "t" },
-    { label: "VM: filesystem usage", run: () => window.hazeOS?.vm?.df() },
-    { label: "VM: format the disk", run: async () => { if (await hazeConfirm("Format the haze VM? Everything on ~ is replaced with the seed.")) window.hazeOS?.vm?.format(); } },
-    { label: "Arcade: snake", run: () => window.hazeArcade?.play("snake"), key: "s" },
-    { label: "Arcade: breakout", run: () => window.hazeArcade?.play("breakout"), key: "b" },
-    { label: "Arcade: open the cabinet", run: () => window.hazeArcade?.open() },
-    { label: "Matrix rain", run: () => window.hazeOS?.matrix() },
-    { label: "Replay boot sequence", run: () => window.hazeOS?.boot(true) },
 
     { label: "Toggle liquid glass", run: () => $haze("glass-toggle").click() },
     { label: "Toggle particles", run: () => $haze("particles-toggle").click() },
-    { label: "Toggle icons-only sidebar", run: () => $haze("sidebar-icon-toggle").click() },
     { label: "Toggle compact layout", run: () => $haze("compact-toggle").click() },
     { label: "Shuffle music results", run: () => setShuffle(!shuffleOn) },
     { label: "Cycle repeat mode", run: () => setRepeatMode(repeatMode === "off" ? "all" : repeatMode === "all" ? "one" : "off") },
@@ -4629,279 +4572,341 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
    browser shell — dock tiles, tab strip, chrome buttons
    ================================================================ */
 
-(function initShellChrome() {
-  const shell$ = (id) => document.getElementById(id);
+(function initBrowserChrome() {
+  const el = (id) => document.getElementById(id);
+  const tabsEl = el("hzb-tabs");
+  const page = el("hzb-page");
+  const pageNote = el("hzb-page-note");
+  const urlInput = el("hzb-url");
+  const form = el("hzb-form");
+  const backBtn = el("hzb-back");
+  const fwdBtn = el("hzb-fwd");
+  const reloadBtn = el("hzb-reload");
+  if (!tabsEl || !page) return;
+
+  const KNOWN = {
+    "youtube.com": "YouTube",
+    "m.youtube.com": "YouTube",
+    "discord.com": "Discord",
+    "open.spotify.com": "Spotify",
+    "spotify.com": "Spotify",
+    "google.com": "Google",
+    "www.google.com": "Google",
+    "twitch.tv": "Twitch",
+  };
   const VIEW_LABELS = {
-    home: "Home", games: "Games", music: "Music", ai: "AI",
-    chat: "Chat", apps: "Apps", cloud: "Cloud", settings: "Settings",
+    home: "New tab", games: "Games", music: "Music", ai: "AI",
+    chat: "Chat", cloud: "Cloud", settings: "Settings", terminal: "Terminal",
   };
 
-  /* ---- dock: real favicons on the pinned shortcuts ---- */
-  const dock = shell$("shortcuts");
+  let tabs = [];
+  let activeId = null;
+  let seq = 0;
+  let lastFrameTab = null;
 
-  function hostOf(url) {
+  const hostOf = (url) => {
     try {
       return new URL(url).hostname.replace(/^www\./, "");
     } catch {
       return "";
     }
+  };
+  const labelForUrl = (url) => {
+    const host = hostOf(url);
+    return KNOWN[host] || host || "New site";
+  };
+  const activeTab = () => tabs.find((t) => t.id === activeId) || null;
+
+  function makeTab(data) {
+    const tab = {
+      id: ++seq,
+      kind: data.kind,
+      view: data.view || null,
+      url: data.url || "",
+      label: data.label || "New tab",
+      history: data.url ? [data.url] : [],
+      at: data.url ? 0 : -1,
+      loadedUrl: "",
+    };
+    tabs.push(tab);
+    return tab;
   }
 
-  function paintTiles() {
-    if (!dock) return;
-    dock.querySelectorAll("button[data-url]").forEach((btn) => {
-      if (btn.dataset.tiled === "1") return;
-      const url = btn.dataset.url || "";
-      const host = hostOf(url);
-      const label = (btn.textContent || "").trim() || host || "site";
-      btn.dataset.tiled = "1";
-      btn.classList.add("dock-tile");
-      btn.title = label + (host ? " — " + host : "");
-      btn.setAttribute("aria-label", label);
-      btn.textContent = "";
-      const img = document.createElement("img");
-      img.alt = "";
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.width = 22;
-      img.height = 22;
-      img.src =
-        "https://www.google.com/s2/favicons?sz=128&domain=" + encodeURIComponent(host);
-      img.addEventListener(
-        "error",
-        () => {
-          img.remove();
-          if (!btn.querySelector(".dock-letter")) {
-            const s = document.createElement("span");
-            s.className = "dock-letter";
-            s.textContent = label.slice(0, 1).toUpperCase();
-            btn.appendChild(s);
-          }
-        },
-        { once: true }
-      );
-      btn.appendChild(img);
-    });
+  function note(text) {
+    if (!pageNote) return;
+    pageNote.textContent = text || "";
+    pageNote.hidden = !text;
   }
 
-  paintTiles();
-  if (dock && "MutationObserver" in window) {
-    new MutationObserver(paintTiles).observe(dock, { childList: true });
+  function paintAddress(tab) {
+    if (!urlInput) return;
+    if (tab?.kind === "url") {
+      urlInput.value = tab.url;
+      urlInput.placeholder = "Search or enter address";
+    } else {
+      urlInput.value = "";
+      urlInput.placeholder = "Search or enter address";
+    }
   }
 
-  /* ---- tab strip, mirroring the view switcher ---- */
-  const tabsEl = shell$("rail-tabs");
-  const openTabs = new Map([["home", "Home"]]);
-  let activeView = "home";
+  function buttonState() {
+    const tab = activeTab();
+    const canStep = tab?.kind === "url" && tab.history.length > 1;
+    if (backBtn) backBtn.disabled = !canStep || tab.at <= 0;
+    if (fwdBtn) fwdBtn.disabled = !canStep || tab.at >= tab.history.length - 1;
+  }
 
-  function renderTabs() {
-    if (!tabsEl) return;
+  function paintTabs() {
     tabsEl.textContent = "";
-    openTabs.forEach((label, view) => {
-      const tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = "rail-tab" + (view === activeView ? " on" : "");
-      const name = document.createElement("span");
-      name.textContent = label;
-      tab.appendChild(name);
-      if (view !== "home") {
-        const x = document.createElement("span");
-        x.className = "rail-tab-x";
-        x.setAttribute("role", "button");
-        x.setAttribute("aria-label", "Close tab");
-        x.textContent = "\u2715";
-        x.addEventListener("click", (e) => {
-          e.stopPropagation();
-          openTabs.delete(view);
-          if (activeView === view) go("home");
-          else renderTabs();
-        });
-        tab.appendChild(x);
+    for (const tab of tabs) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "hzb-tab" + (tab.id === activeId ? " is-active" : "");
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", tab.id === activeId ? "true" : "false");
+      button.title = tab.kind === "url" ? tab.url : tab.label;
+
+      const icon = document.createElement("span");
+      icon.className = "hzb-tab-icon";
+      if (tab.kind === "url") {
+        icon.textContent = labelForUrl(tab.url).slice(0, 1).toUpperCase();
+      } else {
+        icon.textContent = tab.view === "home" ? "⌂" : (VIEW_LABELS[tab.view] || tab.label).slice(0, 1);
       }
-      tab.addEventListener("click", () => go(view));
-      tabsEl.appendChild(tab);
+
+      const name = document.createElement("span");
+      name.className = "hzb-tab-name";
+      name.textContent = tab.label;
+
+      const close = document.createElement("span");
+      close.className = "hzb-tab-x";
+      close.setAttribute("role", "button");
+      close.setAttribute("aria-label", "Close tab");
+      close.textContent = "×";
+      close.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeTab(tab.id);
+      });
+
+      button.append(icon, name, close);
+      button.addEventListener("click", () => activate(tab.id));
+      tabsEl.appendChild(button);
+    }
+    buttonState();
+    requestAnimationFrame(() => {
+      tabsEl.querySelector(".is-active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     });
+  }
+
+  function setBrowsing(on) {
+    document.body.classList.toggle("hzb-browsing", on);
+    page.hidden = !on;
+  }
+
+  function loadTab(tab, force) {
+    if (!tab || tab.kind !== "url") return Promise.resolve();
+    if (!force && lastFrameTab === tab.id && tab.loadedUrl === tab.url) return Promise.resolve();
+    tab.loadedUrl = tab.url;
+    lastFrameTab = tab.id;
+    note("Opening " + labelForUrl(tab.url) + "…");
+    let pending;
+    try {
+      pending = launchRaw(tab.url);
+    } catch (error) {
+      note("This page could not be opened. " + String(error));
+      return Promise.reject(error);
+    }
+    return Promise.resolve(pending).then(
+      () => {
+        note("");
+      },
+      (error) => {
+        console.error("haze: navigation failed", error);
+        note("This page could not be opened. Check the proxy engine and try again.");
+      }
+    );
+  }
+
+  function showView(tab) {
+    setBrowsing(false);
+    note("");
+    toggleView(tab.view);
+    paintAddress(tab);
+    document.title = tab.view === "home" ? "haze" : tab.label + " · haze";
+    paintTabs();
+    updateChromeState();
+  }
+
+  function showUrl(tab) {
+    setBrowsing(true);
+    paintAddress(tab);
+    document.title = tab.label + " · haze";
+    paintTabs();
+    updateChromeState();
+    loadTab(tab, false);
+  }
+
+  function activate(id) {
+    const tab = tabs.find((t) => t.id === id);
+    if (!tab) return;
+    activeId = tab.id;
+    if (tab.kind === "view") showView(tab);
+    else showUrl(tab);
   }
 
   function go(view) {
     const target = hasView(view) ? view : "home";
-    activeView = target;
-    if (!openTabs.has(target)) openTabs.set(target, VIEW_LABELS[target] || target);
-    toggleView(target);
-    renderTabs();
-    document.body.classList.remove("rail-open");
+    let tab = tabs.find((t) => t.kind === "view" && t.view === target);
+    if (!tab) {
+      tab = makeTab({ kind: "view", view: target, label: VIEW_LABELS[target] || target });
+    }
+    activeId = tab.id;
+    showView(tab);
+    window.hazeOSBridge?.closePalette?.();
   }
 
-  /* the apps hub iframe and palette call this too — keep it in sync */
-  window.hazeGo = (v) => go(v);
-
-  document.addEventListener(
-    "click",
-    (e) => {
-      const nav = e.target.closest && e.target.closest(".nav-item[data-view]");
-      if (nav) go(nav.dataset.view);
-    },
-    true
-  );
-
-  shell$("rail-newtab")?.addEventListener("click", () => {
-    go("home");
-    setTimeout(() => shell$("sj-address")?.focus(), 60);
-  });
-
-  shell$("dock-add")?.addEventListener("click", () => {
-    go("settings");
-    setTimeout(() => shell$("bookmark-add-input")?.focus(), 90);
-  });
-
-  /* ---- collapse / reopen the rail ---- */
-  const RAIL_KEY = "haze-rail-collapsed";
-  let collapsed = false;
-  try {
-    collapsed = localStorage.getItem(RAIL_KEY) === "1";
-  } catch {}
-  const applyRail = () => document.body.classList.toggle("rail-collapsed", collapsed);
-  const rememberRail = () => {
-    try {
-      localStorage.setItem(RAIL_KEY, collapsed ? "1" : "0");
-    } catch {}
-  };
-  applyRail();
-
-  shell$("rail-collapse")?.addEventListener("click", () => {
-    collapsed = true;
-    applyRail();
-    rememberRail();
-  });
-  shell$("bar-panel")?.addEventListener("click", () => {
-    if (window.innerWidth <= 900) {
-      document.body.classList.toggle("rail-open");
-      return;
+  function openUrl(input, options = {}) {
+    const raw = String(input || "").trim();
+    if (!raw) return Promise.resolve();
+    let url = raw;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) {
+      url = window.search ? window.search(raw, searchEngine?.value) : "https://" + raw;
     }
-    collapsed = !collapsed;
-    applyRail();
-    rememberRail();
-  });
-  /* the classic home hides the chrome bar, so its corner button drives the same toggle */
-  shell$("rail-toggle")?.addEventListener("click", () => shell$("bar-panel")?.click());
+    const current = activeTab();
+    if (options.current && current?.kind === "url") {
+      current.url = url;
+      current.label = labelForUrl(url);
+      current.loadedUrl = "";
+      current.history = current.history.slice(0, current.at + 1);
+      current.history.push(url);
+      current.at = current.history.length - 1;
+      activeId = current.id;
+      showUrl(current);
+      return loadTab(current, true);
+    }
+    const tab = makeTab({ kind: "url", url, label: labelForUrl(url) });
+    activeId = tab.id;
+    showUrl(tab);
+    return loadTab(tab, true);
+  }
 
-  /* ---- home atmosphere: cursor spotlight ---- */
-  const atmoLayer = document.querySelector(".home-atmo");
-  if (atmoLayer && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    const rootStyle = document.documentElement.style;
-    let tx = 0.5, ty = 0.34, cx = tx, cy = ty, frame = 0;
-    const paint = () => {
-      cx += (tx - cx) * 0.12;
-      cy += (ty - cy) * 0.12;
-      rootStyle.setProperty("--spot-x", (cx * 100).toFixed(2) + "%");
-      rootStyle.setProperty("--spot-y", (cy * 100).toFixed(2) + "%");
-      if (Math.abs(tx - cx) > 0.0015 || Math.abs(ty - cy) > 0.0015) {
-        frame = requestAnimationFrame(paint);
-      } else {
-        frame = 0;
+  function closeTab(id) {
+    const index = tabs.findIndex((t) => t.id === id);
+    if (index < 0) return;
+    const wasActive = tabs[index].id === activeId;
+    tabs.splice(index, 1);
+    if (wasActive) {
+      const next = tabs[index] || tabs[index - 1] || null;
+      if (next) activate(next.id);
+      else {
+        const tab = makeTab({ kind: "view", view: "home", label: "New tab" });
+        activeId = tab.id;
+        showView(tab);
       }
-    };
-    window.addEventListener(
-      "pointermove",
-      (e) => {
-        const box = atmoLayer.getBoundingClientRect();
-        if (!box.width || !box.height) return;
-        const nx = (e.clientX - box.left) / box.width;
-        const ny = (e.clientY - box.top) / box.height;
-        tx = Math.min(1, Math.max(0, nx));
-        ty = Math.min(1, Math.max(0, ny));
-        if (!frame) frame = requestAnimationFrame(paint);
-      },
-      { passive: true }
-    );
-  }
-
-  /* ---- back / forward across proxied pages ---- */
-  const backStack = [];
-  let backAt = -1;
-  const urlLabel = shell$("shell-url-tx");
-
-  function showUrl(url) {
-    const host = hostOf(url);
-    if (urlLabel && host) urlLabel.textContent = host;
-  }
-
-  function noteUrl(url) {
-    if (!url || backStack[backAt] === url) {
-      if (url) showUrl(url);
-      return;
     }
-    backStack.splice(backAt + 1);
-    backStack.push(url);
-    if (backStack.length > 60) backStack.shift();
-    backAt = backStack.length - 1;
-    showUrl(url);
+    if (!tabs.length) {
+      const tab = makeTab({ kind: "view", view: "home", label: "New tab" });
+      activeId = tab.id;
+      showView(tab);
+    }
+    paintTabs();
   }
+
+  function step(direction) {
+    const tab = activeTab();
+    if (!tab || tab.kind !== "url") return;
+    const at = tab.at + direction;
+    if (at < 0 || at >= tab.history.length) return;
+    tab.at = at;
+    tab.url = tab.history[at];
+    tab.label = labelForUrl(tab.url);
+    tab.loadedUrl = "";
+    showUrl(tab);
+    loadTab(tab, true);
+  }
+
+  function navigateAddress() {
+    const raw = (urlInput?.value || "").trim();
+    if (!raw) return;
+    const current = activeTab();
+    if (current?.kind === "url") {
+      openUrl(raw, { current: true });
+    } else {
+      openUrl(raw);
+    }
+  }
+
+  function updateChromeState() {
+    buttonState();
+  }
+
+  function newTab() {
+    const tab = makeTab({ kind: "view", view: "home", label: "New tab" });
+    activeId = tab.id;
+    showView(tab);
+    setTimeout(() => urlInput?.focus(), 30);
+  }
+
+  /* ---- browser chrome wiring ---- */
+
+  el("hzb-new")?.addEventListener("click", newTab);
+  el("hzb-brand")?.addEventListener("click", newTab);
+  el("hzb-home")?.addEventListener("click", newTab);
+  backBtn?.addEventListener("click", () => step(-1));
+  fwdBtn?.addEventListener("click", () => step(1));
+  reloadBtn?.addEventListener("click", () => {
+    const tab = activeTab();
+    if (tab?.kind === "url") loadTab(tab, true);
+    else location.reload();
+  });
+  el("hzb-settings")?.addEventListener("click", () => go("settings"));
+  el("hzb-theme")?.addEventListener("click", () => {
+    document.documentElement.dataset.theme =
+      document.documentElement.dataset.theme === "cream" ? "haze" : "cream";
+  });
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    navigateAddress();
+  });
 
   document.addEventListener(
     "click",
-    (e) => {
-      const tile = e.target.closest && e.target.closest("#shortcuts button[data-url]");
-      if (tile) noteUrl(tile.dataset.url);
+    (event) => {
+      const site = event.target.closest?.("[data-url]");
+      if (site && document.body.contains(site)) {
+        event.preventDefault();
+        openUrl(site.dataset.url);
+        return;
+      }
+      const nav = event.target.closest?.(".nav-item[data-view]");
+      if (nav) {
+        event.preventDefault();
+        go(nav.dataset.view);
+      }
     },
     true
   );
-  form.addEventListener(
-    "submit",
-    () => {
-      const raw = address.value.trim();
-      if (!raw) return;
-      noteUrl(window.search(raw, searchEngine.value));
-    },
-    true
-  );
-  window.hazeLaunch = (url) => {
-    noteUrl(url);
-    return launch(url);
+
+  window.hazeGo = go;
+  window.hazeLaunch = (url) => openUrl(url);
+  window.hazeBrowser = {
+    openUrl,
+    go,
+    newTab,
+    active: () => activeTab(),
+    tabs: () => tabs.map((t) => ({ id: t.id, kind: t.kind, view: t.view, url: t.url, label: t.label })),
   };
 
-  function step(dir) {
-    const next = backAt + dir;
-    if (next < 0) {
-      hazeToast("Nothing further back");
-      return;
-    }
-    if (next >= backStack.length) {
-      hazeToast("Nothing further forward");
-      return;
-    }
-    backAt = next;
-    launch(backStack[next]).catch(() => {});
-    showUrl(backStack[next]);
-  }
-
-  shell$("bar-back")?.addEventListener("click", () => step(-1));
-  shell$("bar-fwd")?.addEventListener("click", () => step(1));
-  shell$("bar-reload")?.addEventListener("click", () => location.reload());
-  shell$("bar-full")?.addEventListener("click", () => {
-    if (document.fullscreenElement) document.exitFullscreen?.();
-    else document.documentElement.requestFullscreen?.()?.catch?.(() => {});
-  });
-  shell$("bar-theme")?.addEventListener("click", () => {
-    const root = document.documentElement;
-    root.dataset.theme = root.dataset.theme === "cream" ? "haze" : "cream";
-  });
-  shell$("shell-url")?.addEventListener("click", () => {
-    go("home");
-    setTimeout(() => shell$("sj-address")?.focus(), 60);
-  });
-  shell$("shell-sync")?.addEventListener("click", () => {
-    go("settings");
-    hazeToast("No account needed — your setup is saved on this device");
-  });
-
-  renderTabs();
+  const home = makeTab({ kind: "view", view: "home", label: "New tab" });
+  activeId = home.id;
+  showView(home);
 })();
 
 /* haze os bridge — lets os.js (loaded next) drive the shell without touching module scope */
 window.hazeOSBridge = {
   openPalette: paletteOpen,
   closePalette: paletteClose,
-  go: toggleView,
+  go: (view) => (window.hazeGo ? window.hazeGo(view) : toggleView(view)),
   toast: hazeToast,
 };

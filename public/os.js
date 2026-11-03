@@ -509,20 +509,14 @@ const sheetGrid = $("hz-sheet-grid");
 
 const SHORTCUTS = [
   ["⌘K / Ctrl K", "Command palette"],
-  ["Ctrl Space", "Start menu"],
-  ["Alt C", "Control center"],
-  ["Double-click", "Maximize a window"],
   ["/", "Focus the search field"],
   ["?", "This shortcut sheet"],
-  ["Ctrl `", "Terminal on / off"],
-  ["g", "Games"],
-  ["c", "Chat"],
-  ["m", "Mute music"],
   ["Esc", "Close any overlay"],
   ["↑ ↓", "Move through palette results"],
   ["Enter", "Run the selected command"],
-  ["1 – 5", "Jump between views in the palette"],
-  ["Tab", "Complete a terminal command"],
+  ["Ctrl `", "Terminal on / off"],
+  ["g", "Games"],
+  ["m", "Mute music"],
 ];
 
 if (sheetGrid) {
