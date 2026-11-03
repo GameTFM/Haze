@@ -1,0 +1,401 @@
+/* ==========================================================================
+   haze windows
+   ========================================================================== */
+
+.hz-wm-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  pointer-events: none;
+  font-family: inherit;
+}
+
+.hz-win {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  min-height: 260px;
+  overflow: hidden;
+  pointer-events: auto;
+  color: var(--text, #f4f4f8);
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--accent, #fff) 5%, transparent), transparent 64%),
+    color-mix(in srgb, var(--bg, #08080b) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text, #fff) 13%, transparent);
+  border-radius: 16px;
+  box-shadow:
+    0 42px 100px -34px rgba(0, 0, 0, 0.95),
+    0 10px 34px -20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(26px) saturate(1.2);
+  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+  isolation: isolate;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hz-win.is-focused {
+  border-color: color-mix(in srgb, var(--accent, #fff) 34%, var(--border, transparent));
+  box-shadow:
+    0 48px 120px -32px rgba(0, 0, 0, 0.98),
+    0 0 0 1px color-mix(in srgb, var(--accent, #fff) 10%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hz-win.is-opening {
+  animation: hz-win-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes hz-win-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.982); }
+  to { opacity: 1; transform: none; }
+}
+
+.hz-win.is-min { display: none; }
+
+.hz-win.is-max {
+  left: 12px !important;
+  top: 12px !important;
+  width: calc(100vw - 24px) !important;
+  height: calc(100dvh - 24px) !important;
+  border-radius: 18px;
+}
+
+/* ---- title bar ---- */
+
+.hz-win-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 46px;
+  flex: none;
+  padding: 0 12px;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #fff) 8%, transparent);
+  background: color-mix(in srgb, var(--text, #fff) 3.5%, transparent);
+}
+
+.hz-win-bar:active { cursor: grabbing; }
+
+.hz-win-lights {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding-right: 2px;
+}
+
+.hz-win-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.62);
+  font: 700 9px/1 ui-monospace, monospace;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.hz-win-light span { opacity: 0; transform: translateY(-0.5px); }
+.hz-win-lights:hover .hz-win-light span { opacity: 1; }
+.hz-win-light:hover { filter: brightness(1.12); transform: scale(1.08); }
+.hz-win-light-close { background: #ff6b6b; }
+.hz-win-light-min { background: #ffd166; }
+.hz-win-light-max { background: #74e0a0; }
+
+.hz-win-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 55%;
+  color: color-mix(in srgb, var(--text, #fff) 62%, transparent);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.hz-win-title span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hz-win-ico {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #fff);
+}
+
+.hz-win-ico svg { width: 14px; height: 14px; }
+
+.hz-win-faint {
+  margin-left: auto;
+  padding-right: 4px;
+  color: color-mix(in srgb, var(--text, #fff) 18%, transparent);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+/* ---- body ---- */
+
+.hz-win-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg-elev, var(--bg, #08080b)) 62%, transparent);
+}
+
+.hz-win .view {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 20px 22px 24px;
+  overflow: auto;
+  box-sizing: border-box;
+  animation: none;
+  scrollbar-width: thin;
+}
+
+.hz-win .view.active { display: block; }
+.hz-win .view::-webkit-scrollbar { width: 9px; }
+.hz-win .view::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text, #fff) 13%, transparent);
+  border-radius: 9px;
+}
+.hz-win .view-head { display: none; }
+.hz-win .muted { color: var(--muted); }
+
+/* panes that own a whole window */
+.hz-win .view-games,
+.hz-win .view-apps,
+.hz-win .view-cloud,
+.hz-win .view-ai,
+.hz-win .view-games.active,
+.hz-win .view-apps.active,
+.hz-win .view-cloud.active,
+.hz-win .view-ai.active {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.hz-win .games-wrap,
+.hz-win .ai-wrap {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.hz-win #games-frame,
+.hz-win #apps-frame,
+.hz-win #cloud-frame,
+.hz-win #ai-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.hz-win .view-ai { padding: 0; }
+.hz-win .view-ai .ai-wrap { border: 0; border-radius: 0; background: transparent; }
+
+/* music is a full-bleed layout of its own */
+.hz-win .view-music {
+  padding: 0;
+  overflow: auto;
+}
+
+.hz-win .view-music .nxm {
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.hz-win .view-music .nxm-cols {
+  min-height: 0;
+}
+
+/* terminal keeps its frame, minus the page padding */
+.hz-win .view-terminal {
+  padding: 8px;
+  overflow: hidden;
+}
+
+.hz-win .view-terminal .hz-term {
+  height: 100%;
+  max-width: none;
+  border-radius: 12px;
+}
+
+/* chat + settings scroll naturally */
+.hz-win .view-chat { padding: 22px; }
+.hz-win .view-chat .chat-room { height: calc(100% - 14px); min-height: 260px; }
+.hz-win .view-chat .chat-auth { margin-top: 4vh; }
+
+.hz-win .view-settings { padding: 22px; }
+.hz-win .view-settings .settings-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  max-width: none;
+}
+
+/* ---- resize grip ---- */
+
+.hz-win-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  opacity: 0.5;
+  background:
+    linear-gradient(135deg, transparent 48%, color-mix(in srgb, var(--text, #fff) 22%, transparent) 49%, transparent 52%),
+    linear-gradient(135deg, transparent 62%, color-mix(in srgb, var(--text, #fff) 15%, transparent) 63%, transparent 66%);
+}
+
+.hz-win-resize:hover { opacity: 1; }
+
+/* ---- dock / sidebar indicators ---- */
+
+.hz-dock-app.wm-open:not(.active)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent, #fff);
+  box-shadow: 0 0 8px var(--accent, #fff);
+  transform: translateX(-50%);
+  opacity: 0.7;
+}
+
+.hz-dock-app.wm-min:not(.active)::after {
+  opacity: 0.3;
+  width: 3px;
+  height: 3px;
+  box-shadow: none;
+}
+
+.nav-item.wm-open { position: relative; }
+.nav-item.wm-open::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent, #fff);
+  opacity: 0.75;
+  flex: none;
+}
+.nav-item.wm-min::after { opacity: 0.3; width: 4px; height: 4px; }
+
+body.hz-win-dragging,
+body.hz-win-resizing { user-select: none; }
+body.hz-win-dragging *,
+body.hz-win-resizing * { cursor: inherit !important; }
+
+/* ---- focus mode ---- */
+
+body.hz-focus .home-chips,
+body.hz-focus .hz-hud,
+body.hz-focus .hz-desk-icons {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+}
+
+body.hz-focus .home-chips,
+body.hz-focus .hz-hud,
+body.hz-focus .hz-desk-icons {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+body.hz-focus .widgets { opacity: 0.55; }
+
+/* ---- mobile: windows become full-screen sheets ---- */
+
+@media (max-width: 720px) {
+  .hz-win {
+    left: 6px !important;
+    top: 6px !important;
+    width: calc(100vw - 12px) !important;
+    height: calc(100dvh - 12px) !important;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 14px;
+  }
+  .hz-win.is-max {
+    left: 6px !important;
+    top: 6px !important;
+    width: calc(100vw - 12px) !important;
+    height: calc(100dvh - 12px) !important;
+  }
+  .hz-win-bar { cursor: default; }
+  .hz-win-resize { display: none; }
+  .hz-win-title { max-width: 48%; font-size: 0.55rem; }
+  .hz-win-faint { display: none; }
+  .hz-win .view { padding: 16px; }
+  .hz-win .view-games,
+  .hz-win .view-apps,
+  .hz-win .view-cloud,
+  .hz-win .view-ai { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-win,
+  .hz-win.is-opening { animation: none !important; transition: none !important; }
+  body.hz-focus .home-chips,
+  body.hz-focus .hz-hud,
+  body.hz-focus .hz-desk-icons { transition: none; }
+}
+
+/* the shell's fullbleed rules are more specific than the window defaults;
+   keep full-bleed panes inside the window instead of off the bottom edge */
+body.fullbleed .hz-win .games-wrap,
+body.fullbleed .hz-win .ai-wrap,
+.hz-win .view .games-wrap,
+.hz-win .view .ai-wrap {
+  height: auto;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+body.fullbleed .hz-win #games-frame,
+body.fullbleed .hz-win #apps-frame,
+body.fullbleed .hz-win #cloud-frame,
+body.fullbleed .hz-win #ai-frame,
+.hz-win #games-frame,
+.hz-win #apps-frame,
+.hz-win #cloud-frame,
+.hz-win #ai-frame {
+  height: 100%;
+  min-height: 0;
+}

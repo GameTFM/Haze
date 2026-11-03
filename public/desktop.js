@@ -215,6 +215,7 @@
     { label: "Arcade", icon: "game", run: () => { close(); window.hazeArcade?.open(); } },
     { label: "App library", icon: "apps", run: () => go("apps") },
     { label: "Palette", icon: "search", run: () => { close(); window.hazeOS?.palette?.(); } },
+    { label: "Control", icon: "gear", run: () => { close(); window.hazeControl?.open(); } },
     { label: "Theme", icon: "moon", run: () => { close(); window.hazeOS?.nextTheme?.(); } },
     { label: "Lock", icon: "lock", run: () => lock() },
     { label: "Terminal", icon: "term", run: () => { close(); window.hazeOS?.terminal?.(); } },

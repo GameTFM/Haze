@@ -26,7 +26,8 @@ function nav(view) {
 }
 
 function currentView() {
-  return document.querySelector(".view.active")?.dataset.viewSection || "home";
+  const focusedWindow = window.hazeWindows?.list?.().find((w) => w.focused);
+  return focusedWindow?.view || document.querySelector(".view.active")?.dataset.viewSection || "home";
 }
 
 function openPalette() {
@@ -54,11 +55,11 @@ function bootLines() {
   const theme = document.documentElement.dataset.theme || "haze";
   const widgets = [...document.querySelectorAll(".widget")].filter((w) => !w.hidden).length;
   return [
-    ["kernel", "haze os 3.0"],
+    ["kernel", "haze os 4.0"],
     ["transport", "scramjet v2 · epoxy"],
     ["surface", "theme " + theme],
     ["widgets", widgets + " active"],
-    ["shell", "start · dock · arcade"],
+    ["shell", "start · windows · arcade"],
     ["disk", "haze-vm · local"],
     ["network", navigator.onLine ? "online" : "offline"],
   ];
@@ -300,7 +301,7 @@ const commands = {
     const info = [
       "<b>haze</b>@os",
       "─────────────",
-      "os      haze os 3.0",
+      "os      haze os 4.0",
       "shell   haze-term",
       "theme   " + theme,
       "engine  " + engine,
@@ -468,6 +469,14 @@ termBody?.addEventListener("click", () => {
 });
 
 function openTerminal() {
+  if (window.hazeWindows?.enabled?.()) {
+    const existing = window.hazeWindows.list().find((w) => w.view === "terminal");
+    if (existing) {
+      if (existing.focused && !existing.minimized) window.hazeWindows.close("terminal");
+      else window.hazeWindows.open("terminal");
+      return;
+    }
+  }
   if (currentView() === "terminal") {
     nav("home");
     return;
@@ -482,7 +491,7 @@ const termWatcher = new MutationObserver(() => {
   const active = currentView() === "terminal";
   if (active && !termGreeted) {
     termGreeted = true;
-    termWrite('<span class="hz-term-hi">haze os</span> <span class="hz-term-mut">3.0 · terminal ready</span>');
+    termWrite('<span class="hz-term-hi">haze os</span> <span class="hz-term-mut">4.0 · terminal ready</span>');
     termWrite('type <span class="hz-term-hi">help</span> to see what this thing can do.', "hz-term-mut");
     termWrite('a real virtual disk is mounted at <span class="hz-term-hi">~</span> — <span class="hz-term-hi">ls</span> to look around.', "hz-term-mut");
     termWrite("", "hz-term-mut");
@@ -501,6 +510,8 @@ const sheetGrid = $("hz-sheet-grid");
 const SHORTCUTS = [
   ["⌘K / Ctrl K", "Command palette"],
   ["Ctrl Space", "Start menu"],
+  ["Alt C", "Control center"],
+  ["Double-click", "Maximize a window"],
   ["/", "Focus the search field"],
   ["?", "This shortcut sheet"],
   ["Ctrl `", "Terminal on / off"],

@@ -49,6 +49,7 @@ const navItems = document.querySelectorAll(".nav-item");
 const views = document.querySelectorAll(".view");
 
 function toggleView(view) {
+  if (window.hazeWindows?.intercept?.(view)) return;
   navItems.forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   views.forEach((v) => v.classList.toggle("active", v.dataset.viewSection === view));
 
@@ -3894,6 +3895,9 @@ function paletteCommands() {
     { label: "Start menu", run: () => window.hazeDesktop?.open(), key: "space" },
     { label: "Lock screen", run: () => window.hazeDesktop?.lock() },
     { label: "Browse the app library", run: () => clickNav("apps") },
+    { label: "Open Control Center", run: () => window.hazeControl?.open() },
+    { label: "Toggle floating windows", run: () => window.hazeWindows?.toggle() },
+    { label: "Minimize all windows", run: () => window.hazeWindows?.minimizeAll() },
     { label: "Keyboard shortcuts", run: () => window.hazeOS?.shortcuts(), key: "?" },
     { label: "Cycle theme", run: () => window.hazeOS?.nextTheme() },
     { label: "VM: open text editor", run: () => window.hazeOS?.vm?.editor(), key: "e" },
