@@ -59,6 +59,7 @@ function bootLines() {
     ["surface", "theme " + theme],
     ["widgets", widgets + " active"],
     ["shell", "dock · palette · terminal"],
+    ["disk", "haze-vm · local"],
     ["network", navigator.onLine ? "online" : "offline"],
   ];
 }
@@ -250,9 +251,20 @@ function termWrite(html, cls) {
 const viewNames = () => [...document.querySelectorAll(".view[data-view-section]")].map((v) => v.dataset.viewSection);
 const themeNames = () => [...document.querySelectorAll("#theme-grid .theme-swatch")].map((s) => s.dataset.theme);
 
+/* commands registered by add-ons (vm.js) appear in help + Tab completion */
+const commandHelp = [];
+const shellHooks = [];
+
+function registerCommands(list) {
+  for (const [name, desc] of list) {
+    if (!Object.prototype.hasOwnProperty.call(commands, name)) commands[name] = () => {};
+    commandHelp.push([name, desc || ""]);
+  }
+}
+
 const commands = {
   help() {
-    const rows = [
+    const base = [
       ["help", "this list"],
       ["neofetch", "system card"],
       ["theme [name]", "switch theme — no name lists them"],
@@ -268,11 +280,12 @@ const commands = {
       ["reload", "reload haze"],
       ["exit", "back to the stage"],
     ];
-    termWrite(
+    const grid = (rows) =>
       '<div class="hz-term-grid">' +
-        rows.map(([c, d]) => "<span>" + escapeHtml(c) + "</span><span>" + escapeHtml(d) + "</span>").join("") +
-        "</div>"
-    );
+      rows.map(([c, d]) => "<span>" + escapeHtml(c) + "</span><span>" + escapeHtml(d) + "</span>").join("") +
+      "</div>";
+    termWrite('<div class="hz-term-mut">shell</div>' + grid(base));
+    if (commandHelp.length) termWrite('<div class="hz-term-mut">vm — virtual filesystem at ~</div>' + grid(commandHelp));
   },
 
   neofetch() {
@@ -396,6 +409,9 @@ function runCommand(raw) {
   const line = raw.trim();
   if (!line) return;
   termWrite('<span class="hz-term-echo">haze@os ~ $</span> ' + escapeHtml(line));
+  for (const hook of shellHooks) {
+    if (hook(line)) return;
+  }
   const [name, ...rest] = line.split(/\s+/);
   const cmd = commands[name.toLowerCase()];
   if (cmd) {
@@ -468,6 +484,7 @@ const termWatcher = new MutationObserver(() => {
     termGreeted = true;
     termWrite('<span class="hz-term-hi">haze os</span> <span class="hz-term-mut">2.0 · terminal ready</span>');
     termWrite('type <span class="hz-term-hi">help</span> to see what this thing can do.', "hz-term-mut");
+    termWrite('a real virtual disk is mounted at <span class="hz-term-hi">~</span> — <span class="hz-term-hi">ls</span> to look around.', "hz-term-mut");
     termWrite("", "hz-term-mut");
   }
   if (active) setTimeout(() => termInput?.focus(), 60);
@@ -638,6 +655,19 @@ window.hazeOS = {
   nextTheme,
   palette: openPalette,
   toast,
+  registerCommands,
+  onLine: (fn) => shellHooks.push(fn),
+  term: {
+    write: (text, cls) => termWrite(escapeHtml(String(text ?? "")), cls),
+    html: (markup, cls) => termWrite(markup, cls),
+    clear: () => { if (termLog) termLog.innerHTML = ""; },
+    run: runCommand,
+    focus: () => termInput?.focus(),
+    setPrompt: (label) => {
+      const el = document.querySelector(".hz-term-prompt em");
+      if (el) el.textContent = label || "~";
+    },
+  },
 };
 
 runBoot(false);

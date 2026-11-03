@@ -3893,6 +3893,10 @@ function paletteCommands() {
     { label: "Open terminal", run: () => window.hazeOS?.terminal(), key: "`" },
     { label: "Keyboard shortcuts", run: () => window.hazeOS?.shortcuts(), key: "?" },
     { label: "Cycle theme", run: () => window.hazeOS?.nextTheme() },
+    { label: "VM: open text editor", run: () => window.hazeOS?.vm?.editor(), key: "e" },
+    { label: "VM: open todo list", run: () => window.hazeOS?.vm?.todo(), key: "t" },
+    { label: "VM: filesystem usage", run: () => window.hazeOS?.vm?.df() },
+    { label: "VM: format the disk", run: async () => { if (await hazeConfirm("Format the haze VM? Everything on ~ is replaced with the seed.")) window.hazeOS?.vm?.format(); } },
     { label: "Matrix rain", run: () => window.hazeOS?.matrix() },
     { label: "Replay boot sequence", run: () => window.hazeOS?.boot(true) },
 
