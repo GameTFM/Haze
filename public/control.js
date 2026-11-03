@@ -389,6 +389,7 @@
     try {
       window.hazeDesktop?.close?.();
       window.hazeOSBridge?.closePalette?.();
+      window.hazeCloak?.close?.();
     } catch {}
     lastFocus = document.activeElement;
     root.hidden = false;
@@ -396,6 +397,8 @@
     ccBtn.classList.add("active");
     ccBtn.setAttribute("aria-expanded", "true");
     refresh();
+    document.getElementById("hz-dock-control")?.classList.add("active");
+    document.dispatchEvent(new CustomEvent("haze:surface", { detail: { name: "control", open: true } }));
     setTimeout(() => panel.focus({ preventScroll: true }), 40);
   }
 
@@ -405,6 +408,8 @@
     root.hidden = true;
     ccBtn.classList.remove("active");
     ccBtn.setAttribute("aria-expanded", "false");
+    document.getElementById("hz-dock-control")?.classList.remove("active");
+    document.dispatchEvent(new CustomEvent("haze:surface", { detail: { name: "control", open: false } }));
     if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus({ preventScroll: true });
   }
 
@@ -455,36 +460,6 @@
 
   window.addEventListener("online", tick);
   window.addEventListener("offline", tick);
-
-  /* ------------------------------------------------------------------------
-     desktop icons
-     ------------------------------------------------------------------------ */
-
-  const DESK = [
-    { label: "Control", control: true, icon: "sliders" },
-  ];
-
-  const deskHost = document.querySelector(".view-home");
-  if (deskHost) {
-    const wrap = document.createElement("nav");
-    wrap.className = "hz-desk-icons";
-    wrap.setAttribute("aria-label", "Quick launcher");
-    for (const item of DESK) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "hz-desk-icon";
-      btn.title = item.label;
-      btn.setAttribute("aria-label", item.label);
-      btn.innerHTML = '<span class="hz-desk-tile">' + svg(item.icon) + "</span><span>" + escapeText(item.label) + "</span>";
-      btn.addEventListener("click", () => {
-        if (item.arcade) window.hazeArcade?.open?.();
-        else if (item.control) open();
-        else go(item.view);
-      });
-      wrap.appendChild(btn);
-    }
-    deskHost.appendChild(wrap);
-  }
 
   /* ------------------------------------------------------------------------
      terminal + init

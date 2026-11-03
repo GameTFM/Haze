@@ -595,7 +595,7 @@ html[data-theme="glass"] .hz-desk-icon:hover { color: #0f0f15; background: rgba(
 @media (max-width: 720px) {
   #hz-dock {
     bottom: 10px;
-    gap: 3px;
+    gap: 2px;
     padding: 5px;
     max-width: calc(100vw - 12px);
     overflow-x: auto;
@@ -604,14 +604,14 @@ html[data-theme="glass"] .hz-desk-icon:hover { color: #0f0f15; background: rgba(
   }
   #hz-dock::-webkit-scrollbar { display: none; }
   #hz-dock .hz-dock-app {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    border-radius: 10px;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 9px;
   }
-  #hz-dock .hz-dock-app svg { width: 16px; height: 16px; }
-  #hz-dock .hz-dock-glyph { font-size: 0.76rem; }
-  #hz-dock .hz-dock-sep { height: 18px; margin: 0 2px; }
+  #hz-dock .hz-dock-app svg { width: 15px; height: 15px; }
+  #hz-dock .hz-dock-glyph { font-size: 0.72rem; }
+  #hz-dock .hz-dock-sep { height: 17px; margin: 0 2px; }
   #hz-dock .hz-dock-app::before { display: none; }
   #hz-dock .hz-dock-app:hover { transform: none; }
 

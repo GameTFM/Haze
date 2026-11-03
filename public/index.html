@@ -82,6 +82,9 @@
       <button class="hzb-ic-btn" id="hzb-theme" type="button" title="Toggle light / dark" aria-label="Toggle theme">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 18.1v2.4M2.5 12h2.4M18.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
       </button>
+      <button class="hzb-ic-btn" id="hzb-cloak" type="button" title="Cloak & panic" aria-label="Open cloak menu" aria-haspopup="menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13a2.5 2.5 0 0 1 5 0v1.5a2.5 2.5 0 0 1-5 0V13Z"/><path d="M14 13a2.5 2.5 0 0 1 5 0v1.5a2.5 2.5 0 0 1-5 0V13Z"/><path d="M10 13.5h4"/><path d="M5 13 7 8h10l2 5"/></svg>
+      </button>
       <button class="hzb-ic-btn" id="hzb-settings" type="button" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
       </button>
@@ -354,11 +357,14 @@
           <button class="hz-dock-app" data-dock-view="chat" data-label="Chat" type="button" aria-label="Chat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </button>
-          <button class="hz-dock-app" id="hz-dock-settings" data-dock-action="settings" data-label="Settings" type="button" aria-label="Settings">
+          <button class="hz-dock-app" id="hz-dock-apps" data-dock-view="apps" data-label="Apps" type="button" aria-label="Apps">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           </button>
           <button class="hz-dock-app" data-dock-view="cloud" data-label="Cloud gaming" type="button" aria-label="Cloud gaming">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 6 19h11.5Z"/><path d="M8 15v3m4-4v5m4-6v6"/></svg>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-control" data-dock-action="control" data-label="Control · Alt C" type="button" aria-label="Control center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
           </button>
           <span class="hz-dock-sep" aria-hidden="true"></span>
           <button class="hz-dock-app" id="hz-dock-palette" data-label="Command ⌘K" type="button" aria-label="Command palette">
@@ -371,6 +377,35 @@
             <span class="hz-dock-glyph">?</span>
           </button>
         </nav>
+      </section>
+
+      <!-- ===================== APPS ===================== -->
+      <section class="view view-apps" data-view-section="apps">
+        <div class="view-head apps-head">
+          <div>
+            <span class="apps-kicker"><i aria-hidden="true"></i>haze://apps</span>
+            <h2>Apps</h2>
+            <p class="muted">Everything built into haze, plus hand-picked web escapes. No desktop OS required.</p>
+          </div>
+          <div class="apps-count" aria-live="polite"><b id="haze-apps-count">0</b><span>apps</span></div>
+        </div>
+
+        <div class="apps-toolbar">
+          <label class="apps-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8L20.5 20.5"/></svg>
+            <input id="haze-apps-search" type="search" placeholder="Search apps and tools…" autocomplete="off" spellcheck="false" />
+            <kbd>/</kbd>
+          </label>
+          <div class="apps-filters" role="tablist" aria-label="App filters">
+            <button class="apps-filter active" type="button" data-app-filter="all" role="tab" aria-selected="true">All</button>
+            <button class="apps-filter" type="button" data-app-filter="haze" role="tab" aria-selected="false">Haze</button>
+            <button class="apps-filter" type="button" data-app-filter="tools" role="tab" aria-selected="false">Tools</button>
+            <button class="apps-filter" type="button" data-app-filter="web" role="tab" aria-selected="false">Web</button>
+          </div>
+        </div>
+
+        <div class="apps-grid" id="haze-apps-grid"></div>
+        <p class="apps-empty" id="haze-apps-empty" hidden>No apps match that search.</p>
       </section>
 
       <!-- ===================== HAZE GAMES ===================== -->
@@ -699,7 +734,7 @@
             </div>
           </div>
 
-          <div class="settings-card">
+          <div class="settings-card" id="cloak-card">
             <h3>Tab cloak</h3>
             <p class="muted">Disguise this tab as a school site — swaps the title and favicon. “Open in about:blank” moves haze into a blank window with no address bar.</p>
             <select id="cloak-select">

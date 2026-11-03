@@ -907,6 +907,9 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
   const iconInput = document.getElementById("cloak-custom-icon");
   const customApply = document.getElementById("cloak-custom-apply");
   const aboutBtn = document.getElementById("cloak-about-blank");
+  const cloakBtn = document.getElementById("hzb-cloak");
+  const cloakMenu = document.createElement("div");
+  let cloakMenuOpen = false;
 
   let cloakState = loadSettings().cloak || { preset: "off" };
 
@@ -931,6 +934,145 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
       }
     }
     saveSettings({ cloak: cloakState });
+    if (cloakSelect) cloakSelect.value = cloakState.preset === "custom" ? "off" : (cloakState.preset || "off");
+    paintCloakQuick();
+  }
+
+  const CLOAK_QUICK = [
+    ["classroom", "Classroom"],
+    ["docs", "Docs"],
+    ["drive", "Drive"],
+    ["canvas", "Canvas"],
+    ["khan", "Khan"],
+    ["desmos", "Desmos"],
+    ["wikipedia", "Wikipedia"],
+    ["gmail", "Gmail"],
+  ];
+
+  function paintCloakQuick() {
+    const preset = cloakState.preset || "off";
+    const label = preset === "custom"
+      ? "custom"
+      : (CLOAK_QUICK.find(([id]) => id === preset)?.[1] || "off");
+    if (cloakBtn) {
+      const active = preset !== "off";
+      cloakBtn.classList.toggle("is-cloaked", active);
+      cloakBtn.setAttribute("aria-label", active ? "Cloak active: " + label + " — open menu" : "Open cloak menu");
+      cloakBtn.title = active ? "Cloak: " + label : "Cloak & panic";
+    }
+    if (!cloakMenu) return;
+    cloakMenu.querySelectorAll("[data-cloak-preset]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.cloakPreset === preset);
+    });
+    const live = cloakMenu.querySelector("#hzb-cloak-live");
+    if (live) live.textContent = label;
+  }
+
+  function buildCloakMenu() {
+    cloakMenu.id = "hzb-cloak-menu";
+    cloakMenu.className = "hzb-cloak-menu";
+    cloakMenu.hidden = true;
+    cloakMenu.setAttribute("role", "menu");
+    cloakMenu.setAttribute("aria-label", "Tab cloak");
+    cloakMenu.innerHTML =
+      '<div class="hzb-cloak-head"><div><b>Cloak this tab</b><small>Title + favicon disguise</small></div><span class="hzb-cloak-live" id="hzb-cloak-live">off</span></div>' +
+      '<div class="hzb-cloak-grid">' +
+      CLOAK_QUICK.map(([id, label]) => {
+        const icon = CLOAKS[id]?.icon || "";
+        return '<button type="button" class="hzb-cloak-preset" data-cloak-preset="' + id + '" role="menuitem"><img src="' + icon + '" alt="" loading="lazy"><span>' + label + "</span></button>";
+      }).join("") +
+      "</div>" +
+      '<div class="hzb-cloak-actions">' +
+      '<button type="button" data-cloak-reset role="menuitem">No cloak</button>' +
+      '<button type="button" data-cloak-about role="menuitem">Open in about:blank <span aria-hidden="true">&#8599;</span></button>' +
+      '<button type="button" data-cloak-panic role="menuitem">Panic now <span aria-hidden="true">!</span></button>' +
+      '<button type="button" data-cloak-settings role="menuitem">All cloak settings <span aria-hidden="true">&#8594;</span></button>' +
+      "</div>" +
+      '<p class="hzb-cloak-note">Cloak swaps the tab title and favicon only. Panic key opens your safe site instantly.</p>';
+    document.body.appendChild(cloakMenu);
+
+    cloakMenu.addEventListener("click", (event) => {
+      const presetBtn = event.target.closest("[data-cloak-preset]");
+      if (presetBtn) {
+        const id = presetBtn.dataset.cloakPreset;
+        applyCloak({ preset: id });
+        const label = CLOAK_QUICK.find(([key]) => key === id)?.[1] || id;
+        hazeToast("Cloak — " + label);
+        closeCloakMenu();
+        return;
+      }
+      if (event.target.closest("[data-cloak-reset]")) {
+        applyCloak({ preset: "off" });
+        hazeToast("Cloak off");
+        closeCloakMenu();
+        return;
+      }
+      if (event.target.closest("[data-cloak-about]")) {
+        closeCloakMenu();
+        openAboutBlank();
+        return;
+      }
+      if (event.target.closest("[data-cloak-panic]")) {
+        panicNow();
+        return;
+      }
+      if (event.target.closest("[data-cloak-settings]")) {
+        closeCloakMenu();
+        window.hazeBrowser?.go?.("settings");
+        setTimeout(() => document.getElementById("cloak-card")?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+      }
+    });
+
+    cloakBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleCloakMenu();
+    });
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!cloakMenuOpen) return;
+        if (event.target.closest("#hzb-cloak, #hzb-cloak-menu")) return;
+        closeCloakMenu();
+      },
+      true
+    );
+    window.addEventListener("resize", closeCloakMenu);
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && cloakMenuOpen) closeCloakMenu();
+    });
+  }
+
+  function openCloakMenu() {
+    if (!cloakBtn || !cloakMenu || cloakMenuOpen) return;
+    window.hazeControl?.close?.();
+    const chromeRect = document.querySelector(".hzb-chrome")?.getBoundingClientRect();
+    const rect = cloakBtn.getBoundingClientRect();
+    cloakMenu.hidden = false;
+    cloakMenu.style.top = Math.round((chromeRect?.bottom || rect.bottom) + 8) + "px";
+    const menuWidth = cloakMenu.offsetWidth || 352;
+    const preferredRight = innerWidth - rect.right;
+    const maxRight = Math.max(8, innerWidth - menuWidth - 8);
+    cloakMenu.style.right = Math.round(Math.max(8, Math.min(preferredRight, maxRight))) + "px";
+    cloakMenuOpen = true;
+    cloakBtn.classList.add("is-open");
+    cloakBtn.setAttribute("aria-expanded", "true");
+    paintCloakQuick();
+    document.dispatchEvent(new CustomEvent("haze:surface", { detail: { name: "cloak", open: true } }));
+  }
+
+  function closeCloakMenu() {
+    if (!cloakMenuOpen || !cloakMenu) return;
+    cloakMenuOpen = false;
+    cloakMenu.hidden = true;
+    cloakBtn?.classList.remove("is-open");
+    cloakBtn?.setAttribute("aria-expanded", "false");
+    document.dispatchEvent(new CustomEvent("haze:surface", { detail: { name: "cloak", open: false } }));
+  }
+
+  function toggleCloakMenu() {
+    if (cloakMenuOpen) closeCloakMenu();
+    else openCloakMenu();
   }
 
   cloakSelect.addEventListener("change", () => {
@@ -962,11 +1104,12 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
 
   // relaunch haze inside about:blank - no address bar, tab inherits the
   // current (cloaked) title + favicon, original tab is closed
-  aboutBtn.addEventListener("click", () => {
+  function openAboutBlank() {
     const win = window.open("about:blank", "_blank");
     if (!win) {
       aboutBtn.textContent = "Popup blocked \u2014 allow popups and retry";
       setTimeout(() => (aboutBtn.textContent = "Open in about:blank"), 2500);
+      hazeToast("Popup blocked \u2014 allow popups and try again");
       return;
     }
     const doc = win.document;
@@ -988,7 +1131,8 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
     setTimeout(() => {
       if (!window.closed) window.location.replace("about:blank");
     }, 150);
-  });
+  }
+  aboutBtn.addEventListener("click", openAboutBlank);
 
   // panic key: press your chosen key anywhere (outside a text field) ->
   // instantly bail to a safe-looking site. location.replace keeps haze out
@@ -999,6 +1143,12 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
   const PANIC_URL = "https://classroom.google.com/";
   const PANIC_FLAG = "haze-panic";
   const PANIC_KEY_FLAG = "haze-panic-key";
+
+  function panicNow() {
+    try {
+      window.location.replace(PANIC_URL);
+    } catch {}
+  }
 
   function panicKeyLabel(key) {
     if (key === " ") return "Space";
@@ -1050,13 +1200,23 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
     const chosen = localStorage.getItem(PANIC_KEY_FLAG) || "`";
     if (event.key === chosen && !typing) {
       event.preventDefault();
-      window.location.replace(PANIC_URL);
+      panicNow();
     }
   });
 
-  // reflect + apply whatever was saved
+  buildCloakMenu();
   cloakSelect.value = cloakState.preset || "off";
   applyCloak(cloakState);
+  window.hazeCloak = {
+    open: openCloakMenu,
+    close: closeCloakMenu,
+    toggle: toggleCloakMenu,
+    apply: applyCloak,
+    state: () => cloakState,
+    presets: CLOAKS,
+    about: openAboutBlank,
+    panic: panicNow,
+  };
 })();
 
 /* ================================================================
@@ -4606,8 +4766,14 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     "twitch.tv": "Twitch",
   };
   const VIEW_LABELS = {
-    home: "New tab", games: "Games", music: "Music", ai: "AI",
+    home: "New tab", apps: "Apps", games: "Games", music: "Music", ai: "AI",
     chat: "Chat", cloud: "Cloud", settings: "Settings", terminal: "Terminal",
+  };
+
+  const HAZE_VIEWS = {
+    home: "home", newtab: "home", new: "home", start: "home",
+    apps: "apps", app: "apps", games: "games", music: "music", ai: "ai",
+    chat: "chat", cloud: "cloud", settings: "settings", terminal: "terminal",
   };
 
   let tabs = [];
@@ -4694,14 +4860,47 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
 
   function paintAddress(tab) {
     if (!urlInput) return;
-    if (tab?.kind === "url") {
-      urlInput.value = tab.url;
-      urlInput.placeholder = "Search or enter address";
-    } else {
-      urlInput.value = "";
-      urlInput.placeholder = "Search or enter address";
-    }
+    const internal = tab?.kind === "view";
+    urlInput.value = internal ? "haze://" + (tab.view || "home") : (tab?.url || "");
+    urlInput.placeholder = "Search or enter address";
+    urlInput.classList.toggle("is-haze", internal);
   }
+
+  function openHazeRoute(raw) {
+    const route = String(raw || "")
+      .replace(/^haze:\/\//i, "")
+      .split(/[/?#]/)[0]
+      .trim()
+      .toLowerCase();
+    if (route === "control") {
+      window.hazeControl?.open?.();
+      return true;
+    }
+    if (route === "cloak") {
+      window.hazeCloak?.open?.();
+      return true;
+    }
+    const target = HAZE_VIEWS[route];
+    if (target) {
+      go(target);
+      return true;
+    }
+    window.hazeOSBridge?.toast?.("Unknown haze:// route");
+    go("apps");
+    return true;
+  }
+
+  document.addEventListener("haze:surface", (event) => {
+    if (!urlInput) return;
+    if (event.detail?.open) {
+      const name = event.detail.name || "control";
+      urlInput.value = "haze://" + name;
+      urlInput.classList.add("is-haze");
+      urlInput.placeholder = "haze://" + name;
+      return;
+    }
+    paintAddress(activeTab());
+  });
 
   function buttonState() {
     const tab = activeTab();
@@ -4896,6 +5095,8 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   }
 
   function go(view) {
+    window.hazeControl?.close?.();
+    window.hazeCloak?.close?.();
     const target = hasView(view) ? view : "home";
     let tab = tabs.find((t) => t.kind === "view" && t.view === target);
     if (!tab) {
@@ -4909,6 +5110,12 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   function openUrl(input, options = {}) {
     const raw = String(input || "").trim();
     if (!raw) return Promise.resolve();
+    if (/^haze:\/\//i.test(raw)) {
+      openHazeRoute(raw);
+      return Promise.resolve();
+    }
+    window.hazeControl?.close?.();
+    window.hazeCloak?.close?.();
     let url = raw;
     if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) {
       url = window.search ? window.search(raw, searchEngine?.value) : "https://" + raw;
@@ -4976,6 +5183,10 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   function navigateAddress() {
     const raw = (urlInput?.value || "").trim();
     if (!raw) return;
+    if (/^haze:\/\//i.test(raw)) {
+      openHazeRoute(raw);
+      return;
+    }
     const current = activeTab();
     if (current?.kind === "url") {
       openUrl(raw, { current: true });
@@ -4992,7 +5203,10 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     const tab = makeTab({ kind: "view", view: "home", label: "New tab" });
     activeId = tab.id;
     showView(tab);
-    setTimeout(() => urlInput?.focus(), 30);
+    setTimeout(() => {
+      urlInput?.focus();
+      urlInput?.select();
+    }, 30);
   }
 
   /* ---- browser chrome wiring ---- */
@@ -5089,14 +5303,123 @@ window.hazeOSBridge = {
     paint();
   });
 
-  document.getElementById("hz-dock-settings")?.addEventListener("click", (event) => {
+  document.getElementById("hz-dock-control")?.addEventListener("click", (event) => {
     event.preventDefault();
-    browser.go("settings");
-    paint();
+    window.hazeControl?.toggle?.();
+  });
+
+  document.addEventListener("haze:surface", (event) => {
+    if (event.detail?.name !== "control") return;
+    document.getElementById("hz-dock-control")?.classList.toggle("active", !!event.detail.open);
   });
 
   window.addEventListener("focus", paint);
   document.addEventListener("click", () => requestAnimationFrame(paint), true);
   setInterval(paint, 1200);
   paint();
+})();
+
+/* ================================================================
+   apps library - native haze://apps surface
+   ================================================================ */
+
+(() => {
+  const grid = document.getElementById("haze-apps-grid");
+  if (!grid) return;
+  const search = document.getElementById("haze-apps-search");
+  const empty = document.getElementById("haze-apps-empty");
+  const count = document.getElementById("haze-apps-count");
+  const filters = [...document.querySelectorAll("[data-app-filter]")];
+
+  const APPS = [
+    { id: "home", name: "New tab", glyph: "⌂", kind: "haze", view: "home", tone: "slate", desc: "The haze start page, clock, search and quick links." },
+    { id: "games", name: "Games", glyph: "▦", kind: "haze", view: "games", tone: "violet", desc: "Hundreds of browser games with no proxy required." },
+    { id: "music", name: "Music", glyph: "♫", kind: "haze", view: "music", tone: "rose", desc: "Search, playlists, queue and liked songs." },
+    { id: "ai", name: "AI", glyph: "✦", kind: "haze", view: "ai", tone: "cyan", desc: "Chat with free and premium models in one place." },
+    { id: "chat", name: "Chat", glyph: "◌", kind: "haze", view: "chat", tone: "amber", desc: "The global haze room — join as a guest or with a name." },
+    { id: "cloud", name: "Cloud gaming", glyph: "☁", kind: "haze", view: "cloud", tone: "blue", desc: "Stream PC games over WebRTC through stratus-api." },
+    { id: "terminal", name: "Terminal", glyph: ">_", kind: "haze", view: "terminal", tone: "green", desc: "A real local shell with a virtual filesystem." },
+    { id: "settings", name: "Settings", glyph: "⚙", kind: "haze", view: "settings", tone: "slate", desc: "Themes, wallpaper, proxy engine and data controls." },
+    { id: "control", name: "Control", glyph: "☰", kind: "tools", action: "control", tone: "violet", desc: "Themes, effects, tab count and one-tap actions." },
+    { id: "cloak", name: "Cloak", glyph: "◐", kind: "tools", action: "cloak", tone: "green", desc: "Disguise the tab title and favicon, panic key, about:blank." },
+    { id: "youtube", name: "YouTube", glyph: "▶", kind: "web", url: "https://www.youtube.com", tone: "rose", desc: "Watch videos through the haze proxy browser." },
+    { id: "discord", name: "Discord", glyph: "◉", kind: "web", url: "https://discord.com", tone: "violet", desc: "Open Discord in a proxied browser tab." },
+    { id: "spotify", name: "Spotify", glyph: "♫", kind: "web", url: "https://open.spotify.com", tone: "green", desc: "Open the Spotify web player." },
+    { id: "twitch", name: "Twitch", glyph: "◈", kind: "web", url: "https://www.twitch.tv", tone: "violet", desc: "Live streams and chat in a browser tab." },
+    { id: "wikipedia", name: "Wikipedia", glyph: "W", kind: "web", url: "https://en.wikipedia.org", tone: "slate", desc: "The free encyclopedia, one click away." },
+    { id: "github", name: "GitHub", glyph: "◧", kind: "web", url: "https://github.com", tone: "slate", desc: "Code, releases and the haze source." },
+    { id: "reddit", name: "Reddit", glyph: "◍", kind: "web", url: "https://www.reddit.com", tone: "amber", desc: "Communities, threads and the front page." },
+  ];
+
+  let activeFilter = "all";
+  let query = "";
+
+  function routeFor(app) {
+    if (app.kind === "web") return "web app";
+    if (app.kind === "tools") return "haze://" + app.action;
+    return "haze://" + app.view;
+  }
+
+  function render() {
+    const needle = query.trim().toLowerCase();
+    const visible = APPS.filter((app) => {
+      const category = activeFilter === "all" || app.kind === activeFilter;
+      const haystack = (app.name + " " + app.desc + " " + routeFor(app)).toLowerCase();
+      return category && (!needle || haystack.includes(needle));
+    });
+    grid.textContent = "";
+    for (const app of visible) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "haze-app";
+      card.dataset.app = app.id;
+      card.setAttribute("aria-label", app.name + " — " + routeFor(app));
+      card.innerHTML =
+        '<span class="haze-app-icon tone-' + app.tone + '" aria-hidden="true">' + app.glyph + "</span>" +
+        '<span class="haze-app-copy"><b>' + app.name + "</b><small>" + app.desc + '</small><code>' + routeFor(app) + "</code></span>" +
+        '<span class="haze-app-go" aria-hidden="true">&#8599;</span>';
+      grid.appendChild(card);
+    }
+    if (count) count.textContent = String(visible.length);
+    if (empty) empty.hidden = visible.length > 0;
+    filters.forEach((button) => {
+      const on = button.dataset.appFilter === activeFilter;
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-selected", String(on));
+    });
+  }
+
+  grid.addEventListener("click", (event) => {
+    const card = event.target.closest?.("[data-app]");
+    if (!card) return;
+    const app = APPS.find((item) => item.id === card.dataset.app);
+    if (!app) return;
+    if (app.kind === "web") window.hazeBrowser?.openUrl?.(app.url);
+    else if (app.action === "control") window.hazeControl?.open?.();
+    else if (app.action === "cloak") window.hazeCloak?.open?.();
+    else if (app.view) window.hazeBrowser?.go?.(app.view);
+  });
+
+  filters.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeFilter = button.dataset.appFilter || "all";
+      render();
+    });
+  });
+
+  search?.addEventListener("input", () => {
+    query = search.value;
+    render();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+    const tag = event.target?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || event.target?.isContentEditable) return;
+    if (window.hazeBrowser?.active?.()?.view !== "apps") return;
+    event.preventDefault();
+    search?.focus();
+  });
+
+  render();
 })();
