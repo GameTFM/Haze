@@ -385,7 +385,7 @@
           <div>
             <span class="apps-kicker"><i aria-hidden="true"></i>haze://apps</span>
             <h2>Apps</h2>
-            <p class="muted">Everything built into haze, plus hand-picked web escapes. No desktop OS required.</p>
+            <p class="muted">Everything built into haze, plus hand-picked web escapes. Pin what you use, pick up from recents, no desktop OS required.</p>
           </div>
           <div class="apps-count" aria-live="polite"><b id="haze-apps-count">0</b><span>apps</span></div>
         </div>
@@ -404,6 +404,32 @@
           </div>
         </div>
 
+        <section class="apps-shelf" id="haze-apps-pinned-section" aria-labelledby="haze-apps-pinned-heading" hidden>
+          <div class="apps-shelf-head">
+            <div class="apps-shelf-title">
+              <span class="apps-shelf-kicker">Keep close</span>
+              <h3 id="haze-apps-pinned-heading">Pinned</h3>
+            </div>
+            <span class="apps-shelf-count" id="haze-apps-pinned-count">0</span>
+          </div>
+          <div class="apps-grid apps-shelf-grid" id="haze-apps-pinned-grid"></div>
+        </section>
+
+        <section class="apps-shelf" id="haze-apps-recents-section" aria-labelledby="haze-apps-recents-heading" hidden>
+          <div class="apps-shelf-head">
+            <div class="apps-shelf-title">
+              <span class="apps-shelf-kicker">Pick up where you left off</span>
+              <h3 id="haze-apps-recents-heading">Recents</h3>
+            </div>
+            <button class="apps-shelf-clear" id="haze-apps-recents-clear" type="button">Clear</button>
+          </div>
+          <div class="apps-grid apps-shelf-grid" id="haze-apps-recents-grid"></div>
+        </section>
+
+        <div class="apps-all-head">
+          <h3>All apps</h3>
+          <span>Pin anything with the star</span>
+        </div>
         <div class="apps-grid" id="haze-apps-grid"></div>
         <p class="apps-empty" id="haze-apps-empty" hidden>No apps match that search.</p>
       </section>

@@ -5075,6 +5075,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
     document.title = tab.view === "home" ? "haze" : tab.label + " · haze";
     paintTabs();
     updateChromeState();
+    document.dispatchEvent(new CustomEvent("haze:navigate", { detail: { kind: "view", view: tab.view } }));
   }
 
   function showUrl(tab) {
@@ -5326,10 +5327,17 @@ window.hazeOSBridge = {
 (() => {
   const grid = document.getElementById("haze-apps-grid");
   if (!grid) return;
+  const library = grid.closest(".view-apps");
   const search = document.getElementById("haze-apps-search");
   const empty = document.getElementById("haze-apps-empty");
   const count = document.getElementById("haze-apps-count");
   const filters = [...document.querySelectorAll("[data-app-filter]")];
+  const pinnedSection = document.getElementById("haze-apps-pinned-section");
+  const pinnedGrid = document.getElementById("haze-apps-pinned-grid");
+  const pinnedCount = document.getElementById("haze-apps-pinned-count");
+  const recentsSection = document.getElementById("haze-apps-recents-section");
+  const recentsGrid = document.getElementById("haze-apps-recents-grid");
+  const recentsClear = document.getElementById("haze-apps-recents-clear");
 
   const APPS = [
     { id: "home", name: "New tab", glyph: "⌂", kind: "haze", view: "home", tone: "slate", desc: "The haze start page, clock, search and quick links." },
@@ -5351,8 +5359,42 @@ window.hazeOSBridge = {
     { id: "reddit", name: "Reddit", glyph: "◍", kind: "web", url: "https://www.reddit.com", tone: "amber", desc: "Communities, threads and the front page." },
   ];
 
+  const appById = new Map(APPS.map((app) => [app.id, app]));
+  const PIN_KEY = "haze-app-pins-v1";
+  const RECENT_KEY = "haze-app-recents-v1";
+  const MAX_RECENTS = 6;
+  const PIN_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.2l5.9-.8Z"/></svg>';
+
   let activeFilter = "all";
   let query = "";
+
+  function readStoredIds(key, limit) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "[]");
+      if (!Array.isArray(value)) return [];
+      const seen = new Set();
+      const ids = [];
+      for (const raw of value) {
+        if (typeof raw !== "string" || !appById.has(raw) || seen.has(raw)) continue;
+        seen.add(raw);
+        ids.push(raw);
+        if (ids.length >= limit) break;
+      }
+      return ids;
+    } catch {
+      return [];
+    }
+  }
+
+  function saveIds(key, ids) {
+    try {
+      localStorage.setItem(key, JSON.stringify(ids));
+    } catch {}
+  }
+
+  let pins = readStoredIds(PIN_KEY, APPS.length);
+  let recents = readStoredIds(RECENT_KEY, MAX_RECENTS);
 
   function routeFor(app) {
     if (app.kind === "web") return "web app";
@@ -5360,28 +5402,68 @@ window.hazeOSBridge = {
     return "haze://" + app.view;
   }
 
-  function render() {
+  function appMatches(app) {
+    if (activeFilter !== "all" && app.kind !== activeFilter) return false;
     const needle = query.trim().toLowerCase();
-    const visible = APPS.filter((app) => {
-      const category = activeFilter === "all" || app.kind === activeFilter;
-      const haystack = (app.name + " " + app.desc + " " + routeFor(app)).toLowerCase();
-      return category && (!needle || haystack.includes(needle));
-    });
+    if (!needle) return true;
+    const haystack = (app.name + " " + app.desc + " " + routeFor(app)).toLowerCase();
+    return haystack.includes(needle);
+  }
+
+  function createCard(app, source) {
+    const isPinned = pins.includes(app.id);
+    const card = document.createElement("article");
+    card.className = "haze-app" + (isPinned ? " is-pinned" : "");
+    card.dataset.app = app.id;
+    card.dataset.source = source;
+
+    const open = document.createElement("button");
+    open.type = "button";
+    open.className = "haze-app-open";
+    open.dataset.appOpen = app.id;
+    open.setAttribute("aria-label", "Open " + app.name + " — " + routeFor(app));
+    open.innerHTML =
+      '<span class="haze-app-icon tone-' + app.tone + '" aria-hidden="true">' + app.glyph + "</span>" +
+      '<span class="haze-app-copy"><b>' + app.name + "</b><small>" + app.desc + '</small><code>' + routeFor(app) + "</code></span>" +
+      '<span class="haze-app-go" aria-hidden="true">&#8599;</span>';
+
+    const pin = document.createElement("button");
+    pin.type = "button";
+    pin.className = "haze-app-pin";
+    pin.dataset.pinApp = app.id;
+    pin.setAttribute("aria-pressed", String(isPinned));
+    pin.setAttribute("aria-label", (isPinned ? "Unpin " : "Pin ") + app.name);
+    pin.title = isPinned ? "Unpin " + app.name : "Pin " + app.name;
+    pin.innerHTML = PIN_ICON;
+
+    card.append(open, pin);
+    return card;
+  }
+
+  function paintSection(section, target, apps, source) {
+    const show = apps.length > 0;
+    section.hidden = !show;
+    target.textContent = "";
+    if (!show) return;
+    const fragment = document.createDocumentFragment();
+    for (const app of apps) fragment.appendChild(createCard(app, source));
+    target.appendChild(fragment);
+  }
+
+  function render() {
+    const visible = APPS.filter(appMatches);
+    const pinnedApps = pins.map((id) => appById.get(id)).filter(Boolean).filter(appMatches);
+    const recentApps = recents.map((id) => appById.get(id)).filter(Boolean).filter(appMatches);
+
+    paintSection(pinnedSection, pinnedGrid, pinnedApps, "pinned");
+    if (pinnedCount) pinnedCount.textContent = String(pinnedApps.length);
+    paintSection(recentsSection, recentsGrid, recentApps, "recent");
+
     grid.textContent = "";
-    for (const app of visible) {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "haze-app";
-      card.dataset.app = app.id;
-      card.setAttribute("aria-label", app.name + " — " + routeFor(app));
-      card.innerHTML =
-        '<span class="haze-app-icon tone-' + app.tone + '" aria-hidden="true">' + app.glyph + "</span>" +
-        '<span class="haze-app-copy"><b>' + app.name + "</b><small>" + app.desc + '</small><code>' + routeFor(app) + "</code></span>" +
-        '<span class="haze-app-go" aria-hidden="true">&#8599;</span>';
-      grid.appendChild(card);
-    }
+    for (const app of visible) grid.appendChild(createCard(app, "all"));
     if (count) count.textContent = String(visible.length);
     if (empty) empty.hidden = visible.length > 0;
+
     filters.forEach((button) => {
       const on = button.dataset.appFilter === activeFilter;
       button.classList.toggle("active", on);
@@ -5389,15 +5471,53 @@ window.hazeOSBridge = {
     });
   }
 
-  grid.addEventListener("click", (event) => {
-    const card = event.target.closest?.("[data-app]");
-    if (!card) return;
-    const app = APPS.find((item) => item.id === card.dataset.app);
+  function recordRecent(id) {
+    if (!appById.has(id)) return;
+    const next = [id, ...recents.filter((item) => item !== id)].slice(0, MAX_RECENTS);
+    if (next.length === recents.length && next.every((item, index) => item === recents[index])) return;
+    recents = next;
+    saveIds(RECENT_KEY, recents);
+    render();
+  }
+
+  function togglePin(id) {
+    if (!appById.has(id)) return;
+    pins = pins.includes(id) ? pins.filter((item) => item !== id) : [...pins, id];
+    saveIds(PIN_KEY, pins);
+    render();
+    library?.querySelector('[data-pin-app="' + id + '"]')?.focus({ preventScroll: true });
+  }
+
+  function launchApp(app) {
     if (!app) return;
-    if (app.kind === "web") window.hazeBrowser?.openUrl?.(app.url);
-    else if (app.action === "control") window.hazeControl?.open?.();
-    else if (app.action === "cloak") window.hazeCloak?.open?.();
-    else if (app.view) window.hazeBrowser?.go?.(app.view);
+    recordRecent(app.id);
+    if (app.kind === "web") {
+      window.hazeBrowser?.openUrl?.(app.url);
+      return;
+    }
+    if (app.action === "control") {
+      window.hazeControl?.open?.();
+      return;
+    }
+    if (app.action === "cloak") {
+      window.hazeCloak?.open?.();
+      return;
+    }
+    if (app.view) window.hazeBrowser?.go?.(app.view);
+  }
+
+  library?.addEventListener("click", (event) => {
+    const pinButton = event.target.closest?.("[data-pin-app]");
+    if (pinButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePin(pinButton.dataset.pinApp);
+      return;
+    }
+    const openButton = event.target.closest?.("[data-app-open]");
+    if (!openButton) return;
+    event.preventDefault();
+    launchApp(appById.get(openButton.dataset.appOpen));
   });
 
   filters.forEach((button) => {
@@ -5410,6 +5530,27 @@ window.hazeOSBridge = {
   search?.addEventListener("input", () => {
     query = search.value;
     render();
+  });
+
+  recentsClear?.addEventListener("click", () => {
+    recents = [];
+    try {
+      localStorage.removeItem(RECENT_KEY);
+    } catch {}
+    render();
+    search?.focus({ preventScroll: true });
+  });
+
+  document.addEventListener("haze:navigate", (event) => {
+    const detail = event.detail;
+    if (detail?.kind !== "view" || !detail.view || detail.view === "apps") return;
+    recordRecent(detail.view);
+  });
+
+  document.addEventListener("haze:surface", (event) => {
+    if (!event.detail?.open) return;
+    const name = event.detail.name;
+    if (name === "control" || name === "cloak") recordRecent(name);
   });
 
   document.addEventListener("keydown", (event) => {

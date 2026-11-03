@@ -693,6 +693,66 @@ body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
 .apps-filter:hover { color: var(--text); }
 .apps-filter.active { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
 
+.apps-shelf { margin: 0 0 22px; }
+.apps-shelf-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+.apps-shelf-title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.apps-shelf-kicker {
+  color: var(--muted);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.apps-shelf-head h3 { margin: 0; font-size: 0.9rem; font-weight: 650; letter-spacing: -0.025em; }
+.apps-shelf-count {
+  min-width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.56rem;
+}
+.apps-shelf-clear {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.apps-shelf-clear:hover { color: var(--text); border-color: var(--accent); }
+.apps-shelf-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.apps-all-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 26px 0 10px;
+}
+.apps-all-head h3 { margin: 0; font-size: 0.9rem; font-weight: 650; letter-spacing: -0.025em; }
+.apps-all-head span {
+  color: var(--muted);
+  font-family: var(--hz-mono, ui-monospace, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .apps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
@@ -702,10 +762,8 @@ body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
 .haze-app {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 11px;
+  align-items: stretch;
   min-width: 0;
-  padding: 14px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
   border-radius: 15px;
@@ -713,11 +771,56 @@ body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
     linear-gradient(145deg, color-mix(in srgb, var(--text) 4%, transparent), transparent 55%),
     color-mix(in srgb, var(--panel) 58%, transparent);
   color: var(--text);
+  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
+}
+.haze-app.is-pinned { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.haze-app-open {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px 41px 14px 14px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
+  -webkit-appearance: none;
+  appearance: none;
 }
+.haze-app-open:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.haze-app-pin {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.haze-app-pin svg { width: 13px; height: 13px; }
+.haze-app:hover .haze-app-pin, .haze-app-pin:focus-visible { opacity: 1; }
+.haze-app-pin:hover { color: var(--text); border-color: var(--border); background: color-mix(in srgb, var(--bg-elev) 90%, transparent); }
+.haze-app-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.haze-app-pin[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  opacity: 1;
+}
+.haze-app-pin[aria-pressed="true"] svg { fill: currentColor; }
 .haze-app::before {
   content: "";
   position: absolute;
@@ -778,8 +881,17 @@ body.fullbleed .view-terminal { min-height: calc(100vh - var(--hzb-h)); }
   .apps-search { flex-basis: 100%; height: 38px; }
   .apps-filters { width: 100%; justify-content: space-between; }
   .apps-filter { padding: 7px 9px; font-size: 0.62rem; }
+  .apps-shelf { margin-bottom: 16px; }
+  .apps-shelf-kicker { font-size: 0.44rem; }
+  .apps-shelf-head h3 { font-size: 0.8rem; }
+  .apps-all-head { margin: 18px 0 8px; }
+  .apps-all-head h3 { font-size: 0.8rem; }
+  .apps-all-head span { display: none; }
   .apps-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
-  .haze-app { gap: 8px; padding: 10px; border-radius: 12px; }
+  .haze-app { border-radius: 12px; }
+  .haze-app-open { gap: 8px; padding: 10px 31px 10px 10px; }
+  .haze-app-pin { top: 7px; right: 7px; width: 24px; height: 24px; border-radius: 7px; }
+  .haze-app-pin svg { width: 12px; height: 12px; }
   .haze-app-icon { width: 35px; height: 35px; border-radius: 10px; font-size: 0.95rem; }
   .haze-app-copy b { font-size: 0.72rem; }
   .haze-app-copy small { display: none; }
