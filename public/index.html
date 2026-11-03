@@ -16,10 +16,25 @@
   <script src="/uv/uv.bundle.js" defer></script>
   <script src="/uv/uv.config.js" defer></script>
   <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="os.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
+  <script type="module" src="os.js"></script>
 </head>
 <body>
+  <div class="hz-boot" id="hz-boot" role="status" aria-live="polite">
+    <div class="hz-boot-inner">
+      <div class="hz-boot-brand">
+        <span class="hz-boot-logo">haze</span>
+        <span class="hz-boot-tag">os</span>
+        <span class="hz-boot-ver">2.0</span>
+      </div>
+      <div class="hz-boot-log" id="hz-boot-log"></div>
+      <div class="hz-boot-bar"><i id="hz-boot-fill"></i></div>
+      <div class="hz-boot-foot"><span id="hz-boot-state">initialising</span><span>click or press any key to skip</span></div>
+    </div>
+  </div>
+  <div class="hz-matrix" id="hz-matrix" hidden><canvas id="hz-matrix-canvas"></canvas></div>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="hz-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5" /><path d="M15.8 15.8L20.5 20.5" /></g></symbol>
     <symbol id="hz-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></g></symbol>
@@ -96,6 +111,10 @@
         <button class="nav-item" data-view="apps" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           <span>Apps</span>
+        </button>
+        <button class="nav-item" data-view="terminal" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9.5l3 2.5-3 2.5"/><path d="M12.5 15h4.5"/></svg>
+          <span>Terminal</span>
         </button>
         <button class="nav-item" data-view="cloud" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 6 19h11.5Z"/><path d="M8 15v3m4-4v5m4-6v6"/></svg>
@@ -177,6 +196,7 @@
           <div class="hero-clock">
             <div class="hero-clock-time" id="hero-clock-time">--:--</div>
             <div class="hero-clock-date" id="hero-clock-date"></div>
+            <div class="hero-clock-day" aria-hidden="true"><span id="hero-clock-day-fill"></span></div>
           </div>
           <h1 class="logo home-logo">haze</h1>
           <p class="greeting" id="greeting" hidden></p>
@@ -226,6 +246,49 @@
         <p id="sj-error"></p>
         <pre id="sj-error-code"></pre>
 
+        <div class="hz-hud" id="hz-hud" aria-hidden="true">
+          <span class="hz-hud-item"><i class="hz-hud-dot" id="hz-hud-dot"></i><b id="hz-hud-net">online</b></span>
+          <span class="hz-hud-item"><b id="hz-hud-fps">60</b>fps</span>
+          <span class="hz-hud-item"><b id="hz-hud-mem">—</b>mem</span>
+          <span class="hz-hud-item">up <b id="hz-hud-up">00:00</b></span>
+        </div>
+
+        <nav class="hz-dock" id="hz-dock" aria-label="Dock">
+          <button class="hz-dock-app nav-item" data-view="home" data-label="Home" type="button" aria-label="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.6v-6H9.6v6H5a1 1 0 0 1-1-1z"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="games" data-label="Games" type="button" aria-label="Games">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4m-2-2v4"/><path d="M15.5 11h.01M18 13h.01"/><path d="M17.3 5H6.7a4.7 4.7 0 0 0-4.6 5.6l1 5.2A3 3 0 0 0 8 17.5l1.5-1.5h5L16 17.5a3 3 0 0 0 4.9-1.7l1-5.2A4.7 4.7 0 0 0 17.3 5Z"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="music" data-label="Music" type="button" aria-label="Music">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="ai" data-label="AI" type="button" aria-label="AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="chat" data-label="Chat" type="button" aria-label="Chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="apps" data-label="Apps" type="button" aria-label="Apps">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="cloud" data-label="Cloud" type="button" aria-label="Cloud gaming">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 6 19h11.5Z"/><path d="M8 15v3m4-4v5m4-6v6"/></svg>
+          </button>
+          <button class="hz-dock-app nav-item" data-view="terminal" data-label="Terminal" type="button" aria-label="Terminal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9.5l3 2.5-3 2.5"/><path d="M12.5 15h4.5"/></svg>
+          </button>
+          <span class="hz-dock-sep" aria-hidden="true"></span>
+          <button class="hz-dock-app" id="hz-dock-palette" data-label="Command ⌘K" type="button" aria-label="Command palette">
+            <span class="hz-dock-glyph">⌘</span>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-theme" data-label="Next theme" type="button" aria-label="Switch theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <button class="hz-dock-app" id="hz-dock-help" data-label="Shortcuts ?" type="button" aria-label="Keyboard shortcuts">
+            <span class="hz-dock-glyph">?</span>
+          </button>
+        </nav>
         <div class="widgets" id="widgets" hidden>
           <div class="widget" id="widget-clock" hidden>
             <h4>Clock</h4>
@@ -564,6 +627,23 @@
       </section>
 
 
+      <!-- ===================== TERMINAL ===================== -->
+      <section class="view view-terminal" data-view-section="terminal">
+        <div class="hz-term" id="hz-term">
+          <div class="hz-term-bar">
+            <span class="hz-term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="hz-term-title">haze@os — ~</span>
+            <span class="hz-term-hint">type <b>help</b> · ctrl+` toggles</span>
+          </div>
+          <div class="hz-term-body" id="hz-term-body">
+            <div class="hz-term-log" id="hz-term-log"></div>
+            <form class="hz-term-line" id="hz-term-form" autocomplete="off">
+              <span class="hz-term-prompt" aria-hidden="true"><b>haze</b><i>@</i><b>os</b><em>~</em><s>$</s></span>
+              <input id="hz-term-input" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Terminal command" />
+            </form>
+          </div>
+        </div>
+      </section>
       <!-- ===================== SETTINGS ===================== -->
       <section class="view view-settings" data-view-section="settings">
         <div class="view-head">
@@ -852,6 +932,16 @@
 
   <button id="frame-exit" class="frame-exit" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#hz-x" /></svg>&nbsp; exit</button>
 
+  <div class="hz-sheet" id="hz-sheet" hidden>
+    <div class="hz-sheet-card" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+      <header class="hz-sheet-head">
+        <h3>Keyboard</h3>
+        <button class="hz-sheet-close" id="hz-sheet-close" type="button" aria-label="Close">esc</button>
+      </header>
+      <div class="hz-sheet-grid" id="hz-sheet-grid"></div>
+      <p class="hz-sheet-note">haze os · shortcuts work from the home screen</p>
+    </div>
+  </div>
   <div class="palette-overlay" id="palette-overlay" hidden>
     <div class="palette" role="dialog" aria-label="Command palette">
       <input id="palette-input" type="text" placeholder="Type a command or site… (try ? for help)" autocomplete="off" />

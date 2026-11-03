@@ -3890,6 +3890,11 @@ function paletteCommands() {
     { label: "Go: Music", run: () => clickNav("music"), key: "3" },
     { label: "Go: Chat", run: () => clickNav("chat"), key: "4" },
     { label: "Go: Settings", run: () => clickNav("settings"), key: "5" },
+    { label: "Open terminal", run: () => window.hazeOS?.terminal(), key: "`" },
+    { label: "Keyboard shortcuts", run: () => window.hazeOS?.shortcuts(), key: "?" },
+    { label: "Cycle theme", run: () => window.hazeOS?.nextTheme() },
+    { label: "Matrix rain", run: () => window.hazeOS?.matrix() },
+    { label: "Replay boot sequence", run: () => window.hazeOS?.boot(true) },
 
     { label: "Toggle liquid glass", run: () => $haze("glass-toggle").click() },
     { label: "Toggle particles", run: () => $haze("particles-toggle").click() },
@@ -4001,7 +4006,7 @@ paletteOverlay?.addEventListener("click", (e) => {
 });
 
 window.addEventListener("keydown", (event) => {
-  if ((event.ctrlKey || event.altKey) && event.key.toLowerCase() === "k") {
+  if ((event.ctrlKey || event.metaKey || event.altKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     if (paletteOverlay.hidden) paletteOpen();
     else paletteClose();
@@ -4766,7 +4771,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   /* the classic home hides the chrome bar, so its corner button drives the same toggle */
   shell$("rail-toggle")?.addEventListener("click", () => shell$("bar-panel")?.click());
 
-  /* ---- home atmosphere: cursor spotlight + ⌘K to search ---- */
+  /* ---- home atmosphere: cursor spotlight ---- */
   const atmoLayer = document.querySelector(".home-atmo");
   if (atmoLayer && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     const rootStyle = document.documentElement.style;
@@ -4796,15 +4801,6 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
       { passive: true }
     );
   }
-
-  document.addEventListener("keydown", (e) => {
-    if (!(e.key === "k" || e.key === "K") || !(e.metaKey || e.ctrlKey)) return;
-    e.preventDefault();
-    if (!document.querySelector(".view-home")?.classList.contains("active")) {
-      document.querySelector('[data-view="home"]')?.click();
-    }
-    setTimeout(() => document.getElementById("sj-address")?.focus(), 40);
-  });
 
   /* ---- back / forward across proxied pages ---- */
   const backStack = [];
@@ -4887,3 +4883,11 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
 
   renderTabs();
 })();
+
+/* haze os bridge — lets os.js (loaded next) drive the shell without touching module scope */
+window.hazeOSBridge = {
+  openPalette: paletteOpen,
+  closePalette: paletteClose,
+  go: toggleView,
+  toast: hazeToast,
+};

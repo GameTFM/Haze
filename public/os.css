@@ -1,0 +1,572 @@
+/* ==========================================================================
+   haze os — shell chrome: boot, dock, hud, terminal, sheet, matrix
+   Monochrome on purpose: the home stage is always a black stage.
+   ========================================================================== */
+
+:root {
+  --hz-ink: #f4f4f8;
+  --hz-dim: rgba(244, 244, 248, 0.56);
+  --hz-faint: rgba(244, 244, 248, 0.32);
+  --hz-line: rgba(255, 255, 255, 0.1);
+  --hz-glass: rgba(13, 13, 17, 0.66);
+  --hz-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+
+/* --------------------------------------------------------------------------
+   boot
+   -------------------------------------------------------------------------- */
+
+.hz-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(70% 60% at 50% 40%, rgba(255, 255, 255, 0.045), transparent 70%),
+    #040407;
+  color: var(--hz-ink);
+  font-family: var(--hz-mono);
+  transition: opacity 0.42s ease, visibility 0.42s ease;
+}
+.hz-boot[hidden] { display: none; }
+.hz-boot.gone { opacity: 0; visibility: hidden; }
+
+.hz-boot-inner { width: min(560px, calc(100vw - 48px)); }
+
+.hz-boot-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+.hz-boot-logo {
+  font-family: "Hurricane", "Segoe Script", cursive;
+  font-size: 2.9rem;
+  line-height: 0.9;
+  color: #fff;
+  text-shadow: 0 0 34px rgba(255, 255, 255, 0.45);
+  transform: rotate(-4deg);
+}
+.hz-boot-tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--hz-dim);
+}
+.hz-boot-ver {
+  margin-left: auto;
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  color: var(--hz-faint);
+}
+
+.hz-boot-log { display: grid; gap: 7px; min-height: 132px; }
+.hz-boot-line {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.63rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hz-dim);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: hz-boot-line 0.3s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+.hz-boot-key { color: var(--hz-faint); }
+.hz-boot-val { color: var(--hz-ink); letter-spacing: 0.06em; }
+.hz-boot-ok { color: rgba(142, 240, 176, 0.85); font-size: 0.58rem; text-align: right; }
+
+.hz-boot-bar {
+  height: 2px;
+  margin: 22px 0 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.hz-boot-bar i {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.35), #fff);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.65);
+  transition: width 0.24s linear;
+}
+.hz-boot-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.54rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hz-faint);
+}
+
+@keyframes hz-boot-line {
+  to { opacity: 1; transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   dock
+   -------------------------------------------------------------------------- */
+
+.view-home .home-stage { padding-bottom: clamp(112px, 16vh, 168px); }
+
+.hz-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border-radius: 22px;
+  background: rgba(12, 12, 16, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    0 26px 64px -26px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  animation: hz-dock-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.45s backwards;
+}
+
+.hz-dock-app {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: rgba(240, 240, 248, 0.6);
+  cursor: pointer;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.9, 0.2, 1),
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.hz-dock-app svg { width: 19px; height: 19px; }
+.hz-dock-glyph {
+  font-family: var(--hz-mono);
+  font-size: 0.92rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.hz-dock-app:hover {
+  transform: translateY(-9px) scale(1.05);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.hz-dock-app:active { transform: translateY(-4px) scale(0.97); }
+.hz-dock-app.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.hz-dock-app.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 9px rgba(255, 255, 255, 0.9);
+  transform: translateX(-50%);
+}
+.hz-dock-app::before {
+  content: attr(data-label);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: rgba(18, 18, 22, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  color: #f2f2f7;
+  font-family: var(--hz-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.hz-dock-app:hover::before { opacity: 1; transform: translate(-50%, 0); }
+
+.hz-dock-sep {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@keyframes hz-dock-in {
+  from { opacity: 0; transform: translate(-50%, 22px) scale(0.94); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* --------------------------------------------------------------------------
+   hud
+   -------------------------------------------------------------------------- */
+
+.hz-hud {
+  position: absolute;
+  left: 22px;
+  bottom: 30px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-family: var(--hz-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 248, 0.34);
+  animation: hz-fade-in 1s ease 1.1s backwards;
+}
+.hz-hud-item { display: inline-flex; align-items: center; gap: 5px; }
+.hz-hud-item b { color: rgba(244, 244, 248, 0.78); font-weight: 500; }
+.hz-hud-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #5ef39a;
+  box-shadow: 0 0 8px rgba(94, 243, 154, 0.8);
+}
+.hz-hud-dot.off { background: #f38a8a; box-shadow: 0 0 8px rgba(243, 138, 138, 0.8); }
+
+@keyframes hz-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* --------------------------------------------------------------------------
+   hero clock: day-progress hairline
+   -------------------------------------------------------------------------- */
+
+.hero-clock-day {
+  width: min(220px, 56vw);
+  height: 2px;
+  margin: 15px auto 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+.hero-clock-day span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.32), #ffffff);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+  transition: width 0.9s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* error lines need to clear the dock */
+.view-home #sj-error { bottom: 108px; }
+.view-home #sj-error-code { bottom: 90px; }
+
+/* the classic corner clock would sit under the dock */
+body.hz-os:has(.view-home.active) .di { display: none; }
+
+/* --------------------------------------------------------------------------
+   terminal
+   -------------------------------------------------------------------------- */
+
+.view.view-terminal {
+  padding: 16px clamp(12px, 2.4vw, 34px);
+  min-height: 100vh;
+}
+.view-terminal .hz-term {
+  height: calc(100vh - 32px);
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.045), transparent 62%),
+    #07070b;
+  box-shadow: 0 50px 130px -60px #000, inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hz-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.022);
+  font-family: var(--hz-mono);
+}
+.hz-term-dots { display: inline-flex; gap: 6px; }
+.hz-term-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+.hz-term-dots i:first-child { background: rgba(255, 125, 125, 0.6); }
+.hz-term-dots i:nth-child(2) { background: rgba(255, 214, 125, 0.55); }
+.hz-term-dots i:last-child { background: rgba(142, 240, 176, 0.55); }
+.hz-term-title {
+  font-size: 0.62rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 248, 0.52);
+}
+.hz-term-hint {
+  margin-left: auto;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 248, 0.28);
+}
+.hz-term-hint b { color: rgba(244, 244, 248, 0.6); font-weight: 500; }
+
+.hz-term-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 24px 10px;
+  font-family: var(--hz-mono);
+  font-size: 0.82rem;
+  line-height: 1.62;
+  color: #d9d9e4;
+  cursor: text;
+  scrollbar-width: thin;
+}
+.hz-term-body::-webkit-scrollbar { width: 9px; }
+.hz-term-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 9px; }
+
+.hz-term-row { white-space: pre-wrap; word-break: break-word; }
+.hz-term-row + .hz-term-row { margin-top: 2px; }
+.hz-term-echo { color: rgba(244, 244, 248, 0.42); }
+.hz-term-ok { color: #8ef0b0; }
+.hz-term-err { color: #ff9c9c; }
+.hz-term-mut { color: rgba(244, 244, 248, 0.42); }
+.hz-term-hi { color: #fff; font-weight: 600; }
+
+.hz-term-pre {
+  margin: 6px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  font-family: var(--hz-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(244, 244, 248, 0.74);
+  overflow-x: auto;
+}
+.hz-term-pre b { color: #fff; }
+
+.hz-term-grid {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 2px 18px;
+  margin: 6px 0 2px;
+}
+.hz-term-grid > span:nth-child(odd) { color: rgba(244, 244, 248, 0.78); }
+.hz-term-grid > span:nth-child(even) { color: rgba(244, 244, 248, 0.42); }
+
+.hz-term-line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0 18px;
+}
+.hz-term-prompt { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.hz-term-prompt b { color: #fff; font-weight: 600; }
+.hz-term-prompt i { color: rgba(244, 244, 248, 0.4); font-style: normal; }
+.hz-term-prompt em { margin: 0 6px 0 4px; color: #8ef0b0; font-style: normal; }
+.hz-term-prompt s { color: rgba(244, 244, 248, 0.55); text-decoration: none; }
+.hz-term-line input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: #f4f4f8;
+  font: inherit;
+  caret-color: #8ef0b0;
+  padding: 0;
+}
+.hz-term-line input::placeholder { color: rgba(244, 244, 248, 0.26); }
+
+/* --------------------------------------------------------------------------
+   keyboard sheet
+   -------------------------------------------------------------------------- */
+
+.hz-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 3, 6, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: hz-fade-in 0.2s ease;
+}
+.hz-sheet[hidden] { display: none; }
+
+.hz-sheet-card {
+  width: min(680px, 100%);
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 22px 24px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 16, 0.94);
+  box-shadow: 0 60px 140px -50px #000, inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  animation: hz-sheet-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hz-sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.hz-sheet-head h3 {
+  margin: 0;
+  font-family: var(--hz-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 248, 0.72);
+}
+.hz-sheet-close {
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(244, 244, 248, 0.6);
+  font-family: var(--hz-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.hz-sheet-close:hover { color: #fff; border-color: rgba(255, 255, 255, 0.28); }
+
+.hz-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 30px;
+}
+.hz-sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  font-size: 0.78rem;
+  color: rgba(244, 244, 248, 0.62);
+}
+.hz-sheet-keys { display: inline-flex; gap: 4px; }
+.hz-sheet-keys kbd {
+  min-width: 22px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom-width: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f2f7;
+  font-family: var(--hz-mono);
+  font-size: 0.6rem;
+  text-align: center;
+}
+.hz-sheet-note {
+  margin: 16px 0 0;
+  font-family: var(--hz-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 248, 0.28);
+}
+
+@keyframes hz-sheet-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.975); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   matrix
+   -------------------------------------------------------------------------- */
+
+.hz-matrix {
+  position: fixed;
+  inset: 0;
+  z-index: 8500;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+.hz-matrix[hidden] { display: none; }
+.hz-matrix.gone { opacity: 0; }
+.hz-matrix canvas { width: 100%; height: 100%; display: block; }
+
+/* --------------------------------------------------------------------------
+   responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .hz-hud { display: none; }
+  .hz-dock { bottom: 16px; gap: 2px; padding: 6px; border-radius: 18px; }
+  .hz-dock-app { width: 36px; height: 36px; border-radius: 11px; }
+  .hz-dock-app svg { width: 17px; height: 17px; }
+  .hz-dock-sep { margin: 0 2px; }
+  .view-home .home-stage { padding-bottom: 100px; }
+  .view-home #sj-error { bottom: 84px; }
+  .view-home #sj-error-code { bottom: 66px; }
+  .hz-sheet-grid { grid-template-columns: minmax(0, 1fr); }
+  .view.view-terminal { padding: 8px; }
+  .view-terminal .hz-term { height: calc(100vh - 16px); border-radius: 14px; }
+  .hz-term-body { padding: 16px 16px 8px; font-size: 0.76rem; }
+  .hz-term-hint { display: none; }
+}
+
+@media (max-height: 680px) {
+  .hz-dock { position: static; transform: none; margin: 22px auto 0; animation: none; }
+  .hz-dock-app:hover { transform: translateY(-5px) scale(1.03); }
+  .hz-hud { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-dock, .hz-hud, .hz-boot-line { animation: none !important; }
+  .hz-dock-app, .hz-boot-bar i, .hero-clock-day span { transition: none; }
+  .hz-dock-app:hover { transform: none; }
+}
+
+
+/* if the os module never loads, the boot screen bows out on its own */
+@keyframes hz-boot-failsafe {
+  to { opacity: 0; visibility: hidden; }
+}
+.hz-boot { animation: hz-boot-failsafe 0.5s ease 7s forwards; }
+/* narrow phones: the dock scrolls instead of clipping */
+@media (max-width: 560px) {
+  .hz-dock {
+    max-width: calc(100vw - 16px);
+    gap: 1px;
+    padding: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+  .hz-dock::-webkit-scrollbar { display: none; }
+  .hz-dock-app { width: 33px; height: 33px; border-radius: 10px; flex: none; }
+  .hz-dock-app svg { width: 16px; height: 16px; }
+  .hz-dock-sep { flex: none; margin: 0 1px; }
+  .hz-dock-app::before { display: none; }
+}
