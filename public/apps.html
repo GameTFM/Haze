@@ -209,7 +209,14 @@
         { id: "yt",       name: "Tubular",      by: "lauraevan",  icon: "\u25B6\uFE0F", kind: "url", url: GD + "/lauraevan/YouTube/main/index.html", desc: "Search YouTube and play results in an embedded player." },
         { id: "ggr",      name: "Greatest Revive", by: "lauraevan", icon: "\u2728", kind: "url", url: GD + "/lauraevan/greatestgreatest-revive/main/index.html", desc: "PWA game grid with theme + card-size settings." },
         { id: "dlhub",    name: "Download Hub", by: "GreenGru2",  icon: "\uD83D\uDCE5", kind: "url", url: GD + "/GreenGru2/Download-Hub/main/index.html", desc: "Cards.json-driven hub: HTML/ZIP downloads with ratings." },
-        { id: "arsenic",  name: "Arsenic",      by: "AvidTroll",  icon: "\uD83E\uDDBF", kind: "url", url: GD + "/AvidTroll/arsenic/main/public/index.html", desc: "Landing portal: home, chatroom, about, games and unblocker." }
+        { id: "arsenic",  name: "Arsenic",      by: "AvidTroll",  icon: "\uD83E\uDDBF", kind: "url", url: GD + "/AvidTroll/arsenic/main/public/index.html", desc: "Landing portal: home, chatroom, about, games and unblocker." },
+        { id: "secrecy",  name: "Secrecy",     by: "frozenfinale", icon: "🌙", kind: "url", url: GD + "/frozenfinale/secrecy/main/index.html", desc: "SVG-cloaked vault of launchers, redirects and decorative pages." },
+        { id: "synapse",  name: "Synapse Lite", by: "blockfreeubg", icon: "🧠", kind: "url", url: GD + "/blockfreeubg/synapse-lite/main/index.html", desc: "Single-file proxy shell with an icon grid and a tiny footprint." },
+        { id: "fucku",    name: "Fuck U",      by: "lauraevan",    icon: "🪞", kind: "url", url: GD + "/lauraevan/fuck-u/main/index.html", desc: "One-file portal with a deliberately unsubtle name." },
+        { id: "bsf",      name: "BSF Single",  by: "BestSpark687090", icon: "🧩", kind: "url", url: GD + "/BestSpark687090/bsf/main/single.html", desc: "Bundled single-file launcher with generated SVG cloak pages." },
+        { id: "cherri",   name: "Cherri",      by: "NotAbdullahHD", icon: "🍒", kind: "url", url: "https://github.com/NotAbdullahHD/cherri", desc: "Proxy OS with its own service-worker routers (opens the repo)." },
+        { id: "nexora",   name: "Nexora Assets", by: "nexora240-lgtm", icon: "🛰️", kind: "url", url: "https://github.com/nexora240-lgtm/Nexora-Assets", desc: "Icon, game and proxy asset pack for Nexora builds (opens the repo)." }
+
       ];
 
       /* ---- Interstellar web-app catalog (https://github.com/Wrbxy/intersteller) ---- */
@@ -321,7 +328,7 @@
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
       }
       function allApps() {
-        return WEBAPPS;
+        return HUB.concat(WEBAPPS);
       }
       function byId(id) {
         var list = allApps();
@@ -480,7 +487,17 @@
         }
         status.hidden = true;
 
-        sections.appendChild(section(favMode ? "\u2605 Favorites" : "Web apps", list.map(tileHtml).join("")));
+        if (q || favMode) {
+          sections.appendChild(section(favMode ? "★ Favorites" : "Results", list.map(tileHtml).join("")));
+        } else {
+          var favList = list.filter(function (t) { return favs.indexOf(t.id) !== -1; });
+          var builtin = HUB.filter(function (t) { return t.kind === "go"; });
+          var github = HUB.filter(function (t) { return t.kind !== "go"; });
+          if (favList.length) sections.appendChild(section("★ Favorites", favList.map(tileHtml).join("")));
+          sections.appendChild(section("Built into haze", builtin.map(tileHtml).join("")));
+          sections.appendChild(section("GitHub apps", github.map(tileHtml).join("")));
+          sections.appendChild(section("Web apps", WEBAPPS.map(tileHtml).join("")));
+        }
         warmIcons(list);
       }
 
@@ -567,6 +584,12 @@
       // exposed for the parent haze command palette ("Open a random app")
       window.hazeRandomApp = function () {
         openTile(WEBAPPS[Math.floor(Math.random() * WEBAPPS.length)]);
+      };
+
+      window.hazeSearchApps = function (query) {
+        favMode = false;
+        search.value = query || "";
+        render();
       };
 
       render();

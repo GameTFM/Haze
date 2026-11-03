@@ -18,11 +18,13 @@
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="os.css" />
   <link rel="stylesheet" href="arcade.css" />
+  <link rel="stylesheet" href="desktop.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
   <script type="module" src="os.js"></script>
   <script type="module" src="vm.js"></script>
   <script type="module" src="arcade.js"></script>
+  <script type="module" src="desktop.js"></script>
 </head>
 <body>
   <div class="hz-boot" id="hz-boot" role="status" aria-live="polite">
@@ -30,7 +32,7 @@
       <div class="hz-boot-brand">
         <span class="hz-boot-logo">haze</span>
         <span class="hz-boot-tag">os</span>
-        <span class="hz-boot-ver">2.0</span>
+        <span class="hz-boot-ver">3.0</span>
       </div>
       <div class="hz-boot-log" id="hz-boot-log"></div>
       <div class="hz-boot-bar"><i id="hz-boot-fill"></i></div>
@@ -115,7 +117,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           <span>Apps</span>
         </button>
-        <button class="nav-item" data-view="terminal" type="button">
+        <button class="nav-item" data-view="terminal" type="button" style="display:none" aria-hidden="true" tabindex="-1">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9.5l3 2.5-3 2.5"/><path d="M12.5 15h4.5"/></svg>
           <span>Terminal</span>
         </button>
@@ -223,6 +225,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4m-2-2v4"/><path d="M15.5 11h.01M18 13h.01"/><path d="M17.3 5H6.7a4.7 4.7 0 0 0-4.6 5.6l1 5.2A3 3 0 0 0 8 17.5l1.5-1.5h5L16 17.5a3 3 0 0 0 4.9-1.7l1-5.2A4.7 4.7 0 0 0 17.3 5Z"/></svg>
               Games
             </button>
+            <button class="home-chip hz-arcade-chip" id="home-arcade" type="button" aria-label="Open the arcade">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4m-2-2v4"/><path d="M15.5 11h.01M18 13h.01"/><path d="M17.3 5H6.7a4.7 4.7 0 0 0-4.6 5.6l1 5.2A3 3 0 0 0 8 17.5l1.5-1.5h5L16 17.5a3 3 0 0 0 4.9-1.7l1-5.2A4.7 4.7 0 0 0 17.3 5Z"/></svg>
+              Arcade
+            </button>
             <button class="home-chip nav-item" data-view="music" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
               Music
@@ -257,6 +263,10 @@
         </div>
 
         <nav class="hz-dock" id="hz-dock" aria-label="Dock">
+          <button class="hz-dock-app" id="hz-dock-start" data-label="Start · Ctrl Space" type="button" aria-label="Open start menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+          </button>
+
           <button class="hz-dock-app nav-item" data-view="home" data-label="Home" type="button" aria-label="Home">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.6v-6H9.6v6H5a1 1 0 0 1-1-1z"/></svg>
           </button>
@@ -277,9 +287,6 @@
           </button>
           <button class="hz-dock-app nav-item" data-view="cloud" data-label="Cloud" type="button" aria-label="Cloud gaming">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 6 19h11.5Z"/><path d="M8 15v3m4-4v5m4-6v6"/></svg>
-          </button>
-          <button class="hz-dock-app nav-item" data-view="terminal" data-label="Terminal" type="button" aria-label="Terminal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9.5l3 2.5-3 2.5"/><path d="M12.5 15h4.5"/></svg>
           </button>
           <span class="hz-dock-sep" aria-hidden="true"></span>
           <button class="hz-dock-app" id="hz-dock-palette" data-label="Command ⌘K" type="button" aria-label="Command palette">
