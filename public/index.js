@@ -2950,6 +2950,16 @@ init().catch((err) => {
     sessionStorage.removeItem("haze-resume");
   } catch {}
   if (!url) return;
+  // only resume after an actual reload (the watchdog reloads this tab); a new
+  // tab can inherit sessionStorage and must not open a page by itself.
+  let navType = "";
+  try {
+    navType = performance.getEntriesByType("navigation")[0]?.type || "";
+  } catch {}
+  if (!navType && performance.navigation) {
+    navType = performance.navigation.type === 1 ? "reload" : "navigate";
+  }
+  if (navType !== "reload") return;
   let ticks = 0;
   const timer = setInterval(() => {
     ticks++;
