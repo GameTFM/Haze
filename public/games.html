@@ -3,259 +3,90 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>haze games</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --ga: #ffffff;              /* accent, mirrors haze accent */
-      --ga-ink: #0a0a0a;
-      --pill: #0f0f0f;
-      --pill-brd: #262626;
-      --muted: #9a9a9a;
-    }
-    html { scrollbar-color: #333 #050505; }
-    body {
-      background: #050505; color: #f5f5f5;
-      font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-      padding: 14px 18px 86px; /* bottom padding leaves room for the page pill */
-    }
-
-    /* ---------- floating pill nav ---------- */
-    .g-nav {
-      position: sticky; top: 12px; z-index: 20;
-      display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(15, 15, 15, 0.92);
-      border: 1px solid var(--pill-brd); border-radius: 999px;
-      padding: 5px; backdrop-filter: blur(10px);
-      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
-    }
-    .g-nav .g-logo {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 7px 14px; border-radius: 999px;
-      background: var(--ga); color: var(--ga-ink);
-      font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em;
-      white-space: nowrap; cursor: pointer; border: none; font-family: inherit;
-    }
-    .g-nav .g-logo:active { transform: scale(0.97); }
-    .g-nav .g-div { width: 1px; height: 18px; background: #2a2a2a; margin: 0 3px; }
-    .g-nav button.g-ico, .g-nav label.g-search {
-      height: 34px; border-radius: 999px; border: none; background: transparent;
-      color: #e8e8e8; font-family: inherit; font-size: 0.85rem;
-      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-      padding: 0 12px; transition: background 0.15s ease;
-    }
-    .g-nav button.g-ico:hover, .g-nav label.g-search:hover { background: #1d1d1d; }
-    .g-nav button.g-ico.on { background: #242424; }
-    .g-nav label.g-search { cursor: text; }
-    .g-nav input {
-      background: transparent; border: none; outline: none;
-      color: #f5f5f5; font-family: inherit; font-size: 0.85rem; width: 150px;
-    }
-    .g-nav input::placeholder { color: #6e6e6e; }
-    .g-nav .g-count { color: var(--muted); font-size: 0.72rem; padding: 0 10px 0 4px; white-space: nowrap; }
-    .g-nav select {
-      height: 34px; border-radius: 999px; border: none; background: transparent;
-      color: #e8e8e8; font-family: inherit; font-size: 0.8rem; cursor: pointer; padding: 0 8px;
-    }
-    .g-nav select:hover { background: #1d1d1d; }
-    .g-nav select option { background: #101010; color: #f5f5f5; }
-
-    /* ---------- sections ---------- */
-    .g-section-title {
-      font-size: 0.9rem; margin: 20px 2px 12px; color: #d8d8d8;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .g-section-title .g-clear {
-      font-size: 0.72rem; color: var(--muted); background: none; border: none;
-      cursor: pointer; text-decoration: underline; font-family: inherit;
-    }
-    .g-status { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
-    .g-status.error { color: #ff7d9c; }
-
-    /* ---------- card grid (cover-only, like the reference) ---------- */
-    .g-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-      gap: 18px 14px;
-    }
-    .g-card {
-      position: relative; cursor: pointer; border: none; padding: 0;
-      background: transparent; color: inherit; font-family: inherit; text-align: center;
-      outline: none;
-    }
-    .g-card:focus-visible .g-cover { border-color: var(--ga); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22); }
-    .g-cover {
-      display: grid; place-items: center; position: relative;
-      width: 100%; aspect-ratio: 1; border-radius: 16px;
-      overflow: hidden; background: #101010; border: 1px solid #1e1e1e;
-      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-    }
-    /* fallback initial when a cover is missing upstream - never a blank tile */
-    .g-cover::after {
-      content: attr(data-initial); font-size: 3rem; font-weight: 800;
-      color: #333; text-transform: uppercase; font-family: inherit;
-    }
-    .g-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-    .g-card:hover .g-cover {
-      transform: translateY(-4px) scale(1.02);
-      border-color: rgba(255, 255, 255, 0.55);
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
-    }
-    /* the little name pill overlapping the cover's bottom edge */
-    .g-name {
-      position: relative; display: inline-block; max-width: 92%;
-      margin-top: -12px; z-index: 2;
-      background: var(--pill); border: 1px solid var(--pill-brd);
-      border-radius: 10px; padding: 5px 10px;
-      font-size: 0.72rem; color: #ddd;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      transition: border-color 0.16s ease, color 0.16s ease;
-    }
-    .g-card:hover .g-name { border-color: var(--ga); color: #fff; }
-    .g-fav {
-      position: absolute; top: 8px; right: 8px; z-index: 3;
-      width: 28px; height: 28px; border-radius: 999px; cursor: pointer;
-      display: grid; place-items: center; font-size: 0.85rem; line-height: 1; padding: 0;
-      background: rgba(0, 0, 0, 0.62); border: 1px solid rgba(255, 255, 255, 0.22);
-      color: #9a9a9a; backdrop-filter: blur(4px);
-      transition: transform 0.15s ease, color 0.15s ease;
-    }
-    .g-fav:hover { transform: scale(1.15); color: #fff; }
-    .g-fav.active { color: #ffd166; border-color: #ffd166; }
-    .g-meta {
-      position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; gap: 5px;
-    }
-    .g-badge {
-      font-size: 0.62rem; padding: 3px 7px; border-radius: 999px;
-      background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(4px); color: #cfcfcf;
-    }
-
-    /* ---------- Luna-style hero (haze monochrome) ---------- */
-    .g-hero {
-      position: relative; margin: 16px 0 4px; border-radius: 20px; overflow: hidden;
-      border: 1px solid #222; min-height: 300px; display: flex; align-items: flex-end;
-      background: #0c0c0c;
-    }
-    .g-hero[hidden] { display: none; }
-    .g-hero-bg {
-      position: absolute; inset: 0; background-size: cover; background-position: center 28%;
-      filter: blur(3px) brightness(0.6); transform: scale(1.06);
-      transition: background-image 0.4s ease;
-    }
-    .g-hero-bg::after {
-      content: ""; position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(5,5,5,0.2) 0%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.95) 100%);
-    }
-    .g-hero-info { position: relative; z-index: 2; padding: 26px 70px; max-width: 660px; }
-    .g-hero-kicker { font-size: 0.68rem; letter-spacing: 0.24em; color: var(--muted); text-transform: uppercase; }
-    .g-hero-title { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; margin: 6px 0; }
-    .g-hero-sub { color: #cfcfcf; font-size: 0.88rem; margin-bottom: 16px; }
-    .g-hero-play {
-      background: var(--ga); color: var(--ga-ink); border: none; border-radius: 999px;
-      padding: 11px 30px; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit;
-    }
-    .g-hero-play:active { transform: scale(0.97); }
-    .g-hero-arrow {
-      position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
-      width: 42px; height: 42px; border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.5); color: #fff;
-      font-size: 1.2rem; line-height: 1; cursor: pointer; backdrop-filter: blur(4px); font-family: inherit;
-    }
-    .g-hero-arrow:hover { border-color: #fff; }
-    #g-hero-prev { left: 14px; }
-    #g-hero-next { right: 14px; }
-    .g-hero-arrow[hidden] { display: none; }
-    /* ---------- horizontal rails (featured / recents / favorites) ---------- */
-    .g-rail {
-      display: flex; gap: 14px; overflow-x: auto;
-      padding: 4px 2px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin;
-    }
-    .g-rail .g-card { flex: 0 0 148px; scroll-snap-align: start; }
-    .g-section-title { text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.74rem; }
-
-    /* ---------- floating bottom page pill ---------- */
-    .g-pages {
-      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      z-index: 20; display: flex; align-items: center; gap: 2px;
-      background: rgba(15, 15, 15, 0.94);
-      border: 1px solid var(--pill-brd); border-radius: 999px;
-      padding: 5px; backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-      max-width: calc(100vw - 32px);
-    }
-    .g-pages button {
-      min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px;
-      border: none; background: transparent; color: #cfcfcf;
-      font-family: inherit; font-size: 0.78rem; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-      transition: background 0.14s ease, color 0.14s ease;
-    }
-    .g-pages button:hover { background: #1e1e1e; color: #fff; }
-    .g-pages button.on { background: var(--ga); color: var(--ga-ink); font-weight: 700; }
-    .g-pages .g-dots { color: #555; padding: 0 2px; font-size: 0.75rem; }
-    .g-pages:empty { display: none; }
-
-    /* ---------- player overlay ---------- */
-    #g-frame-wrap {
-      position: fixed; inset: 0; z-index: 50; background: #050505;
-      display: none; flex-direction: column;
-    }
-    #g-frame-wrap.open { display: flex; }
-    .g-frame-bar {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 14px; border-bottom: 1px solid #232323; background: #0d0d0d;
-    }
-    .g-frame-bar strong { font-size: 0.95rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .g-frame-bar button {
-      padding: 8px 16px; border-radius: 9px; cursor: pointer;
-      background: transparent; color: #f5f5f5; border: 1px solid #232323;
-      font-family: inherit; font-size: 0.85rem;
-      transition: border-color 0.15s ease;
-    }
-    .g-frame-bar button:hover { border-color: #fff; }
-    #g-frame { flex: 1; width: 100%; border: 0; background: #050505; }
-
-    @media (max-width: 560px) {
-      .g-grid { grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 14px 10px; }
-      .g-nav input { width: 90px; }
-      .g-nav .g-count { display: none; }
-    }
-  </style>
+  <title>haze arcade</title>
+  <meta name="theme-color" content="#050506" />
+  <meta name="description" content="Haze Arcade — a hand-picked library of browser games, from instant classics to WebGPU experiments." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preload" as="image" href="/gta5-web-hero.svg" />
+  <link rel="stylesheet" href="games.css" />
   <script src="haze-config.js"></script>
 </head>
 <body>
-  <nav class="g-nav">
-    <button class="g-logo" id="g-home" type="button" title="All games">&#9632;&nbsp; gnmath</button>
-    <span class="g-div"></span>
-    <button class="g-ico" id="g-random" type="button" title="Open a random game">&#127922;</button>
-    <button class="g-ico on" id="g-favmode" type="button" title="Show favorites only">&#9733;</button>
-    <button class="g-ico" id="g-reset" type="button" title="Forget play history and favorites">&#8635;</button>
-    <span class="g-div"></span>
-    <label class="g-search">&#128269;
-      <input id="g-search" type="text" placeholder="search…" autocomplete="off" />
-    </label>
-    <select id="g-sort" title="Sort games">
-      <option value="default">A&#8594;Z</option>
-      <option value="plays">most played</option>
-      <option value="recent">recently played</option>
-    </select>
-    <span class="g-count" id="g-count"></span>
-  </nav>
+  <div class="g-shell">
+    <nav class="g-nav" aria-label="Game library">
+      <button class="g-logo" id="g-home" type="button" title="All games">
+        <span class="g-logo-mark" aria-hidden="true">h</span>
+        <span class="g-logo-copy">haze<small>arcade</small></span>
+      </button>
+      <span class="g-div" aria-hidden="true"></span>
+      <div class="g-tools">
+        <button class="g-ico" id="g-random" type="button" title="Surprise me" aria-label="Open a random game">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3.2c4.6 0 6.4 10 10.8 10H20"/><path d="m17 14 3 3-3 3"/><path d="M4 17h3.2c1.5 0 2.7-1.1 3.8-2.6"/><path d="M13 9.6C13.9 8.1 15 7 16.2 7H20"/><path d="m17 4 3 3-3 3"/></svg>
+        </button>
+        <button class="g-ico" id="g-favmode" type="button" title="Favorites only" aria-label="Show favorites only" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.5 9.7l5.9-.8L12 3.5z"/></svg>
+        </button>
+        <button class="g-ico" id="g-reset" type="button" title="Clear history and favorites" aria-label="Clear history and favorites">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+        </button>
+      </div>
+      <span class="g-nav-spacer"></span>
+      <label class="g-search" aria-label="Search games">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8L20.5 20.5"/></svg>
+        <input id="g-search" type="text" placeholder="Search the arcade…" autocomplete="off" />
+      </label>
+      <label class="g-sort-wrap" title="Sort games">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M4 12h7M4 17h4"/><path d="m17 8 3-3 3 3M20 5v11"/></svg>
+        <select id="g-sort" aria-label="Sort games">
+          <option value="default">A&#8594;Z</option>
+          <option value="plays">Most played</option>
+          <option value="recent">Recently played</option>
+        </select>
+      </label>
+      <span class="g-count" id="g-count"></span>
+    </nav>
 
-  <header class="g-hero" id="g-hero" hidden>
-    <div class="g-hero-bg" id="g-hero-bg"></div>
-    <button class="g-hero-arrow" id="g-hero-prev" type="button" aria-label="Previous featured game">&#8249;</button>
-    <div class="g-hero-info">
-      <div class="g-hero-kicker">Featured</div>
-      <div class="g-hero-title" id="g-hero-title"></div>
-      <div class="g-hero-sub" id="g-hero-sub"></div>
-      <button class="g-hero-play" id="g-hero-play" type="button">&#9654; Play now</button>
-    </div>
-    <button class="g-hero-arrow" id="g-hero-next" type="button" aria-label="Next featured game">&#8250;</button>
-  </header>
+    <header class="g-hero" id="g-hero" hidden>
+      <div class="g-hero-bg" id="g-hero-bg"></div>
+      <div class="g-hero-glow" aria-hidden="true"></div>
+      <div class="g-hero-grid" aria-hidden="true"></div>
+      <div class="g-hero-scan" aria-hidden="true"></div>
+      <div class="g-hero-topline">
+        <span class="g-live"><i aria-hidden="true"></i>live in your browser</span>
+        <span class="g-hero-index" id="g-hero-index">01 / 07</span>
+      </div>
+      <button class="g-hero-arrow" id="g-hero-prev" type="button" aria-label="Previous featured game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5 8.5 12l6.5 6.5"/></svg>
+      </button>
+      <div class="g-hero-info">
+        <div class="g-hero-kicker" id="g-hero-kicker">Featured game</div>
+        <div class="g-hero-title" id="g-hero-title"></div>
+        <div class="g-hero-sub" id="g-hero-sub"></div>
+        <div class="g-hero-tags" id="g-hero-tags"></div>
+        <div class="g-hero-actions">
+          <button class="g-hero-play" id="g-hero-play" type="button">
+            <span class="g-play-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 4.8v14.4L20 12 7.5 4.8z"/></svg></span>
+            <span id="g-hero-play-label">Play now</span>
+            <span class="g-play-arrow" aria-hidden="true">&#8599;</span>
+          </button>
+          <a class="g-hero-hub" id="g-hero-hub" href="#" target="_blank" rel="noopener" hidden>
+            <span id="g-hero-hub-label">Project hub</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 13.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5.5"/></svg>
+          </a>
+        </div>
+      </div>
+      <button class="g-hero-arrow" id="g-hero-next" type="button" aria-label="Next featured game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5 15.5 12 9 18.5"/></svg>
+      </button>
+      <div class="g-hero-footer">
+        <div class="g-hero-dots" id="g-hero-dots" aria-label="Featured games"></div>
+        <span class="g-hero-caption">hand-picked by haze</span>
+      </div>
+    </header>
 
-  <p class="g-status" id="g-status">Loading the library…</p>
-  <div id="g-sections"></div>
+    <p class="g-status loading" id="g-status">Loading the library…</p>
+    <div id="g-sections"></div>
+  </div>
   <div class="g-pages" id="g-pages"></div>
 
   <div id="g-frame-wrap">
@@ -291,26 +122,80 @@
       var byId = {};
       var featured = [];
       var heroIdx = 0;
+      var heroEl = document.getElementById("g-hero");
 
-      function heroCover(g) { return (g.cover || COVERS + "/" + g.id + ".png").replace("{COVER_URL}", COVERS); }
+      if (heroEl) {
+        heroEl.addEventListener("pointermove", function (e) {
+          if (e.pointerType === "touch") return;
+          var r = heroEl.getBoundingClientRect();
+          heroEl.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+          heroEl.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+        });
+        heroEl.addEventListener("pointerleave", function () {
+          heroEl.style.removeProperty("--mx");
+          heroEl.style.removeProperty("--my");
+        });
+      }
+
+      function heroCover(g) {
+        return (g.heroCover || g.cover || COVERS + "/" + g.id + ".png").replace("{COVER_URL}", COVERS);
+      }
 
       function renderHero() {
         var hero = document.getElementById("g-hero");
         if (!featured.length) { hero.hidden = true; return; }
         hero.hidden = false;
         var g = featured[heroIdx % featured.length];
-        document.getElementById("g-hero-bg").style.backgroundImage = "url('" + heroCover(g) + "')";
-        document.getElementById("g-hero-title").textContent = g.name;
+        var bg = heroCover(g);
+        document.getElementById("g-hero-bg").style.backgroundImage = 'url("' + bg.replace(/"/g, '\\"') + '")';
+        document.getElementById("g-hero-title").textContent = g.heroTitle || g.name;
+        document.getElementById("g-hero-kicker").textContent =
+          g.heroKicker || (g.external ? "Featured drop // external build" : "Featured game");
+
         var recents = recentMap();
         var plays = recents[g.id] && recents[g.id].plays || 0;
-        if (g && g.external) {
+        if (g.external) {
           document.getElementById("g-hero-sub").textContent =
             g.externalNote || "External WebGPU game - opens in a new tab";
         } else {
           document.getElementById("g-hero-sub").textContent =
-            plays > 0 ? plays + (plays === 1 ? " play" : " plays") + " · Included in haze — free to play" :
-            "Included in haze — free to play";
+            plays > 0 ? plays + (plays === 1 ? " play" : " plays") + " · Included with haze — free to play" :
+            "Included with haze — free to play";
         }
+
+        var tagList = Array.isArray(g.heroTags) ? g.heroTags :
+          (g.external ? ["WebGPU", "Opens in a new tab"] : ["Instant play", "No install"]);
+        document.getElementById("g-hero-tags").innerHTML = tagList.map(function (tag) {
+          return '<span class="g-hero-tag">' + esc(tag) + "</span>";
+        }).join("");
+
+        var hub = document.getElementById("g-hero-hub");
+        if (g.heroHub) {
+          hub.href = g.heroHub;
+          hub.hidden = false;
+          document.getElementById("g-hero-hub-label").textContent = g.heroHubLabel || "Project hub";
+        } else {
+          hub.hidden = true;
+          hub.removeAttribute("href");
+        }
+
+        document.getElementById("g-hero-play-label").textContent = g.external ? "Launch game" : "Play now";
+        document.getElementById("g-hero-index").textContent =
+          String(heroIdx + 1).padStart(2, "0") + " / " + String(featured.length).padStart(2, "0");
+
+        var dots = document.getElementById("g-hero-dots");
+        dots.hidden = featured.length < 2;
+        dots.innerHTML = featured.map(function (item, i) {
+          return '<button type="button" data-hero="' + i + '" class="' + (i === heroIdx ? "on" : "") +
+            '" aria-label="Show ' + esc(item.name) + '" aria-pressed="' + (i === heroIdx ? "true" : "false") + '"></button>';
+        }).join("");
+        Array.prototype.forEach.call(dots.querySelectorAll("button"), function (dot) {
+          dot.addEventListener("click", function () {
+            heroIdx = parseInt(dot.getAttribute("data-hero"), 10) || 0;
+            renderHero();
+          });
+        });
+
         var multi = featured.length > 1;
         document.getElementById("g-hero-prev").hidden = !multi;
         document.getElementById("g-hero-next").hidden = !multi;
@@ -334,25 +219,36 @@
       function favList() { return loadJson(FAVS_KEY, "[]"); }
 
       function esc(s) {
-        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
       }
 
       function cardHtml(g, meta) {
         var badges = "";
-        if (g && g.external) badges += '<span class="g-badge">WebGPU</span>';
+        if (g && g.external) badges += '<span class="g-badge ext">WebGPU</span>';
         if (meta.plays > 0) badges += '<span class="g-badge">\u25b6 ' + meta.plays + "</span>";
         if (meta.last) {
           var mins = Math.floor((Date.now() - meta.last) / 60000);
           var when = mins < 1 ? "now" : mins < 60 ? mins + "m ago" : mins < 1440 ? Math.floor(mins / 60) + "h ago" : Math.floor(mins / 1440) + "d ago";
           badges += '<span class="g-badge">' + when + "</span>";
         }
+        var tagline = g.external ? "WebGPU · new tab" : "Browser game";
         return (
           '<div class="g-card" data-id="' + g.id + '" role="button" tabindex="0" aria-label="Play ' + esc(g.name) + '">' +
-          '<span class="g-cover" data-initial="' + esc(String(g.name || "?").trim().charAt(0) || "?") + '"><img loading="lazy" src="' + (g.cover || COVERS + "/" + g.id + '.png').replace("{COVER_URL}", COVERS) + '" alt="" onerror="this.remove()" />' +
+          '<span class="g-cover" data-initial="' + esc(String(g.name || "?").trim().charAt(0) || "?") + '"><img loading="lazy" src="' +
+          esc((g.cover || COVERS + "/" + g.id + '.png').replace("{COVER_URL}", COVERS)) + '" alt="" onerror="this.remove()" />' +
           (badges ? '<span class="g-meta">' + badges + "</span>" : "") +
+          '<span class="g-launch" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg></span>' +
           "</span>" +
-          '<button class="g-fav' + (meta.fav ? " active" : "") + '" data-fav="' + g.id + '" title="Favorite" type="button">\u2605</button>' +
+          '<button class="g-fav' + (meta.fav ? " active" : "") + '" data-fav="' + g.id + '" title="' +
+          (meta.fav ? "Remove from favorites" : "Add to favorites") + '" aria-label="' +
+          (meta.fav ? "Remove " + esc(g.name) + " from favorites" : "Add " + esc(g.name) + " to favorites") +
+          '" type="button">\u2605</button>' +
           '<span class="g-name">' + esc(g.name) + "</span>" +
+          '<span class="g-tagline">' + tagline + "</span>" +
           "</div>"
         );
       }
@@ -361,7 +257,9 @@
         var wrap = document.createElement("div");
         var h = document.createElement("div");
         h.className = "g-section-title";
-        h.innerHTML = title + (clearLabel ? ' <button class="g-clear" type="button">' + clearLabel + "</button>" : "");
+        h.innerHTML = '<span class="g-section-label">' + title + "</span>" +
+          (clearLabel ? ' <button class="g-clear" type="button">' + clearLabel + "</button>" : "") +
+          '<span class="g-section-line"></span><span class="g-section-count">' + list.length + "</span>";
         wrap.appendChild(h);
         var grid = document.createElement("div");
         grid.className = rail ? "g-rail" : "g-grid";
@@ -456,7 +354,7 @@
         if (!list.length) {
           status.textContent = favMode && !q ? "No favorites yet — tap \u2605 on any game." : q ? "No games match \"" + q + "\"." : "";
           status.hidden = !favMode && !q;
-          status.className = "g-status";
+          status.className = "g-status empty";
           return;
         }
         status.hidden = true;
@@ -587,6 +485,7 @@
       document.getElementById("g-favmode").addEventListener("click", function () {
         favMode = !favMode;
         this.classList.toggle("on", favMode);
+        this.setAttribute("aria-pressed", favMode ? "true" : "false");
         render();
       });
       document.getElementById("g-reset").addEventListener("click", function () {
@@ -597,7 +496,9 @@
       document.getElementById("g-home").addEventListener("click", function () {
         favMode = false;
         search.value = "";
-        document.getElementById("g-favmode").classList.remove("on");
+        var favButton = document.getElementById("g-favmode");
+        favButton.classList.remove("on");
+        favButton.setAttribute("aria-pressed", "false");
         try { localStorage.removeItem(PAGE_KEY); } catch (e) {}
         render();
       });
@@ -702,10 +603,17 @@
           var gta5 = {
             id: "gta5-webgpu",
             name: "GTA5 Web — GTA V (WebGPU • PC)",
+            heroTitle: "GTA5 Web",
             url: "external",
             external: "https://gta5-87g.pages.dev/?low=1&fps=30&res=1280x720&shadows=0",
             repo: "https://github.com/hammadshakeelai/gta5-web",
-            externalNote: "Open-source edition - 720p/30 profile; opens in a new tab. Chrome/Edge with hardware acceleration required"
+            cover: "/gta5-web-cover.svg",
+            heroCover: "/gta5-web-hero.svg",
+            heroKicker: "Featured drop // open source",
+            heroTags: ["WebGPU", "720p / 30", "~21 GB", "Chrome / Edge"],
+            heroHub: "https://hammadshakeelai.github.io/gta5-web/",
+            heroHubLabel: "Compatibility hub",
+            externalNote: "GTA V, in your browser. The open-source WebGPU build, tuned to 720p / 30 and launched in a clean tab."
           };
           games.unshift(gta5);
           byId[gta5.id] = gta5;
