@@ -408,9 +408,9 @@
       }
 
       function openGame(g) {
-        // External WebGPU games (e.g. PlayGTA5) set COOP/COEP and need
-        // cross-origin isolation plus WebGPU + Memory64. A proxy frame or an
-        // about:blank wrapper breaks that, so always hand off to a clean tab.
+        // External WebGPU games set COOP/COEP and need cross-origin isolation
+        // plus WebGPU + Memory64. A proxy frame or an about:blank wrapper breaks
+        // that, so always hand off to a clean tab.
         if (g && g.external) {
           var ext = String(g.external);
           window.open(ext, "_blank", "noopener");
@@ -595,29 +595,7 @@
             games[i].id = String(games[i].id);
             byId[games[i].id] = games[i];
           }
-          // Pinned external: GTA5 Web community edition. The playable mirror
-          // is 21GB and lives outside Haze, so launch the verified Cloudflare
-          // Pages build with its 720p/30 preset in a clean tab. Chrome/Edge +
-          // WebGPU + Memory64 are required; the project hub explains the rest.
-          var gta5 = {
-            id: "gta5-webgpu",
-            name: "GTA5 Web — GTA V (WebGPU • PC)",
-            heroTitle: "GTA5 Web",
-            url: "external",
-            external: "https://gta5-87g.pages.dev/?low=1&fps=30&res=1280x720&shadows=0",
-            repo: "https://github.com/hammadshakeelai/gta5-web",
-            cover: "/gta5-web-cover.svg",
-            heroCover: "/gta5-web-hero.svg",
-            heroKicker: "Featured drop // open source",
-            heroTags: ["WebGPU", "720p / 30", "~21 GB", "Chrome / Edge"],
-            heroHub: "https://hammadshakeelai.github.io/gta5-web/",
-            heroHubLabel: "Compatibility hub",
-            externalNote: "GTA V, in your browser. The open-source WebGPU build, tuned to 720p / 30 and launched in a clean tab."
-          };
-          games.unshift(gta5);
-          byId[gta5.id] = gta5;
           featured = [];
-          featured.push(gta5);
           for (var gi = 0; gi < games.length; gi++) {
             if (String(games[gi].id) === "851") {
               var gta3 = games.splice(gi, 1)[0];
@@ -627,7 +605,7 @@
             }
           }
           var pool = games.slice(featured.length ? 1 : 0);
-          for (var fi = 0; fi < 5 && pool.length; fi++) {
+          while (featured.length < 7 && pool.length) {
             featured.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
           }
           heroIdx = 0;
