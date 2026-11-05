@@ -2379,10 +2379,16 @@ html { --spot-x: 50%; --spot-y: 36%; }
   font-size: clamp(4.25rem, 9.2vw, 6.5rem);
   font-weight: 600; letter-spacing: -0.045em; line-height: 0.96;
   font-variant-numeric: tabular-nums;
+  display: flex; align-items: baseline; justify-content: center; gap: 0.14em;
   color: var(--text);
   -webkit-text-fill-color: currentColor;
   text-shadow: none;
   animation: none;
+}
+.hero-clock-period {
+  font-size: 0.34em; font-weight: 600;
+  letter-spacing: 0.015em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 64%, transparent);
 }
 .hero-clock-date {
   order: -1;
@@ -2400,7 +2406,7 @@ html { --spot-x: 50%; --spot-y: 36%; }
   font-family: inherit;
   font-size: 0.72rem;
   font-weight: 600; letter-spacing: 0.24em; line-height: 1;
-  color: color-mix(in srgb, var(--text) 56%, transparent);
+  color: color-mix(in srgb, var(--text) 62%, transparent);
   background: none;
   -webkit-text-fill-color: currentColor;
   text-shadow: none;

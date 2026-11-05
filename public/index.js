@@ -327,10 +327,20 @@ const heroClockDate = document.getElementById("hero-clock-date");
 function tickHeroClock() {
   if (!heroClockTime || !heroClockDate) return;
   const now = new Date();
-  heroClockTime.textContent = now.toLocaleTimeString([], {
+  const time = now.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
+  const [clock, ...period] = time.split(/\s+/);
+  if (period.length) {
+    const suffix = document.createElement("span");
+    suffix.className = "hero-clock-period";
+    suffix.textContent = period.join(" ");
+    heroClockTime.replaceChildren(clock, suffix);
+  } else {
+    heroClockTime.textContent = clock;
+  }
+  heroClockTime.setAttribute("aria-label", time);
   heroClockDate.textContent = now.toLocaleDateString([], {
     weekday: "long",
     month: "long",
