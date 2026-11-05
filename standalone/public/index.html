@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>haze</title>
+		<meta name="description" content="haze — a calm little browser with a scramjet v2 engine." />
+		<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%238b7bff'/%3E%3C/svg%3E" />
+		<link rel="stylesheet" href="/style.css?v=4" />
+	</head>
+	<body>
+		<svg class="sprite" aria-hidden="true" focusable="false">
+			<symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></symbol>
+			<symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+			<symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+			<symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></symbol>
+			<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></symbol>
+			<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></symbol>
+			<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+			<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+			<symbol id="i-games" viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="10" rx="5"/><path d="M7 10v4M5 12h4M16 11.5h.01M18.5 14h.01"/></symbol>
+			<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="16" r="2.2"/></symbol>
+			<symbol id="i-ai" viewBox="0 0 24 24"><path d="M12 3l1.9 4.9L19 9.8l-4.1 3 1 5.2-3.9-2.6L8 18l1-5.2-4-3 5.1-1.9z"/></symbol>
+			<symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/></symbol>
+			<symbol id="i-apps" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
+			<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 11.5A3.5 3.5 0 0 0 7 18z"/></symbol>
+			<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.4-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4 1.7 1.7 0 0 0-1.6 0z"/></symbol>
+			<symbol id="i-discord" viewBox="0 0 24 24"><path d="M8.6 6.2A13 13 0 0 0 5 7.6C3 11 2.4 14.3 2.7 17.5a13.4 13.4 0 0 0 4 2l.9-1.4a9 9 0 0 1-1.5-.7l.4-.3a10 10 0 0 0 9 0l.4.3a9 9 0 0 1-1.5.7l.9 1.4a13.4 13.4 0 0 0 4-2c.4-3.7-.6-7-2.5-9.9a13 13 0 0 0-3.4-1.4l-.4 1a10 10 0 0 0-3.6 0z"/><circle cx="8.8" cy="13" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.2" cy="13" r="1.3" fill="currentColor" stroke="none"/></symbol>
+			<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+			<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+			<symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7M20 5v14"/></symbol>
+			<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"/></symbol>
+			<symbol id="i-spark" viewBox="0 0 24 24"><path d="M13 2l-1.5 6L5 10l6.5 2L13 18l1.5-6L21 10l-6.5-2z"/></symbol>
+		</svg>
+
+		<div class="shell">
+			<aside class="sidebar" id="sidebar">
+				<div class="tiles" id="shortcut-tiles" aria-label="Shortcuts"></div>
+
+				<section class="tabs-block">
+					<header class="block-head">
+						<span>Tabs</span>
+						<button class="ghost-link" id="new-tab" type="button">New Tab <span aria-hidden="true">+</span></button>
+					</header>
+					<div class="tab-list" id="tab-list" role="tablist" aria-label="Tabs"></div>
+				</section>
+
+				<nav class="nav" id="nav" aria-label="Collections"></nav>
+
+				<footer class="side-foot">
+					<div class="foot-actions">
+						<button class="icon-btn" id="discord-btn" type="button" aria-label="Community">
+							<svg class="ico"><use href="#i-discord" /></svg>
+						</button>
+						<button class="icon-btn" id="settings-btn" type="button" aria-label="Settings">
+							<svg class="ico"><use href="#i-settings" /></svg>
+						</button>
+						<button class="ghost-link collapse" id="collapse-btn" type="button">Collapse <span aria-hidden="true">×</span></button>
+					</div>
+					<div class="engine">Scramjet</div>
+				</footer>
+			</aside>
+
+			<div class="stage">
+				<header class="topbar">
+					<div class="topbar-left">
+						<button class="icon-btn" id="panel-btn" type="button" aria-label="Toggle sidebar">
+							<svg class="ico"><use href="#i-panel" /></svg>
+						</button>
+						<button class="icon-btn" id="back-btn" type="button" aria-label="Back" disabled>
+							<svg class="ico"><use href="#i-left" /></svg>
+						</button>
+						<button class="icon-btn" id="forward-btn" type="button" aria-label="Forward" disabled>
+							<svg class="ico"><use href="#i-right" /></svg>
+						</button>
+						<button class="icon-btn" id="reload-btn" type="button" aria-label="Reload">
+							<svg class="ico"><use href="#i-reload" /></svg>
+						</button>
+						<button class="icon-btn" id="home-btn" type="button" aria-label="Home">
+							<svg class="ico"><use href="#i-home" /></svg>
+						</button>
+					</div>
+
+					<form class="address" id="address-form" autocomplete="off">
+						<svg class="ico dim"><use href="#i-search" /></svg>
+						<input id="address" type="text" spellcheck="false" placeholder="Search or enter website name" aria-label="Address bar" />
+						<svg class="ico dim lock" aria-hidden="true"><use href="#i-lock" /></svg>
+					</form>
+
+					<div class="topbar-right">
+						<span class="presence"><i></i><span id="presence-label">1 online</span></span>
+						<button class="icon-btn" id="theme-btn" type="button" aria-label="Toggle theme">
+							<svg class="ico" id="theme-icon"><use href="#i-sun" /></svg>
+						</button>
+						<button class="sync" id="sync-btn" type="button">Sign in to sync</button>
+					</div>
+				</header>
+
+				<main class="viewport" id="viewport">
+					<section class="home" id="home">
+						<div class="home-inner">
+							<h1 class="wordmark">haze</h1>
+							<form class="spotlight" id="home-form" autocomplete="off">
+								<svg class="ico dim"><use href="#i-search" /></svg>
+								<input id="home-search" type="text" spellcheck="false" placeholder="Search anything…" aria-label="Search" />
+							</form>
+							<div class="chips" id="home-chips"></div>
+						</div>
+						<div class="clock-pill" id="clock-pill">
+							<span id="clock-time">--:-- --</span>
+							<span class="rule" aria-hidden="true"></span>
+							<span id="clock-date">—</span>
+						</div>
+					</section>
+
+					<section class="collection" id="collection" hidden>
+						<header class="collection-head">
+							<button class="icon-btn" id="collection-back" type="button" aria-label="Back to home">
+								<svg class="ico"><use href="#i-left" /></svg>
+							</button>
+							<h2 id="collection-title">Games</h2>
+							<p id="collection-count"></p>
+						</header>
+						<div class="app-grid" id="app-grid"></div>
+					</section>
+
+					<div class="frames" id="frames"></div>
+
+					<div class="banner" id="banner" hidden>
+						<svg class="ico"><use href="#i-spark" /></svg>
+						<span id="banner-text"></span>
+					</div>
+				</main>
+			</div>
+		</div>
+
+		<dialog class="modal" id="shortcut-dialog">
+			<form method="dialog" id="shortcut-form">
+				<h2>Add a shortcut</h2>
+				<label>Name <input id="shortcut-name" type="text" placeholder="YouTube" required /></label>
+				<label>Address <input id="shortcut-url" type="text" placeholder="youtube.com" required /></label>
+				<div class="modal-actions">
+					<button class="btn ghost" value="cancel" type="submit" formnovalidate>Cancel</button>
+					<button class="btn" value="save" type="submit">Save</button>
+				</div>
+			</form>
+		</dialog>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+		<script src="/config.js"></script>
+		<script type="module" src="/app.js?v=5"></script>
+	</body>
+</html>
