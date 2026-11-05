@@ -255,19 +255,18 @@
    -------------------------------------------------------------------------- */
 
 .hero-clock-day {
-  width: min(220px, 56vw);
-  height: 2px;
-  margin: 15px auto 0;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.09);
+  width: min(136px, 42vw);
+  height: 1px;
+  margin: 18px auto 0;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
   overflow: hidden;
 }
 .hero-clock-day span {
   display: block;
   width: 0%;
   height: 100%;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.32), #ffffff);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+  background: color-mix(in srgb, var(--text) 56%, transparent);
   transition: width 0.9s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 

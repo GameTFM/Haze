@@ -328,7 +328,7 @@ function tickHeroClock() {
   if (!heroClockTime || !heroClockDate) return;
   const now = new Date();
   heroClockTime.textContent = now.toLocaleTimeString([], {
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
   });
   heroClockDate.textContent = now.toLocaleDateString([], {

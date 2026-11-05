@@ -2332,34 +2332,27 @@ html { --spot-x: 50%; --spot-y: 36%; }
 }
 .atmo-orb { position: absolute; border-radius: 50%; filter: blur(80px); }
 .orb-a {
-  width: 48vw; height: 48vw; left: -12vw; top: -18vw; opacity: 0.5;
+  width: 48vw; height: 48vw; left: -12vw; top: -18vw; opacity: 0.34;
   background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 68%);
   animation: hz-drift-a 24s ease-in-out infinite alternate;
 }
 .orb-b {
-  width: 56vw; height: 56vw; right: -16vw; bottom: -26vw; opacity: 0.42;
+  width: 56vw; height: 56vw; right: -16vw; bottom: -26vw; opacity: 0.28;
   background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
   animation: hz-drift-b 32s ease-in-out infinite alternate;
 }
 .orb-c {
-  width: 34vw; height: 34vw; left: 54%; top: 0; opacity: 0.28;
+  width: 34vw; height: 34vw; left: 54%; top: 0; opacity: 0.18;
   background: radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent), transparent 66%);
   animation: hz-drift-c 27s ease-in-out infinite alternate;
 }
-.atmo-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 62px 62px;
-  -webkit-mask-image: radial-gradient(ellipse 66% 56% at 50% 44%, #000 6%, rgba(0, 0, 0, 0.5) 46%, transparent 76%);
-  mask-image: radial-gradient(ellipse 66% 56% at 50% 44%, #000 6%, rgba(0, 0, 0, 0.5) 46%, transparent 76%);
-}
+.atmo-grid { display: none; }
 .atmo-spot {
   position: absolute; inset: 0;
   background: radial-gradient(340px circle at var(--spot-x) var(--spot-y), color-mix(in srgb, var(--accent) 9%, transparent), transparent 64%);
 }
 .atmo-grain {
+  display: none;
   position: absolute; inset: -50%;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
   background-size: 140px 140px;
@@ -2377,43 +2370,46 @@ html { --spot-x: 50%; --spot-y: 36%; }
 .home-stage { position: relative; z-index: 1; }
 
 /* ---- clock ---- */
-.hero-clock { position: relative; margin: 0; }
-.hero-clock::before {
-  content: ""; position: absolute; left: 50%; top: 50%; z-index: -1;
-  width: min(780px, 96vw); height: 320px; border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 10%, transparent), transparent 72%);
-  filter: blur(16px);
-  animation: hz-halo 8s ease-in-out infinite;
+.hero-clock {
+  position: relative; margin: 0;
+  display: flex; flex-direction: column; align-items: center;
 }
+.hero-clock::before { content: none; }
 .hero-clock-time {
-  font-size: clamp(3.9rem, 12vw, 7.4rem);
-  font-weight: 800; letter-spacing: -0.05em; line-height: 0.92;
+  font-size: clamp(4.25rem, 9.2vw, 6.5rem);
+  font-weight: 600; letter-spacing: -0.045em; line-height: 0.96;
   font-variant-numeric: tabular-nums;
-  background: none;
   color: var(--text);
   -webkit-text-fill-color: currentColor;
-  text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 16%, transparent);
+  text-shadow: none;
+  animation: none;
 }
 .hero-clock-date {
-  margin-top: 14px;
-  font-size: 0.73rem; font-weight: 500;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  order: -1;
+  margin: 0 0 14px;
+  font-size: 0.84rem; font-weight: 500;
+  letter-spacing: 0.01em; text-transform: none;
+  color: color-mix(in srgb, var(--text) 62%, transparent);
 }
 
 /* ---- wordmark ---- */
 .view-home .home-logo {
-  margin: 28px 0 0;
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
-  font-weight: 600; letter-spacing: 0.26em; line-height: 1;
-  background-image: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 50%, transparent));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-  transition: letter-spacing 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease;
+  order: -1;
+  margin: 0 0 22px;
+  padding: 0 0 0 0.24em;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600; letter-spacing: 0.24em; line-height: 1;
+  color: color-mix(in srgb, var(--text) 56%, transparent);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+  transform: none;
+  transition: color 0.2s ease;
 }
 .view-home .home-logo:hover {
-  letter-spacing: 0.34em;
-  filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 28%, transparent));
+  color: color-mix(in srgb, var(--text) 86%, transparent);
+  filter: none;
 }
 
 /* ---- quote ---- */
@@ -2427,43 +2423,33 @@ html { --spot-x: 50%; --spot-y: 36%; }
   font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
 }
 
-/* ---- search: glass with a gradient hairline that travels on focus ---- */
+/* ---- search: flat, quiet, focused ---- */
 .home-stage #sj-form {
   position: relative;
-  width: min(620px, 100%);
-  margin: 28px auto 0;
+  width: min(520px, 100%);
+  margin: 30px auto 0;
 }
 .home-stage #sj-address {
   width: 100%;
-  padding: 16px 96px 16px 50px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background:
-    linear-gradient(color-mix(in srgb, var(--panel) 90%, transparent), color-mix(in srgb, var(--panel) 90%, transparent)) padding-box,
-    linear-gradient(110deg,
-      color-mix(in srgb, var(--border) 92%, transparent),
-      color-mix(in srgb, var(--accent) 30%, transparent),
-      color-mix(in srgb, var(--border) 92%, transparent)) border-box;
-  background-size: auto, 240% 100%;
-  background-position: 0 0, 0 0;
+  padding: 14px 52px 14px 44px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
   color: var(--text);
-  font-size: 0.98rem; letter-spacing: 0.01em;
-  backdrop-filter: blur(14px) saturate(1.2);
-  box-shadow:
-    0 20px 54px -26px rgba(0, 0, 0, 0.95),
-    inset 0 1px 0 color-mix(in srgb, var(--accent) 7%, transparent);
-  transition: box-shadow 0.3s ease, background-position 0.7s ease;
+  font-size: 0.9rem; letter-spacing: 0.005em;
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 4%, transparent);
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
 }
-.home-stage #sj-address::placeholder { color: color-mix(in srgb, var(--muted) 88%, transparent); }
+.home-stage #sj-address::placeholder { color: color-mix(in srgb, var(--muted) 82%, transparent); }
 .home-stage #sj-form:focus-within #sj-address {
-  background-position: 0 0, 100% 0;
-  box-shadow:
-    0 24px 64px -24px rgba(0, 0, 0, 0.95),
-    0 0 0 4px color-mix(in srgb, var(--accent) 9%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 7%, transparent);
 }
-.home-stage .sj-ico { left: 20px; color: color-mix(in srgb, var(--muted) 92%, transparent); }
-.home-stage .sj-ico .ic { width: 17px; height: 17px; }
+.home-stage .sj-ico { left: 17px; color: color-mix(in srgb, var(--muted) 88%, transparent); }
+.home-stage .sj-ico .ic { width: 16px; height: 16px; }
 .home-stage #sj-form:focus-within .sj-ico { color: var(--text); }
 
 .sj-key {
@@ -2561,9 +2547,7 @@ html { --spot-x: 50%; --spot-y: 36%; }
 }
 
 @media (max-width: 900px) {
-  .hero-clock-time { font-size: clamp(3rem, 16vw, 4.8rem); }
-  .hero-clock::before { height: 210px; }
-  .view-home .home-logo { font-size: 1.55rem; letter-spacing: 0.2em; }
+  .hero-clock-time { font-size: clamp(4rem, 14vw, 5rem); }
   .home-stage #sj-address { padding: 14px 24px 14px 44px; }
   .home-stage .sj-ico { left: 17px; }
   .sj-key { display: none; }
