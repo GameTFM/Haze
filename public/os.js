@@ -52,7 +52,7 @@ let bootDone = true;
 let bootRunning = false;
 
 function bootLines() {
-  const theme = document.documentElement.dataset.theme || "haze";
+  const theme = document.documentElement.dataset.theme || "haze-dark";
   const widgets = [...document.querySelectorAll(".widget")].filter((w) => !w.hidden).length;
   return [
     ["kernel", "haze os 4.0"],
@@ -223,7 +223,7 @@ function nextTheme() {
   const at = swatches.findIndex((s) => s.dataset.theme === current);
   const next = swatches[(at + 1) % swatches.length];
   next.click();
-  toast("theme — " + (next.dataset.theme || "haze"));
+  toast("theme — " + (next.dataset.theme || "haze-dark"));
 }
 
 /* --------------------------------------------------------------------------
@@ -296,7 +296,7 @@ const commands = {
       " \\  /  ) _ (  )(   ) _)",
       "  \\/  (____/ (__) (____)",
     ].join("\n");
-    const theme = document.documentElement.dataset.theme || "haze";
+    const theme = document.documentElement.dataset.theme || "haze-dark";
     const engine = $("shell-proxy-tx")?.textContent || "scramjet";
     const info = [
       "<b>haze</b>@os",

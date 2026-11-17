@@ -115,9 +115,10 @@ function saveSettings(patch) {
 
 /* ---- themes ---- */
 
+const DEFAULT_THEME = "haze-dark";
 const THEMES = [
-  { id: "haze", label: "haze", from: "#ffffff", to: "#d9d9d4" },
-  { id: "haze-dark", label: "haze dark", from: "#0d0d0d", to: "#2a2a2a" },
+  { id: "haze-dark", label: "black", from: "#0d0d0d", to: "#2a2a2a" },
+  { id: "haze", label: "white", from: "#ffffff", to: "#d9d9d4" },
   { id: "glass", label: "Liquid Glass", from: "#f5f7fb", to: "#c3cfe6" },
   { id: "galaxy", label: "Galaxy", from: "#07020f", to: "#3b2470" },
   { id: "midnight", label: "Midnight", from: "#04070d", to: "#12315e" },
@@ -184,7 +185,7 @@ for (const t of THEMES) {
 }
 
 function applyTheme(id) {
-  if (!THEMES.some((t) => t.id === id)) id = "haze";
+  if (!THEMES.some((t) => t.id === id)) id = DEFAULT_THEME;
   document.documentElement.dataset.theme = id;
   saveSettings({ theme: id });
   themeGrid.querySelectorAll(".theme-swatch").forEach((el) => {
@@ -1152,7 +1153,16 @@ document.getElementById("shell-proxy")?.addEventListener("click", openPrivacySet
 
 (function restoreSettings() {
   const s = loadSettings();
-  applyTheme(s.theme || "haze");
+  let theme = s.theme;
+  try {
+    /* The old default was white. Switch that default once; an explicit white
+       choice made after this update is kept because the flag stays set. */
+    if (!localStorage.getItem("haze-theme-default-v2")) {
+      if (!theme || theme === "haze") theme = DEFAULT_THEME;
+      localStorage.setItem("haze-theme-default-v2", "1");
+    }
+  } catch {}
+  applyTheme(theme || DEFAULT_THEME);
   applyEngine(s.engine || "brave");
   applyProxyEngine(s.proxyEngine || "scramjet");
   applyWidgets(s);
@@ -5521,7 +5531,7 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   });
   el("hzb-settings")?.addEventListener("click", () => go("settings"));
   el("hzb-theme")?.addEventListener("click", () => {
-    const current = document.documentElement.dataset.theme || "haze";
+    const current = document.documentElement.dataset.theme || DEFAULT_THEME;
     const light = current === "haze" || current === "cream";
     applyTheme(light ? "haze-dark" : "haze");
   });

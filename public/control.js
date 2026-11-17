@@ -137,7 +137,7 @@
     const source = [...document.querySelectorAll("#theme-grid .theme-swatch")];
     themesHost.innerHTML = "";
     for (const swatch of source) {
-      const name = swatch.dataset.theme || "haze";
+      const name = swatch.dataset.theme || "haze-dark";
       const label = swatch.querySelector("span:last-child")?.textContent?.trim() || name;
       const chip = swatch.querySelector(".swatch");
       const btn = document.createElement("button");
@@ -159,7 +159,7 @@
   }
 
   function paintThemes() {
-    const current = document.documentElement.dataset.theme || "haze";
+    const current = document.documentElement.dataset.theme || "haze-dark";
     themesHost.querySelectorAll(".hz-cc-theme").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.theme === current);
     });
