@@ -1,4 +1,5 @@
 // ../OneDrive/Desktop/haze/api/_haze.mjs
+import { createFreebuffAuth, isSameOriginRequest } from "@freebuff/auth";
 import { connect } from "cloudflare:sockets";
 var UA = "haze/1.0";
 var MUSIC_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -962,6 +963,103 @@ async function handleWisp(request, ctx) {
   }
   return new Response(null, { status: 101, webSocket: client });
 }
+
+var authClient = null;
+var authHandler = null;
+var accountSchemaReady = false;
+var ACCOUNT_NO_STORE = { "Cache-Control": "private, no-store" };
+
+function setupAuth(env) {
+  if (!authHandler) {
+    const origin = String(env.APP_ORIGIN || "");
+    const local = /^http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(origin);
+    authClient = createFreebuffAuth({
+      clientId: env.FREEBUFF_CLIENT_ID,
+      issuer: env.FREEBUFF_ISSUER,
+      baseUrl: origin,
+      allowInsecureLocalhost: local
+    });
+    authHandler = authClient.wrap((request, env2, ctx2) => worker_default.fetch(request, env2, ctx2));
+  }
+  return authHandler;
+}
+
+async function ensureAccountSchema(env) {
+  if (!env.DB) return false;
+  if (!accountSchemaReady) {
+    await env.DB.prepare(
+      "CREATE TABLE IF NOT EXISTS haze_accounts (" +
+        "sub TEXT PRIMARY KEY, email TEXT, name TEXT, picture TEXT, " +
+        "data TEXT NOT NULL, updated_at INTEGER NOT NULL)"
+    ).run();
+    accountSchemaReady = true;
+  }
+  return true;
+}
+
+async function accountMe(request, env) {
+  if (request.method !== "GET") return json({ error: "GET only." }, 405, ACCOUNT_NO_STORE);
+  if (!authClient) return json({ error: "Accounts are not configured." }, 503, ACCOUNT_NO_STORE);
+  const user = await authClient.getUser(request);
+  if (!user) return json({ error: "Sign in required." }, 401, ACCOUNT_NO_STORE);
+  let storage = false;
+  try {
+    storage = await ensureAccountSchema(env);
+  } catch (e) {
+    console.error("haze account schema:", e?.message || e);
+  }
+  if (!storage) return json({ user, data: null, updatedAt: null, storage: false }, 200, ACCOUNT_NO_STORE);
+  let row = null;
+  try {
+    row = await env.DB.prepare("SELECT data, updated_at FROM haze_accounts WHERE sub = ?")
+      .bind(user.sub)
+      .first();
+  } catch (e) {
+    console.error("haze account read:", e?.message || e);
+    return json({ error: "Account storage is unavailable." }, 503, ACCOUNT_NO_STORE);
+  }
+  let data = null;
+  if (row && row.data) {
+    try { data = JSON.parse(row.data); } catch {}
+  }
+  return json({ user, data, updatedAt: row?.updated_at || null, storage: true }, 200, ACCOUNT_NO_STORE);
+}
+
+async function accountSave(request, env) {
+  if (request.method !== "PUT") return json({ error: "PUT only." }, 405, ACCOUNT_NO_STORE);
+  if (!authClient) return json({ error: "Accounts are not configured." }, 503, ACCOUNT_NO_STORE);
+  if (!isSameOriginRequest(request, env.APP_ORIGIN)) {
+    return json({ error: "Cross-origin request refused." }, 403, ACCOUNT_NO_STORE);
+  }
+  const user = await authClient.getUser(request);
+  if (!user) return json({ error: "Sign in required." }, 401, ACCOUNT_NO_STORE);
+  const body = await readBody(request);
+  const data = body && body.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return json({ error: "Expected a data object." }, 400, ACCOUNT_NO_STORE);
+  }
+  let encoded;
+  try { encoded = JSON.stringify(data); } catch {}
+  if (!encoded || encoded.length > 120000) {
+    return json({ error: "Saved data is too large." }, 413, ACCOUNT_NO_STORE);
+  }
+  if (!env.DB) return json({ error: "Account storage is unavailable." }, 503, ACCOUNT_NO_STORE);
+  try {
+    await ensureAccountSchema(env);
+    const now = Date.now();
+    await env.DB.prepare(
+      "INSERT INTO haze_accounts (sub, email, name, picture, data, updated_at) " +
+        "VALUES (?, ?, ?, ?, ?, ?) " +
+        "ON CONFLICT(sub) DO UPDATE SET email=excluded.email, name=excluded.name, " +
+        "picture=excluded.picture, data=excluded.data, updated_at=excluded.updated_at"
+    ).bind(user.sub, user.email || null, user.name || null, user.picture || null, encoded, now).run();
+    return json({ ok: true, updatedAt: now }, 200, ACCOUNT_NO_STORE);
+  } catch (e) {
+    console.error("haze account write:", e?.message || e);
+    return json({ error: "Account storage is unavailable." }, 503, ACCOUNT_NO_STORE);
+  }
+}
+
 var worker_default = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -987,11 +1085,23 @@ var worker_default = {
     if (p === "/ai/gateway/models") return routes.gwModels(request, env);
     if (p === "/ai/gateway") return routes.gwChat(request, env);
     if (p === "/api/online") return routes.onlineBeat(url);
+    if (p === "/api/account/me") return accountMe(request, env);
+    if (p === "/api/account/data") return accountSave(request, env);
     if (p === "/wisp/" || p.startsWith("/wisp/"))
       return handleWisp(request, ctx);
     return env.ASSETS.fetch(request);
   }
 };
-export {
-  worker_default as default
+export default {
+  async fetch(request, env, ctx) {
+    if (!env.FREEBUFF_CLIENT_ID || !env.APP_ORIGIN) {
+      return worker_default.fetch(request, env, ctx);
+    }
+    try {
+      return await setupAuth(env)(request, env, ctx);
+    } catch (e) {
+      console.error("haze auth unavailable:", e?.message || e);
+      return worker_default.fetch(request, env, ctx);
+    }
+  }
 };

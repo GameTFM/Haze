@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "start:infisical": "infisical run --env=dev -- node server.js"
+    "start:infisical": "infisical run --env=dev -- node server.js",
+    "build:worker": "esbuild worker.js --bundle --format=esm --platform=neutral --external:cloudflare:sockets --outfile=worker.bundle.js"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -19,8 +20,12 @@
     ]
   },
   "dependencies": {
+    "@freebuff/auth": "0.1.0",
     "express": "^4.21.2",
     "@mercuryworkshop/wisp-js": "^0.4.1",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   }
 }

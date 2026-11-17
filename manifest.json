@@ -1,1 +1,1 @@
-{"assetsDirectory": "./public", "compatibilityDate": "2026-10-01", "entrypoint": "index.js", "modules": [{"name": "index.js", "path": "./worker.js", "type": "esm"}], "spa": true}
+{"assetsDirectory": "./public", "compatibilityDate": "2026-10-01", "entrypoint": "index.js", "modules": [{"name": "index.js", "path": "./worker.bundle.js", "type": "esm"}], "spa": true}

@@ -2,6 +2,16 @@
 
 Black & white web proxy with a **choice of engine** — **Scramjet v2** (default) or **Ultraviolet**, switchable in Settings → Proxy engine. All files are vendored statically (Scramjet per the [x8rr/scramjet-templates](https://github.com/x8rr/scramjet-templates) layout, Ultraviolet per [titaniumnetwork-dev/Ultraviolet-Static](https://github.com/titaniumnetwork-dev/Ultraviolet-Static)); traffic rides a same-port wisp websocket via the epoxy transport for both engines.
 
+## Haze 5.0
+
+- **Haze Copilot** sits beside the browser controls. It reads the Haze shell (active view, tab hostnames, quick links, app/game names, focus/ad-block/tunnel state) and streams answers from the free model routes. Ask **“Which one is good?”** for a specific pick based on where you are, or open it with **Alt+J**. It never claims to read inside proxied sites.
+- **Why Haze?** is a built-in feature tour and live dashboard — a real explanation of what the workspace does instead of a marketing page.
+- **Freebuff account sync** keeps theme, notes, todos, quick links and focus mode across devices when the Cloudflare Worker is configured with Freebuff auth and D1. Other hosts simply hide the account action; Haze still works locally.
+- **`public/haze.svg`** is a self-contained 1200×630 brand card that opens directly in any browser.
+- A 20×20 pointer, a smaller hotspot and the rest of the black-first UI fit the same workspace.
+
+The Cloudflare manifest points at the bundled `worker.bundle.js`; after editing `worker.js`, run `pnpm install` and `pnpm build:worker` before redeploying.
+
 ## Run it
 
 ```

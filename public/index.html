@@ -19,10 +19,14 @@
   <link rel="stylesheet" href="os.css" />
   <link rel="stylesheet" href="browser.css" />
   <link rel="stylesheet" href="privacy.css" />
+  <link rel="stylesheet" href="account.css" />
+  <link rel="stylesheet" href="copilot.css" />
   <link rel="stylesheet" href="control.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
+  <script type="module" src="account.js"></script>
   <script type="module" src="os.js"></script>
+  <script type="module" src="copilot.js"></script>
   <script type="module" src="control.js"></script>
   <script type="module" src="vm.js"></script>
 </head>
@@ -80,6 +84,14 @@
       <button class="hzb-brand" id="hzb-brand" type="button" title="New tab">haze<span>web</span></button>
       <div class="hzb-tabs" id="hzb-tabs" role="tablist" aria-label="Browser tabs"></div>
       <button class="hzb-new" id="hzb-new" type="button" title="New tab" aria-label="New tab">+</button>
+      <button class="hzb-copilot-btn" id="hzb-copilot" type="button" title="Ask Haze Copilot (Alt+J)" aria-label="Open Haze Copilot" aria-haspopup="dialog" aria-expanded="false" aria-controls="hz-copilot">
+        <span class="hzb-copilot-spark" aria-hidden="true">✦</span>
+        <span class="hzb-copilot-label">Ask</span>
+        <kbd>⌥J</kbd>
+      </button>
+      <button class="hzb-account-btn" id="hzb-account" type="button" title="Sign in to save your Haze" aria-label="Account" aria-haspopup="dialog" aria-expanded="false">
+        <span class="hzb-account-avatar" id="hzb-account-avatar" aria-hidden="true">?</span>
+      </button>
       <button class="hzb-ic-btn" id="hzb-theme" type="button" title="Toggle black / white" aria-label="Toggle black or white theme">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 18.1v2.4M2.5 12h2.4M18.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>
       </button>
@@ -113,6 +125,98 @@
     </div>
   </header>
 
+  <div class="hz-account-backdrop" id="hz-account-backdrop" hidden>
+    <section class="hz-account-panel" role="dialog" aria-modal="true" aria-labelledby="hz-account-title">
+      <button class="hz-account-close" id="hz-account-close" type="button" aria-label="Close account panel">&times;</button>
+      <span class="hz-account-kicker">Haze account</span>
+      <h2 id="hz-account-title">Keep your Haze</h2>
+
+      <div id="hz-account-signed-out">
+        <p class="hz-account-copy">Sign in once to keep your theme, notes and workspace data, and stay logged in on this device.</p>
+        <a class="hz-account-primary" id="hz-account-signin" href="/auth/freebuff/signin?returnTo=/">
+          <span class="hz-account-g" aria-hidden="true">G</span>
+          <span><strong>Sign in with Freebuff</strong><small>Google, GitHub or Apple</small></span>
+        </a>
+        <p class="hz-account-note">Choose Google on the next screen. Freebuff handles the sign-in, so Haze never sees your Google password.</p>
+      </div>
+
+      <div id="hz-account-signed-in" hidden>
+        <div class="hz-account-user">
+          <span class="hz-account-user-avatar"><img id="hz-account-pic" alt="" hidden /><span id="hz-account-initial"></span></span>
+          <div><strong id="hz-account-name"></strong><small id="hz-account-email"></small></div>
+        </div>
+        <p class="hz-account-copy">Your theme, notes, todos and quick links are saved to this account. You will stay signed in on this device.</p>
+        <div class="hz-account-actions">
+          <button class="hz-account-secondary" id="hz-account-save" type="button">Save now</button>
+          <form id="hz-account-signout-form" method="post" action="/auth/freebuff/signout">
+            <input type="hidden" name="returnTo" value="/" />
+            <button class="hz-account-danger" id="hz-account-signout" type="submit">Sign out</button>
+          </form>
+        </div>
+      </div>
+
+      <p class="hz-account-status" id="hz-account-status" role="status"></p>
+    </section>
+  </div>
+
+  <div class="hz-copilot" id="hz-copilot" role="dialog" aria-label="Haze Copilot" aria-modal="false" hidden>
+    <div class="hz-cp-head">
+      <span class="hz-cp-orb" aria-hidden="true"><span>✦</span></span>
+      <div class="hz-cp-head-copy"><strong>Haze Copilot</strong><small>sees this workspace, not your private pages</small></div>
+      <div class="hz-cp-head-actions">
+        <button class="hz-cp-mini" id="hz-cp-new" type="button" title="New chat" aria-label="New chat">+</button>
+        <button class="hz-cp-mini" id="hz-cp-close" type="button" title="Close" aria-label="Close Haze Copilot">×</button>
+      </div>
+    </div>
+    <div class="hz-cp-context" id="hz-cp-context" aria-label="Current Haze context"></div>
+    <div class="hz-cp-scroll" id="hz-cp-scroll">
+      <div class="hz-cp-overview" id="hz-cp-overview"></div>
+      <div class="hz-cp-messages" id="hz-cp-messages" aria-live="polite"></div>
+    </div>
+    <div class="hz-cp-suggestions" id="hz-cp-suggestions" aria-label="Suggested questions"></div>
+    <form class="hz-cp-composer" id="hz-cp-form" autocomplete="off">
+      <div class="hz-cp-input-wrap">
+        <textarea class="hz-cp-input" id="hz-cp-input" rows="1" placeholder="Ask anything about your Haze…" aria-label="Ask Haze Copilot"></textarea>
+        <button class="hz-cp-send" id="hz-cp-send" type="submit" title="Send" aria-label="Send message">↑</button>
+      </div>
+      <p class="hz-cp-foot"><b>Context-aware</b> · sees Haze tabs and settings, never inside proxied sites.</p>
+    </form>
+  </div>
+
+  <div class="hz-why-backdrop" id="hz-why-backdrop" hidden>
+    <section class="hz-why" role="dialog" aria-modal="true" aria-labelledby="hz-why-title">
+      <button class="hz-why-x" id="hz-why-close" type="button" aria-label="Close Why Haze">&times;</button>
+      <span class="hz-why-kicker"><i aria-hidden="true"></i>one tab · your whole internet</span>
+      <h2 id="hz-why-title">why <span>haze?</span></h2>
+      <p class="hz-why-lede">A normal start page gives you a search box and sends you away. Haze gives you a <b>workspace</b>: tabs, apps, games, music, AI, chat, a terminal and the small things that make a browser feel like yours.</p>
+      <div class="hz-why-stats" aria-label="Live Haze stats">
+        <span class="hz-why-stat"><b id="hz-why-stat-tabs">1</b> tabs</span>
+        <span class="hz-why-stat"><b id="hz-why-stat-apps">0</b> apps</span>
+        <span class="hz-why-stat"><b id="hz-why-stat-blocked">0</b> blocked</span>
+        <span class="hz-why-stat"><b>5.0</b> version</span>
+      </div>
+      <div class="hz-why-grid">
+        <button class="hz-why-card" type="button" data-why-ask><span class="ic" aria-hidden="true">✦</span><strong>AI Copilot</strong><span>The assistant knows which Haze view you're in and what you're working with.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="games"><span class="ic" aria-hidden="true">◈</span><strong>One workspace</strong><span>Tabs, arcade, music, chat, apps, terminal. No app-hopping.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="settings"><span class="ic" aria-hidden="true">◐</span><strong>Private by default</strong><span>Ad blocker, tunnel status and cloak are part of the chrome, not an extension.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="settings"><span class="ic" aria-hidden="true">↻</span><strong>Yours everywhere</strong><span>Sign in once and your theme, notes, todos and quick links come with you.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="music"><span class="ic" aria-hidden="true">♫</span><strong>Music in the tab</strong><span>Search, play, like and keep the soundtrack beside the work.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="apps"><span class="ic" aria-hidden="true">▦</span><strong>The app shelf</strong><span>Pin the tools you use and keep recents close without a desktop OS.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="terminal"><span class="ic" aria-hidden="true">⌘</span><strong>Keyboard-first</strong><span>Command palette, terminal and shortcuts for people who hate menus.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="settings"><span class="ic" aria-hidden="true">◑</span><strong>Make it yours</strong><span>Black or white, wallpapers, focus mode and a cursor that finally fits.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="chat"><span class="ic" aria-hidden="true">◌</span><strong>Built-in room</strong><span>A global chat and a guest mode for when you want company.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="games"><span class="ic" aria-hidden="true">▷</span><strong>Instant arcade</strong><span>Hundreds of browser games, no install and no detour.</span></button>
+        <button class="hz-why-card" type="button" data-why-view="settings"><span class="ic" aria-hidden="true">◒</span><strong>Small useful things</strong><span>Notes, todos, timers, weather, world clock and a password generator.</span></button>
+        <button class="hz-why-card" type="button" data-why-start><span class="ic" aria-hidden="true">○</span><strong>No lock-in</strong><span>Start without an account. Sign in only when you want your setup to follow you.</span></button>
+      </div>
+      <div class="hz-why-foot">
+        <button class="hz-why-primary" type="button" data-why-ask>Ask Haze what's good</button>
+        <button class="hz-why-secondary" type="button" data-why-start>Start exploring</button>
+        <span class="hz-why-note">Single-file card: <a href="/haze.svg" target="_blank" rel="noopener">open haze.svg ↗</a></span>
+      </div>
+    </section>
+  </div>
+
   <div class="app">
     <main class="main">
       <!-- ===================== HOME ===================== -->
@@ -141,6 +245,11 @@
             <div class="hero-clock-day" aria-hidden="true"><span id="hero-clock-day-fill"></span></div>
           </div>
           <h1 class="logo home-logo">haze</h1>
+          <button class="hz-why-link" id="hz-why-open" type="button" title="See what makes Haze different">
+            <span class="spark" aria-hidden="true">✦</span>
+            why haze
+            <span class="arrow" aria-hidden="true">↗</span>
+          </button>
           <p class="greeting" id="greeting" hidden></p>
           <div class="hero-quote" id="hero-quote" hidden>
             <span class="hero-quote-text" id="hero-quote-text"></span>
