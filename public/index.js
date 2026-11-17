@@ -116,7 +116,8 @@ function saveSettings(patch) {
 /* ---- themes ---- */
 
 const THEMES = [
-  { id: "haze", label: "haze", from: "#050505", to: "#1a1a1a" },
+  { id: "haze", label: "haze", from: "#ffffff", to: "#d9d9d4" },
+  { id: "haze-dark", label: "haze dark", from: "#0d0d0d", to: "#2a2a2a" },
   { id: "glass", label: "Liquid Glass", from: "#f5f7fb", to: "#c3cfe6" },
   { id: "galaxy", label: "Galaxy", from: "#07020f", to: "#3b2470" },
   { id: "midnight", label: "Midnight", from: "#04070d", to: "#12315e" },
@@ -191,50 +192,232 @@ function applyTheme(id) {
   });
 }
 
-/* ---- wallpaper ---- */
+/* ---- wallpaper: full-resolution images persist in IndexedDB ---- */
 
 const wallpaperInput = document.getElementById("wallpaper-input");
 const wallpaperClear = document.getElementById("wallpaper-clear");
 const wallpaperPreview = document.getElementById("wallpaper-preview");
 const wallpaperLayer = document.getElementById("wallpaper");
 
-function applyWallpaper(dataUrl) {
-  if (dataUrl) {
-    wallpaperLayer.style.backgroundImage = `url(${dataUrl})`;
-    wallpaperLayer.classList.add("visible");
-    wallpaperPreview.style.backgroundImage = `url(${dataUrl})`;
-    wallpaperPreview.hidden = false;
-    wallpaperClear.hidden = false;
-  } else {
-    wallpaperLayer.style.backgroundImage = "";
-    wallpaperLayer.classList.remove("visible");
-    wallpaperPreview.hidden = true;
-    wallpaperClear.hidden = true;
+const WALLPAPER_DB = "haze-media";
+const WALLPAPER_STORE = "assets";
+const WALLPAPER_KEY = "wallpaper";
+let wallpaperObjectUrl = "";
+let wallpaperDbPromise = null;
+
+function wallpaperDb() {
+  if (!("indexedDB" in window)) return Promise.reject(new Error("IndexedDB unavailable"));
+  if (!wallpaperDbPromise) {
+    wallpaperDbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(WALLPAPER_DB, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(WALLPAPER_STORE)) {
+          req.result.createObjectStore(WALLPAPER_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return wallpaperDbPromise;
+}
+
+async function putWallpaperBlob(blob) {
+  const db = await wallpaperDb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(WALLPAPER_STORE, "readwrite");
+    tx.objectStore(WALLPAPER_STORE).put(blob, WALLPAPER_KEY);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+async function getWallpaperBlob() {
+  const db = await wallpaperDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(WALLPAPER_STORE, "readonly");
+    const req = tx.objectStore(WALLPAPER_STORE).get(WALLPAPER_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteWallpaperBlob() {
+  try {
+    const db = await wallpaperDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(WALLPAPER_STORE, "readwrite");
+      tx.objectStore(WALLPAPER_STORE).delete(WALLPAPER_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } catch {}
+}
+
+function paintWallpaper(value = "") {
+  const on = !!value;
+  if (wallpaperLayer) {
+    wallpaperLayer.style.backgroundImage = value;
+    wallpaperLayer.classList.toggle("visible", on);
+  }
+  document.documentElement.classList.toggle("has-wallpaper", on);
+  if (wallpaperPreview) {
+    wallpaperPreview.style.backgroundImage = value;
+    wallpaperPreview.hidden = !on;
+  }
+  if (wallpaperClear) wallpaperClear.hidden = !on;
+}
+
+function setWallpaperImage(blob) {
+  if (!(blob instanceof Blob)) return;
+  const nextUrl = URL.createObjectURL(blob);
+  if (wallpaperObjectUrl) URL.revokeObjectURL(wallpaperObjectUrl);
+  wallpaperObjectUrl = nextUrl;
+  try {
+    localStorage.removeItem("haze-wallpaper");
+    localStorage.removeItem("haze-wallpaper-css");
+  } catch {}
+  paintWallpaper(`url("${nextUrl}")`);
+}
+
+function setWallpaperCss(css, persist = true) {
+  if (wallpaperObjectUrl) {
+    URL.revokeObjectURL(wallpaperObjectUrl);
+    wallpaperObjectUrl = "";
+  }
+  if (persist) {
+    try {
+      localStorage.setItem("haze-wallpaper-css", css);
+      localStorage.removeItem("haze-wallpaper");
+    } catch {}
+    deleteWallpaperBlob();
+  }
+  paintWallpaper(css);
+}
+
+function clearWallpaper() {
+  if (wallpaperObjectUrl) {
+    URL.revokeObjectURL(wallpaperObjectUrl);
+    wallpaperObjectUrl = "";
+  }
+  try {
+    localStorage.removeItem("haze-wallpaper");
+    localStorage.removeItem("haze-wallpaper-css");
+  } catch {}
+  paintWallpaper("");
+  deleteWallpaperBlob();
+}
+
+async function restoreWallpaper() {
+  let preset = "";
+  try { preset = localStorage.getItem("haze-wallpaper-css") || ""; } catch {}
+  if (preset) {
+    setWallpaperCss(preset, false);
+    return;
+  }
+
+  try {
+    const stored = await getWallpaperBlob();
+    if (stored) {
+      setWallpaperImage(stored);
+      return;
+    }
+  } catch {}
+
+  // Migrate the old small-image localStorage value to a full-resolution blob.
+  let legacy = "";
+  try { legacy = localStorage.getItem("haze-wallpaper") || ""; } catch {}
+  if (!legacy) {
+    paintWallpaper("");
+    return;
+  }
+  try {
+    const response = await fetch(legacy);
+    const blob = await response.blob();
+    await putWallpaperBlob(blob);
+    setWallpaperImage(blob);
+  } catch {
+    paintWallpaper(`url("${legacy}")`);
   }
 }
 
-wallpaperInput.addEventListener("change", () => {
+/* low-resolution uploads are scaled up to a 4K long edge (3840px) */
+const WALLPAPER_4K = 3840;
+
+async function prepareWallpaper(file) {
+  if (typeof createImageBitmap !== "function") return { blob: file, upscaled: false };
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return { blob: file, upscaled: false };
+  }
+  const longEdge = Math.max(bitmap.width || 0, bitmap.height || 0);
+  if (!longEdge || longEdge >= WALLPAPER_4K) {
+    bitmap.close?.();
+    return { blob: file, upscaled: false };
+  }
+  const scale = WALLPAPER_4K / longEdge;
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close?.();
+    return { blob: file, upscaled: false };
+  }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+  /* webp keeps transparency; if the browser cannot encode it, keep the original */
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.95));
+  if (!blob || blob.type !== "image/webp") return { blob: file, upscaled: false };
+  return { blob, upscaled: true, width, height };
+}
+
+wallpaperInput?.addEventListener("change", async () => {
   const file = wallpaperInput.files && wallpaperInput.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      localStorage.setItem("haze-wallpaper", String(reader.result));
-      applyWallpaper(String(reader.result));
-    } catch {
-      // image too large for localStorage (~5MB) - apply for this session only
-      applyWallpaper(String(reader.result));
-      wallpaperClear.hidden = false;
-      error.textContent = "Image too large to save permanently — applied for this session.";
-      setTimeout(() => (error.textContent = ""), 4000);
-    }
-  };
-  reader.readAsDataURL(file);
+  if (!file.type.startsWith("image/")) {
+    hazeToast("Choose an image file for your wallpaper");
+    wallpaperInput.value = "";
+    return;
+  }
+  if (file.size > 64 * 1024 * 1024) {
+    hazeToast("That wallpaper is over 64 MB — try a smaller 4K image");
+    wallpaperInput.value = "";
+    return;
+  }
+  const prepared = await prepareWallpaper(file);
+  const blob = prepared.blob;
+  try {
+    await deleteWallpaperBlob();
+    await putWallpaperBlob(blob);
+    setWallpaperImage(blob);
+    hazeToast(
+      prepared.upscaled
+        ? `Low-res image upscaled to ${prepared.width}×${prepared.height} and saved`
+        : "Wallpaper saved at full resolution"
+    );
+  } catch {
+    setWallpaperImage(blob);
+    hazeToast(
+      prepared.upscaled
+        ? `Upscaled to ${prepared.width}×${prepared.height} — this browser could not save it`
+        : "Wallpaper applied — this browser could not save it"
+    );
+  }
+  wallpaperInput.value = "";
 });
 
-wallpaperClear.addEventListener("click", () => {
-  localStorage.removeItem("haze-wallpaper");
-  applyWallpaper(null);
+wallpaperClear?.addEventListener("click", () => {
+  clearWallpaper();
+  hazeToast("Wallpaper removed");
 });
 
 /* ---- search engine ---- */
@@ -302,7 +485,10 @@ function applyProxyEngine(id) {
     ENGINE_PLACEHOLDERS[loadSettings().engine] || ENGINE_PLACEHOLDERS.duckduckgo;
   if (engineFoot) engineFoot.textContent = PROXY_ENGINES[engine].foot;
   const chip = document.getElementById("shell-proxy-tx");
-  if (chip) chip.textContent = PROXY_ENGINES[engine].short;
+  if (chip) {
+    chip.textContent = "VPN";
+    chip.parentElement.title = PROXY_ENGINES[engine].label + " tunnel";
+  }
   const row = document.getElementById("proxy-server-row");
   const note = document.getElementById("proxy-server-note");
   const external = PROXY_ENGINES[engine].kind === "external";
@@ -505,7 +691,7 @@ function applyWidgets(prefs) {
   }
   // music widget isn't a toggle - it shows automatically whenever something is playing
   widgetMusic.hidden = !nowPlaying;
-  widgetsRow.hidden = !WIDGET_KEYS.some(on);
+  widgetsRow.hidden = !WIDGET_KEYS.some((k) => k !== "clock" && on(k)) && !nowPlaying;
   for (const k of WIDGET_KEYS) widgetToggles[k].checked = on(k);
   updateMusicWidget();
 }
@@ -849,16 +1035,118 @@ document.getElementById("wisp-url-save")?.addEventListener("click", () => {
   setTimeout(() => location.reload(), 500);
 });
 
-// the chip in the home chrome bar jumps to the proxy card
-document.getElementById("shell-proxy")?.addEventListener("click", () => {
+/* ---- ad blocker ---- */
+
+const ADBLOCK_KEY = "haze-adblock";
+const adblockToggle = document.getElementById("adblock-toggle");
+const adblockCountEl = document.getElementById("adblock-count");
+const shieldBtn = document.getElementById("hzb-shield");
+const shieldBadge = document.getElementById("hzb-shield-count");
+let adblockOn = true;
+let adblockTotal = 0;
+try {
+  adblockOn = localStorage.getItem(ADBLOCK_KEY) !== "0";
+} catch {}
+
+function paintAdblock() {
+  if (adblockToggle) adblockToggle.checked = adblockOn;
+  if (shieldBtn) {
+    shieldBtn.classList.toggle("is-on", adblockOn);
+    shieldBtn.setAttribute("aria-pressed", String(adblockOn));
+  }
+  if (adblockCountEl) adblockCountEl.textContent = adblockTotal ? adblockTotal + " blocked" : "On";
+  if (shieldBadge) {
+    shieldBadge.textContent = adblockTotal > 99 ? "99+" : String(adblockTotal);
+    shieldBadge.hidden = adblockTotal <= 0;
+  }
+}
+
+function postAdblock() {
+  const message = { type: "haze-adblock", enabled: adblockOn };
+  try {
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage(message);
+    } else if (navigator.serviceWorker) {
+      navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage(message)).catch(() => {});
+    }
+  } catch {}
+}
+
+function setAdblock(on) {
+  adblockOn = !!on;
+  try {
+    localStorage.setItem(ADBLOCK_KEY, adblockOn ? "1" : "0");
+  } catch {}
+  paintAdblock();
+  postAdblock();
+}
+
+adblockToggle?.addEventListener("change", () => setAdblock(adblockToggle.checked));
+shieldBtn?.addEventListener("click", () => setAdblock(!adblockOn));
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type === "haze-adblock-count") {
+      adblockTotal = Number(data.count) || 0;
+      paintAdblock();
+    }
+  });
+  navigator.serviceWorker.ready.then(() => postAdblock()).catch(() => {});
+}
+paintAdblock();
+
+/* ---- vpn / tunnel status ---- */
+
+const vpnBtn = document.getElementById("hzb-vpn");
+const vpnDot = document.getElementById("vpn-dot");
+const vpnStatusEl = document.getElementById("vpn-status");
+const vpnServerEl = document.getElementById("vpn-server");
+let tunnelUrl = "";
+
+function tunnelHost(url) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url || "no exit";
+  }
+}
+
+function paintVpn(state, url) {
+  if (url) tunnelUrl = url;
+  const good = state === "on";
+  const bad = state === "bad";
+  vpnBtn?.classList.toggle("is-on", good);
+  vpnBtn?.classList.toggle("is-bad", bad);
+  vpnDot?.classList.toggle("is-on", good);
+  vpnDot?.classList.toggle("is-bad", bad);
+  if (vpnStatusEl) vpnStatusEl.textContent = good ? "VPN on · tunnel active" : bad ? "Tunnel issue" : "Connecting…";
+  if (vpnServerEl) vpnServerEl.textContent = tunnelUrl ? tunnelHost(tunnelUrl) : "no exit selected";
+  if (vpnBtn) vpnBtn.title = "VPN · " + (good ? tunnelHost(tunnelUrl) : bad ? "tunnel issue" : "connecting");
+}
+
+function openPrivacySettings() {
   window.hazeGo?.("settings");
   setTimeout(() => {
-    const card = document.getElementById("proxy-card");
+    const card = document.getElementById("privacy-card");
     card?.scrollIntoView({ behavior: "smooth", block: "center" });
     card?.classList.add("proxy-card-flash");
     setTimeout(() => card?.classList.remove("proxy-card-flash"), 1400);
   }, 120);
+}
+
+vpnBtn?.addEventListener("click", openPrivacySettings);
+document.getElementById("vpn-reconnect")?.addEventListener("click", () => {
+  try {
+    localStorage.removeItem("haze-wisp-url");
+    localStorage.removeItem("haze-wisp-bad");
+  } catch {}
+  hazeToast("Reconnecting the VPN tunnel…");
+  setTimeout(() => location.reload(), 400);
 });
+paintVpn("connecting");
+
+// compatibility hook for the old proxy chip
+document.getElementById("shell-proxy")?.addEventListener("click", openPrivacySettings);
 
 /* ---- restore saved settings ---- */
 
@@ -868,8 +1156,7 @@ document.getElementById("shell-proxy")?.addEventListener("click", () => {
   applyEngine(s.engine || "brave");
   applyProxyEngine(s.proxyEngine || "scramjet");
   applyWidgets(s);
-  const wp = localStorage.getItem("haze-wallpaper");
-  if (wp) applyWallpaper(wp);
+  restoreWallpaper();
   /* font picker: only fetch the Google-Families stylesheet when a non-default font is chosen */
   if (s.font && s.font !== "system") {
     ensureFontLink();
@@ -1416,8 +1703,9 @@ function updateMusicWidget() {
   if (!card) return;
   const playing = Boolean(nowPlaying);
   card.hidden = !playing;
-  // the widget row itself only shows when at least one widget is on OR music is playing
-  widgetsRow.hidden = !(WIDGET_KEYS.some((k) => widgetToggles[k] && widgetToggles[k].checked) || playing);
+  // the widget row only holds the row widgets now; the clock lives in the home stage
+  const rowWidgetOn = WIDGET_KEYS.some((k) => k !== "clock" && widgetToggles[k] && widgetToggles[k].checked);
+  widgetsRow.hidden = !(rowWidgetOn || playing);
   if (!playing) return;
   const coverImg = card.querySelector(".widget-music-cover img");
   const coverGlyph = card.querySelector(".widget-music-cover .widget-music-glyph");
@@ -2839,10 +3127,11 @@ function launch(url) {
    error page inside the frame. when that happens, rotate to the next wisp
    server and reopen the same address instead of leaving the error on screen. */
 
-const WISP_CANDIDATES = [
-  "wss://wisp.mercurywork.shop/",
-  (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/",
-];
+// Public Wisp exits. The same-origin /wisp/ worker in this deploy accepts a
+// socket but stalls TLS streams, so it must not be preferred over a working
+// exit. Users can still paste a private Wisp in Settings.
+const WISP_CANDIDATES = ["wss://wisp.mercurywork.shop/"];
+const DEFAULT_WISP = WISP_CANDIDATES[0];
 
 function markWispBad(url) {
   try {
@@ -2967,9 +3256,8 @@ async function waitForControl(timeoutMs = 10000) {
   await Promise.race([ready, changed, sleep(timeoutMs)]);
 }
 
-// wisp server the x8rr/scramjet-templates html template ships with - used as a
-// fallback when this site's own /wisp/ socket refuses to open
-const TEMPLATE_WISP = "wss://wisp.mercurywork.shop/";
+// wisp server the x8rr/scramjet-templates html template ships with
+const TEMPLATE_WISP = DEFAULT_WISP;
 
 function wispAlive(url, ms = 6000) {
   return new Promise((resolve) => {
@@ -3005,6 +3293,7 @@ function wispAlive(url, ms = 6000) {
 async function init() {
   error.textContent = "starting proxy engine...";
   errorCode.textContent = "";
+  let chosenWisp = "";
 
   const engine = PROXY_ENGINES[loadSettings().proxyEngine]
     ? loadSettings().proxyEngine
@@ -3072,11 +3361,20 @@ async function init() {
     let configuredWisp = "";
     try {
       configuredWisp = localStorage.getItem("haze-wisp-url") || "";
+      // Migrate away from the known-broken static-host /wisp/ endpoint. A
+      // self-hosted same-origin Wisp on a real Node host is still allowed.
+      if (location.hostname.endsWith("freebuff.page") && configuredWisp.indexOf(location.host + "/wisp/") !== -1) {
+        localStorage.removeItem("haze-wisp-url");
+        configuredWisp = "";
+      }
+      if ((localStorage.getItem("haze-wisp-bad") || "").includes("mercurywork.shop")) {
+        localStorage.removeItem("haze-wisp-bad");
+      }
     } catch {}
     if (!configuredWisp && window.__HAZE_WISP_URL) configuredWisp = window.__HAZE_WISP_URL;
 
-    const wispOrder = [...new Set([configuredWisp, TEMPLATE_WISP, wispUrl].filter(Boolean))];
-    let chosenWisp = wispOrder[0];
+    const wispOrder = [...new Set([configuredWisp, ...WISP_CANDIDATES].filter(Boolean))];
+    chosenWisp = wispOrder[0] || wispUrl;
     for (const candidate of wispOrder) {
       if (await wispAlive(candidate)) {
         chosenWisp = candidate;
@@ -3102,12 +3400,15 @@ async function init() {
 
   proxyReady = true;
   window.$haze = { controller, ready: true, initError: null, engine };
+  paintVpn("on", chosenWisp);
+  postAdblock();
   error.textContent = "";
 }
 
 init().catch((err) => {
   console.error("haze: controller init failed", err);
   window.$haze = { controller: null, ready: false, initError: String(err) };
+  paintVpn("bad");
   error.textContent = "Failed to initialize the proxy.";
   errorCode.textContent = String(err);
 });
@@ -3957,19 +4258,12 @@ function initParticles() {
       btn.title = name;
       btn.style.background = css;
       btn.addEventListener("click", () => {
-        try {
-          localStorage.setItem("haze-wallpaper-css", css);
-          localStorage.removeItem("haze-wallpaper");
-        } catch {}
-        applyWallpaperCss(css);
+        setWallpaperCss(css);
         hazeToast("Wallpaper: " + name);
       });
       wrap.appendChild(btn);
     }
   }
-  const savedCss = localStorage.getItem("haze-wallpaper-css");
-  if (savedCss && !localStorage.getItem("haze-wallpaper")) applyWallpaperCss(savedCss);
-
   const blurToggle = $haze("wallpaper-blur-toggle");
   blurToggle.checked = !!loadSettings().wallpaperBlur;
   blurToggle.addEventListener("change", () => {
@@ -3978,27 +4272,6 @@ function initParticles() {
   });
   if (loadSettings().wallpaperBlur) document.documentElement.classList.add("wallpaper-blur");
 })();
-
-function applyWallpaperCss(css) {
-  const layer = $haze("wallpaper");
-  if (!layer) return;
-  layer.style.backgroundImage = css;
-  layer.classList.add("visible");
-}
-
-// keep the old applyWallpaper honest: a CSS preset survives until replaced
-const _applyWallpaperImage = applyWallpaper;
-applyWallpaper = function (dataUrl) {
-  _applyWallpaperImage(dataUrl);
-  if (dataUrl) {
-    try { localStorage.removeItem("haze-wallpaper-css"); } catch {}
-    const layer = $haze("wallpaper");
-    if (layer) layer.style.backgroundImage = "url(" + dataUrl + ")";
-  } else {
-    const savedCss = localStorage.getItem("haze-wallpaper-css");
-    if (savedCss) applyWallpaperCss(savedCss);
-  }
-};
 
 /* ================================================================
    command palette (ctrl/alt+k) + shortcut hints
@@ -4408,6 +4681,7 @@ $haze("import-data-file")?.addEventListener("change", (e) => {
 $haze("wipe-btn")?.addEventListener("click", async () => {
   if (!await hazeConfirm("Wipe ALL local haze data (themes, widgets, favorites, history)? Chat accounts stay on the server.")) return;
   if (!await hazeConfirm("Really wipe everything?")) return;
+  await deleteWallpaperBlob();
   localStorage.clear();
   sessionStorage.clear();
   location.reload();
@@ -4930,8 +5204,22 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
 
       const icon = document.createElement("span");
       icon.className = "hzb-tab-icon";
+      icon.setAttribute("aria-hidden", "true");
       if (tab.kind === "url") {
         icon.textContent = labelForUrl(tab.url).slice(0, 1).toUpperCase();
+        let host = "";
+        try {
+          host = new URL(tab.url).hostname.replace(/^www\./, "");
+        } catch {}
+        if (host) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.decoding = "async";
+          img.referrerPolicy = "no-referrer";
+          img.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+          img.addEventListener("error", () => img.remove(), { once: true });
+          icon.appendChild(img);
+        }
       } else {
         icon.textContent = tab.view === "home" ? "⌂" : (VIEW_LABELS[tab.view] || tab.label).slice(0, 1);
       }
@@ -5233,8 +5521,9 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
   });
   el("hzb-settings")?.addEventListener("click", () => go("settings"));
   el("hzb-theme")?.addEventListener("click", () => {
-    document.documentElement.dataset.theme =
-      document.documentElement.dataset.theme === "cream" ? "haze" : "cream";
+    const current = document.documentElement.dataset.theme || "haze";
+    const light = current === "haze" || current === "cream";
+    applyTheme(light ? "haze-dark" : "haze");
   });
   form?.addEventListener("submit", (event) => {
     event.preventDefault();

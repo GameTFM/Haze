@@ -852,8 +852,8 @@ class WispProxy {
   }
   closeStream(id, reason) {
     var s = this.streams.get(id);
-    if (!s) return;
     this.streams.delete(id);
+    this.opening.delete(id);
     try { s.close(); } catch (e) {}
     if (reason != null) this.send(4, id, new Uint8Array([reason]));
   }
@@ -907,8 +907,11 @@ class WispProxy {
     var writer;
     try {
       socket = connect({ hostname: host, port: Number(port) || 80 });
+      await Promise.race([
+        socket.opened,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("connect timeout")), 8000))
+      ]);
       writer = socket.writable.getWriter();
-      await socket.opened;
       console.log("[wisp] openStream ready", id);
     } catch (e) {
       console.log("[wisp] openStream failed", id, e?.message || e);

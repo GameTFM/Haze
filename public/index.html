@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="os.css" />
   <link rel="stylesheet" href="browser.css" />
+  <link rel="stylesheet" href="privacy.css" />
   <link rel="stylesheet" href="control.css" />
   <script src="search.js" defer></script>
   <script type="module" src="index.js"></script>
@@ -101,7 +102,14 @@
         <input id="hzb-url" type="text" placeholder="Search or enter address" spellcheck="false" autocomplete="off" autocapitalize="off" />
         <button class="hzb-go" type="submit" title="Go" aria-label="Go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="M12 6l6 6-6 6"/></svg></button>
       </form>
-      <div class="hzb-meta"><i aria-hidden="true"></i><span id="shell-proxy-tx">scramjet</span></div>
+      <button class="hzb-vpn" id="hzb-vpn" type="button" title="VPN tunnel status" aria-label="VPN tunnel status">
+        <i id="hzb-vpn-dot" aria-hidden="true"></i>
+        <span id="shell-proxy-tx">VPN</span>
+      </button>
+      <button class="hzb-ic-btn hzb-shield" id="hzb-shield" type="button" title="Block ads and trackers" aria-label="Toggle ad blocker" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.2-7 9.6C8 19.2 5 15.4 5 11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span class="hzb-shield-badge" id="hzb-shield-count" hidden>0</span>
+      </button>
     </div>
   </header>
 
@@ -151,24 +159,36 @@
 
 
           <nav class="hzb-quick" aria-label="Quick links">
-            <button class="hzb-quick-btn" type="button" data-url="https://www.youtube.com"><span>▶</span>YouTube</button>
-            <button class="hzb-quick-btn" type="button" data-url="https://discord.com"><span>◉</span>Discord</button>
-            <button class="hzb-quick-btn" type="button" data-url="https://open.spotify.com"><span>♫</span>Spotify</button>
-            <button class="hzb-quick-btn nav-item" type="button" data-view="games"><span>▦</span>Games</button>
-            <button class="hzb-quick-btn nav-item" type="button" data-view="music"><span>♬</span>Music</button>
-            <button class="hzb-quick-btn nav-item" type="button" data-view="ai"><span>✳</span>AI</button>
+            <button class="hzb-quick-btn" type="button" data-url="https://www.youtube.com">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#ff0000" d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81Z"/><path fill="#fff" d="M9.55 15.57V8.43L15.82 12l-6.27 3.57Z"/></svg></span>YouTube
+            </button>
+            <button class="hzb-quick-btn" type="button" data-url="https://discord.com">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#5865f2" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/></svg></span>Discord
+            </button>
+            <button class="hzb-quick-btn" type="button" data-url="https://open.spotify.com">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#1db954" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/></svg></span>Spotify
+            </button>
+            <button class="hzb-quick-btn nav-item" type="button" data-view="games">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h4m-2-2v4"/><path d="M15.5 11h.01M18 13h.01"/><path d="M17.3 5H6.7a4.7 4.7 0 0 0-4.6 5.6l1 5.2A3 3 0 0 0 8 17.5l1.5-1.5h5L16 17.5a3 3 0 0 0 4.9-1.7l1-5.2A4.7 4.7 0 0 0 17.3 5Z"/></svg></span>Games
+            </button>
+            <button class="hzb-quick-btn nav-item" type="button" data-view="music">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>Music
+            </button>
+            <button class="hzb-quick-btn nav-item" type="button" data-view="ai">
+              <span class="hzb-quick-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" fill="currentColor" stroke="none"/></svg></span>AI
+            </button>
           </nav>
+          <div class="widget home-clock-widget" id="widget-clock" hidden>
+            <h4>Clock</h4>
+            <div class="widget-clock-time" id="widget-clock-time">--:--</div>
+            <div class="widget-clock-date" id="widget-clock-date"></div>
+          </div>
         </div>
 
         <p id="sj-error"></p>
         <pre id="sj-error-code"></pre>
 
         <div class="widgets" id="widgets" hidden>
-          <div class="widget" id="widget-clock" hidden>
-            <h4>Clock</h4>
-            <div class="widget-clock-time" id="widget-clock-time">--:--</div>
-            <div class="widget-clock-date" id="widget-clock-date"></div>
-          </div>
           <div class="widget" id="widget-notes" hidden>
             <h4>Notes</h4>
             <textarea id="widget-notes-area" placeholder="Jot something down..."></textarea>
@@ -607,7 +627,7 @@
 
           <div class="settings-card">
             <h3>Wallpaper</h3>
-            <p class="muted">Upload your own background image.</p>
+            <p class="muted">Upload any image — low-res photos are upscaled to 4K automatically. Or choose a gradient. Saved on this device.</p>
             <label class="upload-btn">
               Upload your own
               <input id="wallpaper-input" type="file" accept="image/*" hidden />
@@ -628,6 +648,21 @@
               <option value="bing">Bing</option>
               <option value="startpage">Startpage</option>
             </select>
+          </div>
+
+          <div class="settings-card" id="privacy-card">
+            <h3>Ad blocker &amp; VPN</h3>
+            <p class="muted">Blocks ad and tracker hosts inside proxied pages. The VPN is a browser tunnel: it routes Haze pages through a remote Wisp exit and hides your IP from those sites, but it does not cover other apps.</p>
+            <label class="widget-toggle"><input id="adblock-toggle" type="checkbox" checked /> Block ads &amp; trackers <span class="muted" id="adblock-count"></span></label>
+            <div class="vpn-status-row">
+              <span class="vpn-dot" id="vpn-dot" aria-hidden="true"></span>
+              <div class="vpn-status-copy">
+                <strong id="vpn-status">Starting tunnel…</strong>
+                <span class="muted" id="vpn-server">no exit selected</span>
+              </div>
+              <button id="vpn-reconnect" class="ghost-btn" type="button">Reconnect</button>
+            </div>
+            <p class="muted widget-toggle-note">Default exit is the Mercury Workshop demo Wisp. For a private exit, run your own Wisp server and paste it below.</p>
           </div>
 
           <div class="settings-card" id="proxy-card">
@@ -652,7 +687,7 @@
               </label>
               <button id="wisp-url-save" class="ghost-btn" type="button">Save &amp; reload</button>
             </div>
-            <p class="muted widget-toggle-note">Scramjet and Ultraviolet browse through a wisp server. If pages die with “websocket did not open”, haze rotates to the next one automatically — you can also paste a known-good wisp here.</p>
+            <p class="muted widget-toggle-note">Scramjet and Ultraviolet browse through a Wisp server. The default is the Mercury Workshop demo; if it fails, Haze retries and falls back automatically. A custom Wisp gives you a private exit.</p>
           </div>
 
           <div class="settings-card">
@@ -786,7 +821,7 @@
 
           <div class="settings-card">
             <h3>Widgets</h3>
-            <p class="muted">Add handy widgets to the home screen. All off by default.</p>
+            <p class="muted">Add handy widgets to the home screen. All off by default. Clock appears under your shortcuts.</p>
             <label class="widget-toggle">
               <input id="widget-toggle-clock" type="checkbox" />
               Clock

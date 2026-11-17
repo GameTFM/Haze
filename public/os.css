@@ -569,3 +569,63 @@ body.hz-os:has(.view-home.active) .di { display: none; }
   .hz-dock-sep { flex: none; margin: 0 1px; }
   .hz-dock-app::before { display: none; }
 }
+
+/* --------------------------------------------------------------------------
+   light default — dock + hud sit on white
+   -------------------------------------------------------------------------- */
+
+html[data-theme="haze"] {
+  --hz-ink: #0b0b0b;
+  --hz-dim: rgba(11, 11, 11, 0.6);
+  --hz-faint: rgba(11, 11, 11, 0.38);
+  --hz-line: rgba(0, 0, 0, 0.1);
+  --hz-glass: rgba(255, 255, 255, 0.82);
+}
+
+html[data-theme="haze"] .hz-dock {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--border);
+  box-shadow:
+    0 22px 48px -34px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 #ffffff;
+  backdrop-filter: blur(14px) saturate(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+}
+html[data-theme="haze"] .hz-dock-app { color: rgba(11, 11, 11, 0.55); }
+html[data-theme="haze"] .hz-dock-app:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border);
+  color: #0b0b0b;
+}
+html[data-theme="haze"] .hz-dock-app.active {
+  color: #0b0b0b;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: var(--border);
+}
+html[data-theme="haze"] .hz-dock-app.active::after {
+  background: #0b0b0b;
+  box-shadow: none;
+}
+html[data-theme="haze"] .hz-dock-app::before {
+  background: #0b0b0b;
+  border-color: #0b0b0b;
+  color: #ffffff;
+}
+html[data-theme="haze"] .hz-dock-sep { background: var(--border); }
+
+html[data-theme="haze"] .hz-hud { color: rgba(11, 11, 11, 0.42); }
+html[data-theme="haze"] .hz-hud-item b { color: rgba(11, 11, 11, 0.76); }
+html[data-theme="haze"] .hz-hud-dot { box-shadow: none; }
+
+/* boot would flash black before a white app; keep it light */
+html[data-theme="haze"] .hz-boot {
+  background: #ffffff;
+  color: #0b0b0b;
+}
+html[data-theme="haze"] .hz-boot-logo { color: #0b0b0b; text-shadow: none; }
+html[data-theme="haze"] .hz-boot-bar { background: rgba(0, 0, 0, 0.08); }
+html[data-theme="haze"] .hz-boot-bar i {
+  background: #0b0b0b;
+  box-shadow: none;
+}
+html[data-theme="haze"] .hz-boot-ok { color: #1f7a4d; }

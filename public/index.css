@@ -1,22 +1,32 @@
 /* ============ haze — black & white base + themes ============ */
 
 :root {
-  --bg: #050505;
-  --bg-elev: #0d0d0d;
-  --panel: #101010;
-  --border: #232323;
-  --text: #f5f5f5;
-  --muted: #9a9a9a;
-  --accent: #ffffff;
-  --accent-contrast: #000000;
-  --glow: rgba(255, 255, 255, 0.08);
-  --grid-line: rgba(255, 255, 255, 0.05);
+  --bg: #ffffff;
+  --bg-elev: #f8f8f5;
+  --panel: #ffffff;
+  --border: #e3e3df;
+  --text: #0b0b0b;
+  --muted: #6c6c67;
+  --accent: #0b0b0b;
+  --accent-contrast: #ffffff;
+  --glow: rgba(0, 0, 0, 0.05);
+  --grid-line: rgba(0, 0, 0, 0.05);
   --side-w: 220px;
 }
 
 /* ---------------- themes ---------------- */
 
 html[data-theme="haze"] {
+  color-scheme: light;
+  --bg: #ffffff; --bg-elev: #f8f8f5; --panel: #ffffff; --border: #e3e3df;
+  --text: #0b0b0b; --muted: #6c6c67;
+  --accent: #0b0b0b; --accent-contrast: #ffffff;
+  --glow: rgba(0, 0, 0, 0.05); --grid-line: rgba(0, 0, 0, 0.05);
+}
+
+/* the original dark haze, kept as a choice */
+html[data-theme="haze-dark"] {
+  color-scheme: dark;
   --bg: #050505; --bg-elev: #0d0d0d; --panel: #101010; --border: #232323;
   --text: #f5f5f5; --muted: #9a9a9a;
   --accent: #ffffff; --accent-contrast: #000000;
@@ -148,10 +158,15 @@ body {
 
 .wallpaper {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-size: cover; background-position: center;
+  background-color: var(--bg);
+  background-size: cover; background-position: center center; background-repeat: no-repeat;
   opacity: 0; transition: opacity 0.4s ease;
 }
-.wallpaper.visible { opacity: 0.55; }
+.wallpaper::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 24%, transparent);
+}
+.wallpaper.visible { opacity: 1; }
 .wallpaper.visible + .grid-overlay { opacity: 0.25; }
 
 /* liquid-glass backdrop: drifting color blobs the glass panels blur over.
@@ -771,7 +786,7 @@ html[data-theme^="glass"] .glass-blobs {
 
 .wallpaper-preview {
   margin-top: 14px; height: 110px; border-radius: 10px;
-  background-size: cover; background-position: center;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
   border: 1px solid var(--border);
 }
 
@@ -2207,7 +2222,7 @@ body.rail-collapsed .sidebar { display: none !important; }
   .shell-right .b-online { display: none; }
   .shell-sync { display: none; }
   .home-stage { padding: 110px 18px 70px; }
-  .view-home .home-logo { font-size: clamp(3.4rem, 15vw, 5rem); margin-bottom: 38px; }
+  .view-home .home-logo { font-size: clamp(3.4rem, 15vw, 5rem); margin-bottom: 24px; }
 }
 
 /* the rail keeps its full width — icons-only mode would clip the dock and tabs */
@@ -2398,15 +2413,16 @@ html { --spot-x: 50%; --spot-y: 36%; }
   color: color-mix(in srgb, var(--text) 62%, transparent);
 }
 
-/* ---- wordmark ---- */
+/* ---- wordmark: haze is the home screen's main mark ---- */
 .view-home .home-logo {
-  order: -1;
-  margin: 0 0 22px;
-  padding: 0 0 0 0.24em;
+  order: 0;
+  margin: 0 0 24px;
+  padding: 0;
+  max-width: 100%;
   font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 600; letter-spacing: 0.24em; line-height: 1;
-  color: color-mix(in srgb, var(--text) 62%, transparent);
+  font-size: clamp(3.8rem, 9.5vw, 6.4rem);
+  font-weight: 600; letter-spacing: -0.055em; line-height: 0.95;
+  color: var(--text);
   background: none;
   -webkit-text-fill-color: currentColor;
   text-shadow: none;
@@ -2416,6 +2432,30 @@ html { --spot-x: 50%; --spot-y: 36%; }
 .view-home .home-logo:hover {
   color: color-mix(in srgb, var(--text) 86%, transparent);
   filter: none;
+}
+
+/* time is the optional Clock widget, not a permanent hero */
+.view-home .hero-clock { display: none; }
+.view-home .home-clock-widget {
+  width: min(300px, 100%);
+  margin: 24px auto 0;
+  align-self: center;
+  text-align: left;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(1.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.16);
+}
+.view-home .home-clock-widget[hidden] { display: none; }
+
+/* wallpaper takes over the home surface, with a quiet scrim for legibility */
+html.has-wallpaper .view.view-home { background: transparent; }
+html.has-wallpaper .home-atmo { display: none; }
+html.has-wallpaper .grid-overlay,
+html.has-wallpaper .glass-blobs { display: none; }
+html.has-wallpaper .view-home .home-logo {
+  text-shadow:
+    0 2px 26px color-mix(in srgb, var(--bg) 78%, transparent),
+    0 1px 2px color-mix(in srgb, var(--bg) 58%, transparent);
 }
 
 /* ---- quote ---- */
@@ -2567,3 +2607,134 @@ html { --spot-x: 50%; --spot-y: 36%; }
   .hero-clock-time { background-position: 0 0, 0 0; }
   .home-chips, .hero-quote { animation: none !important; }
 }
+
+/* ==========================================================================
+   light default — black on white, flat and quiet
+   ========================================================================== */
+
+html[data-theme="haze"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* the textured, glowy backdrop is part of the old dark look only */
+html[data-theme="haze"] .home-bg,
+html[data-theme="haze"] .home-atmo,
+html[data-theme="haze"] .grid-overlay,
+html[data-theme="haze"] .glass-blobs,
+html[data-theme="haze-dark"] .home-bg,
+html[data-theme="haze-dark"] .home-atmo,
+html[data-theme="haze-dark"] .grid-overlay,
+html[data-theme="haze-dark"] .glass-blobs {
+  display: none !important;
+}
+
+html[data-theme="haze"] .view.view-home {
+  background: var(--bg);
+}
+html[data-theme="haze"].has-wallpaper .view.view-home {
+  background: transparent;
+}
+
+/* wordmark: still the main mark, just quieter */
+html[data-theme="haze"] .view-home .home-logo {
+  font-size: clamp(3.1rem, 7.4vw, 4.9rem);
+  margin-bottom: 30px;
+  color: var(--text);
+}
+
+/* no blur-in, no glass, no lift */
+html[data-theme="haze"] .home-stage > * { animation: none !important; }
+html[data-theme="haze"] .home-stage #sj-address {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-theme="haze"] .home-stage #sj-form:focus-within #sj-address {
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+html[data-theme="haze"] .home-stage #sj-form:focus-within .sj-ico { color: var(--text); }
+html[data-theme="haze"] .sj-key { background: #f5f5f2; }
+html[data-theme="haze"] .hzb-quick-btn:hover {
+  border-color: var(--border);
+  background: #f5f5f2;
+  color: var(--text);
+}
+
+
+/* home widgets */
+html[data-theme="haze"] .view-home .home-clock-widget,
+html[data-theme="haze"] .widget {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* wallpaper: light veil, black text stays readable */
+html[data-theme="haze"] .wallpaper::after {
+  background: rgba(255, 255, 255, 0.42);
+}
+html[data-theme="haze"].has-wallpaper .view-home .home-logo {
+  text-shadow: 0 1px 20px rgba(255, 255, 255, 0.6);
+}
+
+/* browser chrome: solid white, hairline rules */
+html[data-theme="haze"] .hzb-chrome {
+  background: #ffffff;
+  border-bottom-color: var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-theme="haze"] .hzb-tab { background: transparent; }
+html[data-theme="haze"] .hzb-tab:hover { background: #f5f5f2; }
+html[data-theme="haze"] .hzb-tab.is-active {
+  background: #f2f2ee;
+  border-color: var(--border);
+  box-shadow: none;
+}
+html[data-theme="haze"] .hzb-address {
+  background: #f6f6f3;
+  border-color: var(--border);
+}
+html[data-theme="haze"] .hzb-address:focus-within {
+  border-color: var(--text);
+  box-shadow: none;
+}
+html[data-theme="haze"] .hzb-meta i { background: #1f9d55; box-shadow: none; }
+
+/* settings: plain cards */
+html[data-theme="haze"] .settings-card {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-theme="haze"] .theme-swatch .swatch { border-color: rgba(0, 0, 0, 0.14); }
+html[data-theme="haze"] .upload-btn,
+html[data-theme="haze"] .ghost-btn { background: #ffffff; }
+html[data-theme="haze"] .upload-btn:hover,
+html[data-theme="haze"] .ghost-btn:hover { border-color: var(--text); }
+
+/* music follows the shell instead of staying a dark island */
+html[data-theme="haze"] .nxm {
+  --nx-bg: #ffffff; --nx-panel: #ffffff; --nx-panel2: #f5f5f1;
+  --nx-brd: #e3e3df; --nx-tx: #0b0b0b; --nx-mut: #6c6c67;
+  background: var(--bg);
+}
+html[data-theme="haze"] .nxm-top { background: rgba(255, 255, 255, 0.94); }
+html[data-theme="haze"] .music-cat.active {
+  background: #0b0b0b;
+  border-color: #0b0b0b;
+  color: #ffffff;
+}
+html[data-theme="haze"] .music-cat:hover,
+html[data-theme="haze"] .music-grid-next:hover { border-color: var(--border); }
+html[data-theme="haze"] .nxm-nav:hover,
+html[data-theme="haze"] .nxm-nav.on { background: #f5f5f1; color: var(--text); }
