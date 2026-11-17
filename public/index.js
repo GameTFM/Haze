@@ -5305,7 +5305,8 @@ $haze("history-clear-btn")?.addEventListener("click", async () => {
       try {
         doc = frame.contentDocument;
       } catch {}
-      if (!doc || doc.__hzbYtBridge) return;
+      if (!doc) return;
+      if (doc.__hzbYtBridge) return;
       doc.__hzbYtBridge = true;
       doc.addEventListener(
         "click",
